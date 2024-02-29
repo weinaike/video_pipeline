@@ -1,0 +1,52 @@
+{
+    "task_name": "ExampleTask",
+    "nodes": [
+        {
+            "node_id": 1,
+            "node_type": "Base",
+            "node_name": "Node1",
+            "channels": 1,
+            "cfg_file": ""
+        },
+        {
+            "node_id": 2,
+            "node_type": "Base",
+            "node_name": "Node2",
+            "channels": 1,
+            "cfg_file": ""
+        },
+        {
+            "node_id": 3,
+            "node_type": "Base",
+            "node_name": "Node3",
+            "channels": 1,
+            "cfg_file": ""
+        },
+        {
+            "node_id": 4,
+            "node_type": "Base",
+            "node_name": "Node4",
+            "channels": 1,
+            "cfg_file": ""
+        }
+    ],
+    "connections": [
+        {
+            "from_node_id": 1,
+            "to_node_id": 2
+        },
+        {
+            "from_node_id": 1,
+            "to_node_id": 3
+        },
+        {
+            "from_node_id": 2,
+            "to_node_id": 4
+        },
+        {
+            "from_node_id": 3,
+            "to_node_id": 4
+        }
+
+    ]
+}

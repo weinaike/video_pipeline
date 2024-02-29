@@ -1,0 +1,4 @@
+build
+cmake_template-main
+.file-templates/
+.vscode/
