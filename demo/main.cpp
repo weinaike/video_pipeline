@@ -3,31 +3,35 @@
 #include "pipeline/Pipeline.h"
 #include "common/CommonDefine.h"
 #include "nodes/BaseNode.h"
+#include "logger/easylogging++.h"
+INITIALIZE_EASYLOGGINGPP
 
 int main()
 {
-    std::cout << "Hello, World!" << std::endl;
+    
+
+    LOG(INFO) << "Hello, World!" ;
 
     std::string cfg_file = "../configure/pipeline_sample.json";
 
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
-    std::cout << "pipeline.init()" << std::endl;
+    LOG(INFO) << "pipeline.init()" ;
     pipeline.init();
-    std::cout << "pipeline.start()" << std::endl;
+    LOG(INFO) << "pipeline.start()" ;
     pipeline.start();
     
     
-    std::cout << "Press 'q' to exit" << std::endl;
+    LOG(INFO) << "Press 'q' to exit" ;
 
     std::vector<std::string> src_node_name = pipeline.get_src_node_name();
     
     // 打印源节点数量
-    std::cout << "src_node_name.size(): " << src_node_name.size() << std::endl;
+    LOG(INFO) << "src_node_name.size(): " << src_node_name.size() ;
 
     for (auto & name : src_node_name)
     {
-        std::cout << "src_node_name: " << name << std::endl;
+        LOG(INFO) << "src_node_name: " << name ;
     }
     while (getchar() != 'q')
     {

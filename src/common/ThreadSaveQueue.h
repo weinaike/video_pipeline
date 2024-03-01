@@ -14,10 +14,10 @@
 namespace ZJVIDEO {
 // 缓冲队列满时的策略
 enum BufferOverStrategy {
-    DROP_EARLY,  // 丢弃最早的帧
-    DROP_LATE,   // 丢弃最新的帧
-    CLEAR,       // 清空缓冲队列
-    BLOCK        // 堵塞，直到队列有空间
+    ZJV_QUEUE_DROP_EARLY,  // 丢弃最早的帧
+    ZJV_QUEUE_DROP_LATE,   // 丢弃最新的帧
+    ZJV_QUEUE_CLEAR,       // 清空缓冲队列
+    ZJV_QUEUE_BLOCK        // 堵塞，直到队列有空间
 };
 
 // 线程安全队列
@@ -118,7 +118,7 @@ private:
     std::condition_variable                     m_self_cond;            // 用于唤醒自身的条件变量
     std::list<std::shared_ptr<BaseData> >       m_list;          // 缓冲队列
     int                                         m_max_number = 25;        // 默认最大缓冲帧数
-    BufferOverStrategy                          m_buffer_strategy = BufferOverStrategy::DROP_EARLY;  // 缓冲队列满时的策略
+    BufferOverStrategy                          m_buffer_strategy = ZJV_QUEUE_DROP_EARLY;  // 缓冲队列满时的策略
 }; // class ThreadSaveQueue
 
 } // namespace ZJVIDEO

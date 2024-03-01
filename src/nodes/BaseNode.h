@@ -9,7 +9,7 @@
 #include <mutex>
 #include <condition_variable>
 #include "../common/CommonDefine.h"
-
+#include "../logger/easylogging++.h"
 
 namespace ZJVIDEO {
 
@@ -19,6 +19,8 @@ namespace ZJVIDEO {
 // 3. 启动进程，start(); 调用线程任务函数worker,执行任务流程
 // 4. worker中包含核心处理流程， 保护获取数据， 处理数据，发送数据等
 // 5. 结束线程
+
+#define BASENODE_LOG "BaseNode"
 
 class BaseNode : public AbstractNode {
 
@@ -54,6 +56,7 @@ protected:
     virtual int process(std::vector<std::shared_ptr<BaseData>> & data); 
 
 protected:
+    std::string                         m_log_name = "BaseNode";
     unsigned int                        m_node_id; // 节点id
     std::string                         m_node_type; // 节点类型
     std::string                         m_name;    // 节点名 

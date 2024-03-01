@@ -12,5 +12,6 @@
 #include "AbstractNode.h"
 #include "NodeParam.h"
 #include "NodeFactory.h"
+#include "FrameData.h"
 
 #endif  // ZJVIDEO_BASEDATA_H

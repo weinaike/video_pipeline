@@ -6,13 +6,16 @@
 #include <../nlohmann/json.hpp>
 #include <fstream>
 
-
 namespace ZJVIDEO {
 
 
-Pipeline::Pipeline(std::string cfg_file) {
+Pipeline::Pipeline(std::string cfg_file) 
+{
+    el::Loggers::getLogger(PIPE_LOG);
+
     parse_cfg_file(cfg_file);
     m_initialized = false;
+    CLOG(INFO, PIPE_LOG) << "Pipeline created" ;
 }
 
 
@@ -20,7 +23,8 @@ int Pipeline::start()
 {
     if (!m_initialized) 
     {
-        std::cout << "Pipeline not initialized" << std::endl;
+        CLOG(INFO, PIPE_LOG) << "Pipeline not initialized" ;
+
         return ZJV_STATUS_ERROR;
     }
 
@@ -46,7 +50,7 @@ int Pipeline::stop()
     }
     else
     {
-        std::cout << "Pipeline not initialized" << std::endl;
+        CLOG(INFO, PIPE_LOG) << "Pipeline not initialized" ;
     }
 
     return ZJV_STATUS_OK;
@@ -59,12 +63,120 @@ Pipeline::~Pipeline() {
 
 static void from_json(const nlohmann::json& j, NodeParam& p) 
 {
-    j.at("node_id").get_to(p.m_node_id);
     j.at("node_type").get_to(p.m_node_type);
     j.at("node_name").get_to(p.m_node_name);
     j.at("channels").get_to(p.m_channels);
     j.at("cfg_file").get_to(p.m_cfg_file);
 }
+
+static std::string join_string(std::string str, int i)
+{
+    return str + "_c" + std::to_string(i);
+}
+
+int Pipeline::expand_pipe() 
+{
+    // 在所有节点中，找出支持多通道的节点
+    std::vector<NodeParam> m_multi_channel_nodes;
+    for (auto & node : m_nodeparams) 
+    {
+        if(node.m_channels)
+        {
+            NodeParam node_copy = node;
+            m_multi_channel_nodes.push_back(node_copy);
+        }
+    }
+
+    // 多通道，节点扩展为多份
+    
+    for(int i = 0; i < m_channel_num; i++)
+    {
+        for (auto & node : m_nodeparams) 
+        {
+            NodeParam node_copy = node;
+            node_copy.m_node_name = join_string(node.m_node_name , i);
+            m_channels[i].push_back(node_copy);
+        }
+    }
+    // 多通道，节点链接也相应扩展多份
+    std::map<int, std::vector<std::pair<std::string, std::string>>> m_channels_connect_list;
+    for(int i = 0; i < m_channel_num; i++)
+    {
+        for (auto & connection : m_connect_list) 
+        {
+            std::pair<std::string, std::string> connection_copy = connection;
+            connection_copy.first = join_string(connection.first , i);
+            connection_copy.second = join_string(connection.second , i);
+            m_channels_connect_list[i].push_back(connection_copy);
+        }
+    }
+
+    // 对于支持多通道的节点， 将扩展后的节点和链接关系，合并到多通道节点中
+    for (auto & node : m_multi_channel_nodes) 
+    {
+        for(int i = 0; i < m_channel_num; i++)
+        {
+            // 删除支持多通道的节点
+            for (auto & item : m_channels[i]) 
+            {
+                std::string temp_name = join_string(node.m_node_name,i);
+                m_channels[i].erase(std::remove_if(m_channels[i].begin(), m_channels[i].end(), [&](const NodeParam& item) {
+                    return item.m_node_name == temp_name;
+                }), m_channels[i].end());
+            }
+
+            // 对于支持多通道的节点名， 扩展后节点名称替换为原名
+            for (auto & item : m_channels_connect_list[i]) 
+            {
+                std::string temp_name = join_string(node.m_node_name,i);
+                if(item.first == temp_name)
+                {
+                    item.first = node.m_node_name;
+                }
+                if(item.second == temp_name)
+                {
+                    item.second = node.m_node_name;
+                }
+            }
+        }
+    }
+
+    // 清空，m_nodeparams
+    m_nodeparams.clear();
+    // 通道节点合并如m_nodeparams
+    for(int i = 0; i < m_channel_num; i++)
+    {
+        for (auto & node : m_channels[i]) 
+        {
+            node.m_channel_id = i;
+            m_nodeparams.push_back(node);
+        }
+    }
+    // 添加多通道节点
+    for (auto & node : m_multi_channel_nodes) 
+    {
+        m_nodeparams.push_back(node);
+    }
+
+    // 清空，m_connect_list
+    m_connect_list.clear();
+    // 通道链接合并如m_connect_list, <first, next>相同的不重复添加
+    for(int i = 0; i < m_channel_num; i++)
+    {
+        for (auto & connection : m_channels_connect_list[i]) 
+        {
+            if(std::find(m_connect_list.begin(), m_connect_list.end(), connection) == m_connect_list.end())
+            {
+                m_connect_list.push_back(connection);
+            }
+        }
+    }
+
+
+
+    return ZJV_STATUS_OK;
+}
+
 
 int Pipeline::parse_cfg_file(std::string cfg_file) 
 {
@@ -76,32 +188,39 @@ int Pipeline::parse_cfg_file(std::string cfg_file)
 
     // Parse the JSON
     m_task_name = j["task_name"];
+    m_expand_pipe = j["expand_pipe"].get<bool>();
+    m_channel_num = j["channel_num"].get<int>();
     m_nodeparams = j["nodes"].get<std::vector<NodeParam>>();
 
     for (const auto& connection : j["connections"]) {
-        m_connect_list.push_back({connection["from_node_id"], connection["to_node_id"]});
+        m_connect_list.push_back({connection["from_node"], connection["to_node"]});
+    }
+
+    if(m_expand_pipe && (m_channel_num > 1) )
+    {
+        expand_pipe();
     }
 
 
-
-
-    // 打印信息
-    std::cout << "m_task_name: " << m_task_name << std::endl;
-    std::cout << "m_nodeparams.size(): " << m_nodeparams.size() << std::endl;
+    // ------------------打印信息------------------------------
+    CLOG(INFO, PIPE_LOG) << "m_task_name: " << m_task_name ;
+    CLOG(INFO, PIPE_LOG) << "m_expand_pipe: " << m_expand_pipe ;
+    CLOG(INFO, PIPE_LOG) << "m_channel_num: " << m_channel_num ;
+    CLOG(INFO, PIPE_LOG) << "m_nodeparams.size(): " << m_nodeparams.size() ;
     for (auto & node : m_nodeparams) 
     {
-        std::cout << "node.m_node_id: " << node.m_node_id << std::endl;
-        std::cout << "node.m_node_type: " << node.m_node_type << std::endl;
-        std::cout << "node.m_node_name: " << node.m_node_name << std::endl;
-        std::cout << "node.m_channels: " << node.m_channels << std::endl;
-        std::cout << "node.m_cfg_file: " << node.m_cfg_file << std::endl << std::endl;
+        CLOG(INFO, PIPE_LOG) << "node.m_node_type: " << node.m_node_type ;
+        CLOG(INFO, PIPE_LOG) << "node.m_node_name: " << node.m_node_name ;
+        CLOG(INFO, PIPE_LOG) << "node.m_channels: " << node.m_channels ;
+        CLOG(INFO, PIPE_LOG) << "node.m_cfg_file: " << node.m_cfg_file  ;
+        CLOG(INFO, PIPE_LOG) << "node.m_channel_id: " << node.m_channel_id  ;
     }
-    std::cout << "m_connect_list.size(): " << m_connect_list.size() << std::endl;
+    CLOG(INFO, PIPE_LOG) << "m_connect_list.size(): " << m_connect_list.size() ;
     for (auto & item : m_connect_list) 
     {
-        std::cout << "m_connect_list: " << item.first << " " << item.second << std::endl;
+        CLOG(INFO, PIPE_LOG) << "m_connect_list: " << item.first << " " << item.second ;
     }
-    std::cout << std::endl;
+    CLOG(INFO, PIPE_LOG) ;
 
 
     return ZJV_STATUS_OK;
@@ -114,14 +233,14 @@ int Pipeline::init()
     for (auto & node_param : m_nodeparams) 
     {
         std::shared_ptr<AbstractNode> node = NodeRegister::CreateNode(node_param);
-        m_node_map.insert(std::make_pair(node_param.m_node_id, node));
+        m_node_map.insert(std::make_pair(node_param.m_node_name, node));
     }
 
     //  2. 配置节点输入输出队列
     for (auto & connection : m_connect_list) 
     {
-        int prior = connection.first;
-        int next = connection.second;
+        std::string prior = connection.first;
+        std::string next = connection.second;
         // 创建安全队列
         std::shared_ptr<ThreadSaveQueue> queue = std::make_shared<ThreadSaveQueue>();
         m_connectQueueList.push_back(queue);
@@ -130,7 +249,7 @@ int Pipeline::init()
         m_node_map[next]->connect_add_input(m_node_map[prior]->get_name(), queue);
     }
 
-    std::vector<int> zeroInDegreeNodes = getZeroInDegreeNodes(m_connect_list);
+    std::vector<std::string> zeroInDegreeNodes = getZeroInDegreeNodes(m_connect_list);
     for (auto & node_id : zeroInDegreeNodes) 
     {
         // 创建队列
@@ -139,7 +258,7 @@ int Pipeline::init()
         m_node_map[node_id]->connect_add_input(m_node_map[node_id]->get_name(), queue);
     }
     // 从m_connect_list 有向图连接中 提取末尾节点，即只有入度，没有出度
-    std::vector<int> zeroOutDegreeNodes = getZeroOutDegreeNodes(m_connect_list);
+    std::vector<std::string> zeroOutDegreeNodes = getZeroOutDegreeNodes(m_connect_list);
     for (auto & node_id : zeroOutDegreeNodes) 
     {
         // 创建队列
@@ -149,18 +268,18 @@ int Pipeline::init()
     }
 
     // m_dstQueueList， m_srcQueueList， 的数量及其ID或名称
-    std::cout << "m_srcQueueList.size(): " << m_srcQueueList.size() << std::endl;
+    CLOG(INFO, PIPE_LOG) << "m_srcQueueList.size(): " << m_srcQueueList.size() ;
     for (auto & item : m_srcQueueList) 
     {
-        std::cout << "m_srcQueueList: " << item.first << std::endl;
+        CLOG(INFO, PIPE_LOG) << "m_srcQueueList: " << item.first ;
     }
-    std::cout << "m_dstQueueList.size(): " << m_dstQueueList.size() << std::endl;
+    CLOG(INFO, PIPE_LOG) << "m_dstQueueList.size(): " << m_dstQueueList.size() ;
     for (auto & item : m_dstQueueList) 
     {
-        std::cout << "m_dstQueueList: " << item.first << std::endl;
+        CLOG(INFO, PIPE_LOG) << "m_dstQueueList: " << item.first ;
     }
 
-    std::cout << "Pipeline initialized" << std::endl;
+    CLOG(INFO, PIPE_LOG) << "Pipeline initialized" ;
 
 
 
@@ -169,10 +288,10 @@ int Pipeline::init()
 }
 
 
-std::vector<int> Pipeline::getZeroInDegreeNodes(const std::vector<std::pair<int,int>>& connect_list) 
+std::vector<std::string> Pipeline::getZeroInDegreeNodes(const std::vector<std::pair<std::string,std::string>>& connect_list) 
 {
 
-    std::map<int, int> inDegree;
+    std::map<std::string, int> inDegree;
 
     // Initialize in-degrees
     for (const auto& pair : connect_list) {
@@ -186,7 +305,7 @@ std::vector<int> Pipeline::getZeroInDegreeNodes(const std::vector<std::pair<int,
     }
 
     // Find nodes with in-degree 0
-    std::vector<int> zeroInDegreeNodes;
+    std::vector<std::string> zeroInDegreeNodes;
     for (const auto& pair : inDegree) {
         if (pair.second == 0) {
             zeroInDegreeNodes.push_back(pair.first);
@@ -198,9 +317,9 @@ std::vector<int> Pipeline::getZeroInDegreeNodes(const std::vector<std::pair<int,
 
 
 
-std::vector<int> Pipeline::getZeroOutDegreeNodes(const std::vector<std::pair<int,int>>& connect_list)
+std::vector<std::string> Pipeline::getZeroOutDegreeNodes(const std::vector<std::pair<std::string,std::string>>& connect_list)
 {
-    std::map<int, int> outDegree;
+    std::map<std::string, int> outDegree;
 
     // Initialize out-degrees
     for (const auto& pair : connect_list) {
@@ -214,7 +333,7 @@ std::vector<int> Pipeline::getZeroOutDegreeNodes(const std::vector<std::pair<int
     }
 
     // Find nodes with out-degree 0
-    std::vector<int> zeroOutDegreeNodes;
+    std::vector<std::string> zeroOutDegreeNodes;
     for (const auto& pair : outDegree) {
         if (pair.second == 0) {
             zeroOutDegreeNodes.push_back(pair.first);
@@ -256,7 +375,7 @@ int Pipeline::set_input_data(const std::string & tag, std::shared_ptr<BaseData> 
     }
     else
     {
-        std::cout << "No such src node: " << tag << std::endl;
+        CLOG(INFO, PIPE_LOG) << "No such src node: " << tag ;
         return ZJV_STATUS_ERROR;
     }
 }
@@ -271,7 +390,7 @@ int Pipeline::get_output_data(const std::string & tag, std::shared_ptr<BaseData>
     }
     else
     {
-        std::cout << "No such dst node: " << tag << std::endl;
+        CLOG(INFO, PIPE_LOG) << "No such dst node: " << tag ;
         return ZJV_STATUS_ERROR;
     }
 }

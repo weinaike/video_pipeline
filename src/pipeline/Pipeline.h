@@ -9,7 +9,9 @@
 #include <memory>
 #include <map>
 #include "../common/CommonDefine.h"
+#include "../logger/easylogging++.h"
 
+#define PIPE_LOG "pipe"
 
 namespace ZJVIDEO{
 
@@ -38,24 +40,36 @@ protected:
     
     //解析配置文件
     int parse_cfg_file(std::string cfg_file);
-    std::vector<int> getZeroInDegreeNodes(const std::vector<std::pair<int,int>>& connect_list);
-    std::vector<int> getZeroOutDegreeNodes(const std::vector<std::pair<int,int>>& connect_list);
+    std::vector<std::string> getZeroInDegreeNodes(const std::vector<std::pair<std::string ,std::string >>& connect_list);
+    std::vector<std::string> getZeroOutDegreeNodes(const std::vector<std::pair<std::string ,std::string >>& connect_list);
+
+    int expand_pipe();
+
 protected:
+
+    const std::string                                               m_log_name = "Pipeline";
     // 解析配置文件，存储
-    std::string                                         m_task_name;
-    std::vector<NodeParam>                              m_nodeparams;
-    std::vector<std::pair<int,int> >                    m_connect_list;  // 链接关系
+    std::string                                                     m_task_name;
+    std::vector<NodeParam>                                          m_nodeparams;
+    std::vector<std::pair<std::string, std::string> >               m_connect_list;  // 链接关系
 
     // 初始化变量
-    std::map<int, std::shared_ptr<AbstractNode>>        m_node_map;    
-    std::vector<std::shared_ptr<ThreadSaveQueue>>       m_connectQueueList ;//每个连接的队列
+    std::map<std::string, std::shared_ptr<AbstractNode>>            m_node_map;    
+    std::vector<std::shared_ptr<ThreadSaveQueue>>                   m_connectQueueList ;//每个连接的队列
 
-    std::map<std::string, std::shared_ptr<ThreadSaveQueue>>       m_srcQueueList ;//每个连接的队列
-    std::map<std::string, std::shared_ptr<ThreadSaveQueue>>       m_dstQueueList ;//每个连接的队列
+    std::map<std::string, std::shared_ptr<ThreadSaveQueue>>         m_srcQueueList ;//每个连接的队列
+    std::map<std::string, std::shared_ptr<ThreadSaveQueue>>         m_dstQueueList ;//每个连接的队列
 
+    bool                                                            m_expand_pipe = false;
+    int                                                             m_channel_num = 1;
 
-    std::mutex                                          m_mutex;
-    std::atomic<bool>                                   m_initialized{false};
+    // 扩展后通道
+    std::vector<NodeParam>                                          m_multi_channel_nodes;
+    std::map<int, std::vector<NodeParam>>                           m_channels;
+    std::map<int, std::vector<std::pair<std::string, std::string>>> m_channels_connect_list;
+
+    std::mutex                                                      _mutex;
+    std::atomic<bool>                                               m_initialized{false};
 
 }; // class Pipeline
 

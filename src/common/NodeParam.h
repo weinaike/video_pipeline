@@ -16,11 +16,11 @@ namespace ZJVIDEO {
 
 struct NodeParam
 {
-    unsigned int                m_node_id;              // 节点id
     std::string                 m_node_type;            // 节点类型
     std::string                 m_node_name;            // 节点名
-    int                         m_channels = 1;         // 通道数   
+    bool                        m_channels = true;      // 是否支持多通道
     std::string                 m_cfg_file;             // 配置文件路径
+    int                         m_channel_id = -1;      // 通道id
 };// struct NodeParam
 
 

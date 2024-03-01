@@ -4,10 +4,13 @@ namespace ZJVIDEO{
 
 BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param)
 {
+    // 注册日志记录器
+    el::Loggers::getLogger(BASENODE_LOG);
+
+
     m_node_type = param.m_node_type;
     m_name = param.m_node_name;
     m_channels = param.m_channels;
-    m_node_id = param.m_node_id;
     m_cfg_file = param.m_cfg_file;
     parse_configure(m_cfg_file);
     init();
@@ -72,12 +75,12 @@ int BaseNode::start()
     std::unique_lock<std::mutex> lk(m_base_mutex);
     if (m_run) 
     {
-        std::cout<<"该线程重复启动"<<std::endl;
+        CLOG(INFO, BASENODE_LOG)<<"该线程重复启动";
         return ZJV_STATUS_OK;
     }
     m_run = true;
     m_worker = std::thread(&BaseNode::worker, this);
-    std::cout<<m_name<<" 线程启动"<<std::endl;
+    CLOG(INFO, BASENODE_LOG)<<m_name<<" 线程启动";
     return ZJV_STATUS_OK;
 }
 
@@ -86,7 +89,7 @@ int BaseNode::stop()
 {
     if (!m_run) 
     {
-        std::cout<< m_name << " tread exited already"<<std::endl;
+        CLOG(INFO, BASENODE_LOG)<< m_name << " tread exited already";
         return ZJV_STATUS_OK;
     }
     m_run = false;
@@ -106,7 +109,7 @@ int BaseNode::stop()
     {
         m_worker.join();
     }
-    std::cout<<m_name<<" thread exit success"<<std::endl;
+    CLOG(INFO, BASENODE_LOG)<<m_name<<" thread exit success";
     return ZJV_STATUS_OK;
 }
 
