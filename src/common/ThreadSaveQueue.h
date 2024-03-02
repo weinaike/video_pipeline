@@ -24,11 +24,15 @@ enum BufferOverStrategy {
 class ThreadSaveQueue {
 
 public:
-    bool Push(const std::shared_ptr<BaseData> &data) {
+    bool Push(const std::shared_ptr<BaseData> &data) 
+    {
         std::unique_lock<std::mutex> lock(m_mutex);
-        if (m_list.size() > m_max_number) {
-            switch (m_buffer_strategy) {
-                case BufferOverStrategy::DROP_EARLY: {
+        if (m_list.size() > m_max_number) 
+        {
+            switch (m_buffer_strategy) 
+            {
+                case ZJV_QUEUE_DROP_EARLY: 
+                {
                     // 缓存队列满了，丢弃最早的帧，保证实时性，但不丢弃其他信息数据
                     if (m_list.front()->get_data_type() == BaseDataType::ZJV_DATATYPE_FRAME) {
                         m_list.pop_front();
@@ -38,7 +42,8 @@ public:
                     }
                     break;
                 }
-                case BufferOverStrategy::DROP_LATE: {
+                case ZJV_QUEUE_DROP_LATE: 
+                {
                     if (m_list.front()->get_data_type() == BaseDataType::ZJV_DATATYPE_FRAME) {
                         m_list.pop_back();
                         m_list.push_back(data);
@@ -47,13 +52,15 @@ public:
                     }
                     break;
                 }
-                case BufferOverStrategy::CLEAR: {
+                case ZJV_QUEUE_CLEAR: 
+                {
                     m_list.clear();
                     m_list.push_back(data);
                     m_work_cond->notify_one();
                     return false;
                 }
-                case BufferOverStrategy::BLOCK: {
+                case ZJV_QUEUE_BLOCK: 
+                {
                     m_self_cond.wait(lock);
                     break;
                 }
@@ -61,7 +68,9 @@ public:
                     throw std::runtime_error("unknown buffer over strategy");
                 }
             }
-        } else {
+        } 
+        else 
+        {
             m_list.push_back(data);
             m_work_cond->notify_one();
         }
@@ -75,7 +84,7 @@ public:
         }
         data = m_list.front();
         m_list.pop_front();
-        if (m_buffer_strategy == BufferOverStrategy::BLOCK) {
+        if (m_buffer_strategy == ZJV_QUEUE_BLOCK) {
             m_self_cond.notify_one();
         }
         return true;

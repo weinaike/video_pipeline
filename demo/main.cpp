@@ -4,12 +4,11 @@
 #include "common/CommonDefine.h"
 #include "nodes/BaseNode.h"
 #include "logger/easylogging++.h"
+
 INITIALIZE_EASYLOGGINGPP
 
 int main()
-{
-    
-
+{  
     LOG(INFO) << "Hello, World!" ;
 
     std::string cfg_file = "../configure/pipeline_sample.json";

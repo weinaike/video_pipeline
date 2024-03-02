@@ -1,5 +1,5 @@
 # find_package(OpenCV REQUIRED)
-# find_package(Threads REQUIRED)
+find_package(Threads REQUIRED)
 # find_package(oatpp 1.3.0 REQUIRED)
 
 include_directories(/usr/local/include)

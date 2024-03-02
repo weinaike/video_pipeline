@@ -38,7 +38,7 @@ enum ImageFormat{
 // 用于存储帧数据的类
 class FrameData : public BaseData {
 public:
-    explicit FrameData(BaseDataType data_type): BaseData(data_type) {}
+    explicit FrameData(): BaseData(ZJV_DATATYPE_FRAME) {}
     // 析构函数
     ~FrameData() override = default;
 
@@ -53,11 +53,8 @@ public:
     int64_t pts; // 时间戳
     int64_t frame_id; // 帧号
     int64_t frame_type; // 帧类型   FrameType
-
-    std::vector<std::shared_ptr<BaseData> >  m_extras;
 };
 
-}  // namespace Data
-
+}  // namespace ZJVIDEO
 
 #endif

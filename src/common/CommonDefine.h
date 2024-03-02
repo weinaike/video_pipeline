@@ -13,5 +13,6 @@
 #include "NodeParam.h"
 #include "NodeFactory.h"
 #include "FrameData.h"
+#include "FlowMetaData.h"
 
 #endif  // ZJVIDEO_BASEDATA_H

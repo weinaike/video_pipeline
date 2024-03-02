@@ -14,6 +14,8 @@ enum BaseDataType {
     ZJV_DATATYPE_FRAME,    // 帧数据
     ZJV_DATATYPE_CONTROL,  // 控制数据
     ZJV_DATATYPE_CONFIG,   // 配置数据
+    ZJV_DATATYPE_EXTRA,    // 额外数据，检测结果，识别结果等
+    ZJV_DATATYPE_FLOW,     // 流数据
     ZJV_DATATYPE_MAX
 };
 
