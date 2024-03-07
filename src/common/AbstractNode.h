@@ -20,8 +20,8 @@ public:
 
     AbstractNode() = delete;
     // 2. 配置节点输入输出队列
-    virtual int connect_add_input(const std::string &, std::shared_ptr<ThreadSaveQueue> ) = 0;
-    virtual int connect_add_output(const std::string &, std::shared_ptr<ThreadSaveQueue> ) = 0;
+    virtual int connect_add_input(const std::string &, std::shared_ptr<FlowQueue> ) = 0;
+    virtual int connect_add_output(const std::string &, std::shared_ptr<FlowQueue> ) = 0;
     virtual int disconnect_del_input(const std::string &) = 0;
     virtual int disconnect_del_output(const std::string &) = 0;
 

@@ -51,6 +51,7 @@ public:
 
     void *data;  // 图像数据
     int64_t pts; // 时间戳
+    int camera_id; // 相机ID
     int64_t frame_id; // 帧号
     int64_t frame_type; // 帧类型   FrameType
 };

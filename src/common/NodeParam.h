@@ -21,6 +21,9 @@ struct NodeParam
     bool                        m_channels = true;      // 是否支持多通道
     std::string                 m_cfg_file;             // 配置文件路径
     int                         m_channel_id = -1;      // 通道id
+    std::vector<std::string>    m_output_datas;         // 输出数据类型
+    std::vector<std::pair<std::string, std::string>>    m_input_node_datas;   // 前置节点数据
+    bool                        m_wait_data;
 };// struct NodeParam
 
 

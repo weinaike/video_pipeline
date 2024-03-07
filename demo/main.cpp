@@ -1,45 +1,55 @@
 
 #include <iostream>
 #include "pipeline/Pipeline.h"
-#include "common/CommonDefine.h"
-#include "nodes/BaseNode.h"
-#include "logger/easylogging++.h"
+#include <chrono>
+#include <thread>
 
-INITIALIZE_EASYLOGGINGPP
 
 int main()
 {  
-    LOG(INFO) << "Hello, World!" ;
+    std::cout<< "Hello, World!\n" ;
 
     std::string cfg_file = "../configure/pipeline_sample.json";
 
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
-    LOG(INFO) << "pipeline.init()" ;
+    std::cout<< "pipeline.init()\n" ;
     pipeline.init();
-    LOG(INFO) << "pipeline.start()" ;
+    std::cout<< "pipeline.start()\n" ;
     pipeline.start();
     
-    
-    LOG(INFO) << "Press 'q' to exit" ;
 
     std::vector<std::string> src_node_name = pipeline.get_src_node_name();
     
     // 打印源节点数量
-    LOG(INFO) << "src_node_name.size(): " << src_node_name.size() ;
+    std::cout<< "src_node_name.size(): " << src_node_name.size()  <<std::endl;
 
     for (auto & name : src_node_name)
     {
-        LOG(INFO) << "src_node_name: " << name ;
+        std::cout<< "src_node_name: " << name <<std::endl;
     }
-    while (getchar() != 'q')
-    {
-        std::shared_ptr<ZJVIDEO::BaseData> data= std::make_shared<ZJVIDEO::BaseData>(ZJVIDEO::ZJV_DATATYPE_FRAME);
 
+    std::cout<< "Press 'q' to exit\n" ;
+
+    int frame_id = 0;
+    // while (getchar() != 'q')
+    while(1)
+    {
+        // std::cout<< frame_id<<std::endl;
+        frame_id++;
+        int camera_id = 0;
         for (auto & name : src_node_name)
         {
-            pipeline.set_input_data(name, data);
+            std::shared_ptr<ZJVIDEO::FrameData> data =  std::make_shared<ZJVIDEO::FrameData>();
+            data->frame_id = frame_id;
+            data->camera_id = camera_id;
+            std::shared_ptr<ZJVIDEO::FlowData> flowdata= std::make_shared<ZJVIDEO::FlowData>(data);
+            pipeline.set_input_data(name, flowdata);
+            camera_id++;
         }
+        // 延时10ms
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        pipeline.show_debug_info();
     }
 
     pipeline.stop();

@@ -21,10 +21,12 @@ enum BufferOverStrategy {
 };
 
 // 线程安全队列
+class FlowData;
+template <typename Dtype>
 class ThreadSaveQueue {
 
 public:
-    bool Push(const std::shared_ptr<BaseData> &data) 
+    bool Push(const Dtype & data) 
     {
         std::unique_lock<std::mutex> lock(m_mutex);
         if (m_list.size() > m_max_number) 
@@ -33,30 +35,28 @@ public:
             {
                 case ZJV_QUEUE_DROP_EARLY: 
                 {
-                    // 缓存队列满了，丢弃最早的帧，保证实时性，但不丢弃其他信息数据
-                    if (m_list.front()->get_data_type() == BaseDataType::ZJV_DATATYPE_FRAME) {
-                        m_list.pop_front();
-                        m_list.push_back(data);
-                        m_work_cond->notify_one();
-                        return false;  // 返回的false标识缓冲队列满
-                    }
+                    // 缓存队列满了，丢弃最早的数据
+                    m_list.pop_front();
+                    m_list.push_back(data);
+                    m_work_cond->notify_one();
+                    m_drop_count++;
                     break;
                 }
                 case ZJV_QUEUE_DROP_LATE: 
                 {
-                    if (m_list.front()->get_data_type() == BaseDataType::ZJV_DATATYPE_FRAME) {
-                        m_list.pop_back();
-                        m_list.push_back(data);
-                        m_work_cond->notify_one();
-                        return false;  // 丢弃的是最新的帧
-                    }
+                    m_list.pop_back();
+                    m_list.push_back(data);
+                    m_work_cond->notify_one();
+                    m_drop_count++;
                     break;
                 }
                 case ZJV_QUEUE_CLEAR: 
                 {
+                    m_drop_count += m_list.size();
                     m_list.clear();
                     m_list.push_back(data);
                     m_work_cond->notify_one();
+                    
                     return false;
                 }
                 case ZJV_QUEUE_BLOCK: 
@@ -77,7 +77,8 @@ public:
         return true;
     }
 
-    bool Pop(std::shared_ptr<BaseData> &data) {
+    bool Pop(Dtype &data) 
+    {
         std::unique_lock<std::mutex> lock(m_mutex);
         if (m_list.empty()) {
             return false;
@@ -90,12 +91,20 @@ public:
         return true;
     }
 
-    void push_front(const std::shared_ptr<BaseData> &data) {
+    void push_front(const Dtype &data) {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_list.push_front(data);
         m_work_cond->notify_one();
     }
-
+    bool front(Dtype &data)
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        if (m_list.empty()) {
+            return false;
+        }
+        data = m_list.front();
+        return true;
+    }
     void set_max_size(const int size) {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_max_number = size;
@@ -104,6 +113,10 @@ public:
     int size() {
         std::unique_lock<std::mutex> lock(m_mutex);
         return (int)m_list.size();
+    }
+    int get_drop_count() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        return m_drop_count;
     }
 
     void clear() {
@@ -123,12 +136,19 @@ public:
 
 private:
     std::mutex                                  m_mutex;
-    std::shared_ptr<std::condition_variable>    m_work_cond;  // 用于唤醒工作线程的条件变量
-    std::condition_variable                     m_self_cond;            // 用于唤醒自身的条件变量
-    std::list<std::shared_ptr<BaseData> >       m_list;          // 缓冲队列
-    int                                         m_max_number = 25;        // 默认最大缓冲帧数
-    BufferOverStrategy                          m_buffer_strategy = ZJV_QUEUE_DROP_EARLY;  // 缓冲队列满时的策略
+    std::shared_ptr<std::condition_variable>    m_work_cond;                // 用于唤醒工作线程的条件变量
+    std::condition_variable                     m_self_cond;                // 用于唤醒自身的条件变量
+    std::list<Dtype>  m_list;   // 缓冲队列
+    int                                         m_max_number = 25;          // 默认最大缓冲帧数
+    BufferOverStrategy                          m_buffer_strategy = ZJV_QUEUE_DROP_LATE;  // 缓冲队列满时的策略
+    int                                         m_drop_count = 0;
 }; // class ThreadSaveQueue
+
+// ThreadSaveQueue 实例化
+template class ThreadSaveQueue<std::shared_ptr<FlowData>>;
+//重命名
+typedef ThreadSaveQueue<std::shared_ptr<FlowData>> FlowQueue;
+
 
 } // namespace ZJVIDEO
 

@@ -25,7 +25,7 @@ add_subdirectory(src)
 # 头文件目录
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-add_executable(demo demo/test.cpp)
+add_executable(demo demo/main.cpp)
 
 # 添加链接库目录
 link_directories(${CMAKE_SOURCE_DIR}/libs)

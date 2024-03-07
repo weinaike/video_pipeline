@@ -7,44 +7,85 @@
             "node_type": "Base",
             "node_name": "Node1",
             "channels": false,
-            "cfg_file": ""
+            "cfg_file": "",
+            "input_datas":
+            [
+                
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "Frame"
+                }
+            ]            
         },
         {
             "node_type": "Base",
             "node_name": "Node2",
             "channels": true,
-            "cfg_file": ""
+            "cfg_file": "",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                }                
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "Detection"
+                },
+                {
+                    "meta_data_type": "Classification"
+                }
+            ]     
         },
         {
             "node_type": "Base",
             "node_name": "Node3",
             "channels": true,
-            "cfg_file": ""
+            "cfg_file": "",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                }
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "Classification"
+                }
+            ]    
         },
         {
             "node_type": "Base",
             "node_name": "Node4",
             "channels": false, 
-            "cfg_file": ""
+            "cfg_file": "",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                },
+                {
+                    "pre_node": "Node2",
+                    "meta_data_type": "Detection"
+                },
+                {
+                    "pre_node": "Node3",
+                    "meta_data_type": "Classification"
+                }
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "PipelineResult"
+                }
+            ]
         }
-    ],
-    "connections": [
-        {
-            "from_node": "Node1",
-            "to_node": "Node2"
-        },
-        {
-            "from_node": "Node1",
-            "to_node": "Node3"
-        },
-        {
-            "from_node": "Node2",
-            "to_node": "Node4"
-        },
-        {
-            "from_node": "Node3",
-            "to_node": "Node4"
-        }
-
     ]
 }
