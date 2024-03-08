@@ -23,6 +23,7 @@ enum StatusCode {
     ZJV_STATUS_NODE_CONFIG_ERROR = -11,  // 节点配置错误
     ZJV_STATUS_NODE_CONTROL_ERROR = -12,  // 节点控制错误
     ZJV_STATUS_QUEUE_EMPTY = -13,  // 节点数据错误
+    ZJV_STATUS_QUEUE_NOT_ENOUGH = -14,  // 节点数据错误
 
     
 };

@@ -12,7 +12,6 @@ namespace ZJVIDEO {
 Pipeline::Pipeline(std::string cfg_file) 
 {
     el::Loggers::getLogger(PIPE_LOG);
-
     parse_cfg_file(cfg_file);
     m_initialized = false;
     CLOG(INFO, PIPE_LOG) << "Pipeline created" ;
@@ -335,6 +334,7 @@ int Pipeline::init()
         // 创建队列
         std::shared_ptr<FlowQueue> queue = std::make_shared<FlowQueue>();
         queue->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_DROP_EARLY);
+        queue->setCond(m_out_cond);
         m_dstQueueList.insert(std::make_pair(m_node_map[node_id]->get_name(), queue));
         m_node_map[node_id]->connect_add_output(m_node_map[node_id]->get_name(), queue);
     }
@@ -459,7 +459,7 @@ int Pipeline::set_input_data(const std::string & tag, const std::shared_ptr<Flow
                 data->set_channel_id(id);
             }
             m_srcQueueList[tag]->Push(data);
-            CLOG(INFO, PIPE_LOG) << "set_input_data " << m_srcQueueList[tag]->size() ;
+            // CLOG(INFO, PIPE_LOG) << "set_input_data " << m_srcQueueList[tag]->size() ;
         }
         else
         {
@@ -516,8 +516,9 @@ int Pipeline::show_debug_info()
         str +="] ";
     }
     str += "| ";
-
-
+    CLOG(INFO, PIPE_LOG) << str ;
+    str = "";
+    
     for(const auto & buffer: m_connectQueue)
     {
         str += buffer.first;

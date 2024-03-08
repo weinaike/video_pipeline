@@ -74,6 +74,7 @@ protected:
     std::map<int, std::vector<std::pair<std::string, std::string>>> m_channels_connect_list;
 
     std::mutex                                                      m_mutex;
+    std::shared_ptr<std::condition_variable> m_out_cond = std::make_shared<std::condition_variable>();
     std::atomic<bool>                                               m_initialized{false};
 
 }; // class Pipeline

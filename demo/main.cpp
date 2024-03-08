@@ -3,10 +3,17 @@
 #include "pipeline/Pipeline.h"
 #include <chrono>
 #include <thread>
+#include <csignal>
+
+volatile std::sig_atomic_t flag = 0;
+void signalHandler(int signum) {
+    flag = 1;
+}
 
 
 int main()
 {  
+    signal(SIGINT, signalHandler);  
     std::cout<< "Hello, World!\n" ;
 
     std::string cfg_file = "../configure/pipeline_sample.json";
@@ -20,6 +27,7 @@ int main()
     
 
     std::vector<std::string> src_node_name = pipeline.get_src_node_name();
+    std::vector<std::string> dst_node_name = pipeline.get_dst_node_name();
     
     // 打印源节点数量
     std::cout<< "src_node_name.size(): " << src_node_name.size()  <<std::endl;
@@ -29,11 +37,8 @@ int main()
         std::cout<< "src_node_name: " << name <<std::endl;
     }
 
-    std::cout<< "Press 'q' to exit\n" ;
-
     int frame_id = 0;
-    // while (getchar() != 'q')
-    while(1)
+    while(!flag)
     {
         // std::cout<< frame_id<<std::endl;
         frame_id++;
@@ -50,6 +55,22 @@ int main()
         // 延时10ms
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         pipeline.show_debug_info();
+        for(auto & name :dst_node_name)
+        {
+            while (1)
+            {
+                std::shared_ptr<ZJVIDEO::FlowData> flowdata = nullptr;
+                pipeline.get_output_data(name, flowdata);
+                if (flowdata)
+                {
+                    std::cout<< "get_output_data: "<<flowdata->frame->camera_id<< " " << flowdata->frame->frame_id <<std::endl;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
     }
 
     pipeline.stop();

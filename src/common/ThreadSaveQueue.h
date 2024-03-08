@@ -10,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include "BaseData.h"
+#include <iostream>
 
 namespace ZJVIDEO {
 // 缓冲队列满时的策略
@@ -29,7 +30,7 @@ public:
     bool Push(const Dtype & data) 
     {
         std::unique_lock<std::mutex> lock(m_mutex);
-        if (m_list.size() > m_max_number) 
+        if (m_list.size() >= m_max_number) 
         {
             switch (m_buffer_strategy) 
             {
@@ -138,7 +139,7 @@ private:
     std::mutex                                  m_mutex;
     std::shared_ptr<std::condition_variable>    m_work_cond;                // 用于唤醒工作线程的条件变量
     std::condition_variable                     m_self_cond;                // 用于唤醒自身的条件变量
-    std::list<Dtype>  m_list;   // 缓冲队列
+    std::list<Dtype>                            m_list;                     // 缓冲队列
     int                                         m_max_number = 25;          // 默认最大缓冲帧数
     BufferOverStrategy                          m_buffer_strategy = ZJV_QUEUE_DROP_LATE;  // 缓冲队列满时的策略
     int                                         m_drop_count = 0;
