@@ -86,7 +86,7 @@ protected:
     std::string                         m_cfg_file;                 // 配置文件路径
     int                                 m_node_position_type;
 
-    std::deque<std::chrono::system_clock::time_point >                 m_dealed_smaple;               // 额外数据
+    std::deque<void* >                 m_dealed_smaple;               // 额外数据
 
 };
 

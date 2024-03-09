@@ -3,6 +3,8 @@
 
 namespace ZJVIDEO{
 
+#define BASENODE_LOG "BaseNode"
+
 BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
     m_nodeparam(param)
 {
@@ -288,7 +290,7 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                     bool repeat = false;
                     for(const auto & item : m_dealed_smaple)
                     {
-                        if(data->create_time == item)
+                        if(data.get() == item)
                         {
                             // std::cout<<m_nodeparam.m_node_name<<" repeat data " << data.get()<<std::endl;
                             repeat = true;
@@ -299,14 +301,14 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                     {
                         datas.push_back(data);
                         cnt++;
-                        if(m_dealed_smaple.size()>=32)
+                        if(m_dealed_smaple.size()>=64)
                         {
                             m_dealed_smaple.pop_front(); 
-                            m_dealed_smaple.push_back(data->create_time);                       
+                            m_dealed_smaple.push_back(data.get());                       
                         }
                         else
                         {
-                            m_dealed_smaple.push_back(data->create_time);
+                            m_dealed_smaple.push_back(data.get());
                         }
                     } 
 
@@ -420,7 +422,7 @@ int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
 
     for(const auto & data :datas)
     {
-        std::vector<std::pair<std::string, std::shared_ptr<const ExtraData> > > metas;
+        std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > metas;
 
         for (const auto & output_data : m_nodeparam.m_output_datas)
         {

@@ -13,6 +13,20 @@ void signalHandler(int signum) {
 
 int main()
 {  
+
+
+    auto time1 = std::chrono::system_clock::now();
+    auto time2 = std::chrono::system_clock::now();
+
+    if (time1 == time2) {
+        std::cout << "The times are the same.\n";
+    } else {
+        std::cout << "The times are different.\n";
+    }
+
+    // return 0;
+
+
     signal(SIGINT, signalHandler);  
     std::cout<< "Hello, World!\n" ;
 
@@ -54,7 +68,7 @@ int main()
         }
         // 延时10ms
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        pipeline.show_debug_info();
+        // pipeline.show_debug_info();
         for(auto & name :dst_node_name)
         {
             while (1)
@@ -63,7 +77,7 @@ int main()
                 pipeline.get_output_data(name, flowdata);
                 if (flowdata)
                 {
-                    std::cout<< "get_output_data: "<<flowdata->frame->camera_id<< " " << flowdata->frame->frame_id <<std::endl;
+                    std::cout<< "get_output_data: "<<flowdata->get_channel_id() <<std::endl;
                 }
                 else
                 {

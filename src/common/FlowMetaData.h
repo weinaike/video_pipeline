@@ -23,11 +23,9 @@ public:
         frame = data;
     }
     ~FlowData() override = default;
-
-    // 流转的帧不能被修改， 流转过程中通过FrameData的camera_id和Frame_id来标识唯一的帧
-    std::shared_ptr<const FrameData > frame; //帧数据
+     
      // 添加额外数据
-    inline int push_back(std::vector<std::pair<std::string, std::shared_ptr<const ExtraData> > > &datas )
+    inline int push_back(std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > &datas )
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -48,7 +46,7 @@ public:
         return ZJV_STATUS_OK;
     }
     // 获取额外数据
-    inline int get_extras(const std::vector< std::string > & tags, std::vector<std::shared_ptr<const ExtraData>>& data)
+    inline int get_extras(const std::vector< std::string > & tags, std::vector<std::shared_ptr<const BaseData>>& data)
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -81,8 +79,10 @@ public:
     }
 
 private:
+    // 流转过程中，create_time和指针地址是标识
+    std::shared_ptr<const FrameData > frame; //帧数据
     // 可以添加修改随帧数据
-    std::map<std::string, std::shared_ptr<const ExtraData> >  m_extras; // 额外数据
+    std::map<std::string, std::shared_ptr<const BaseData> >  m_extras; // 额外数据
     // 锁
     std::mutex                  m_mutex;
     int                         m_channel_id = -1 ;
