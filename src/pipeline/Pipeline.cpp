@@ -209,10 +209,12 @@ int Pipeline::expand_pipe()
             if (std::find(multi_names.begin(), multi_names.end(), input.first) == multi_names.end())
             {
                 std::string name = input.first;
+                std::string type = input.second;
                 input.first = join_string(name, 0);
                 for(int i = 1; i < m_channel_num; i++)
                 {
-                    node.m_input_node_datas.push_back({join_string(name, i), input.second});
+                    node.m_input_node_datas.push_back({join_string(name, i), type});
+                    //std::cout<<node.m_node_name<<" " <<join_string(name, i)<< " type "<<type<<std::endl;
                 }
             }
         }
@@ -272,22 +274,24 @@ int Pipeline::parse_cfg_file(std::string cfg_file)
 
 
     // ------------------打印信息------------------------------
+    CLOG(INFO, PIPE_LOG) << "****************** PIPELINE INFO ******************** " ;
     CLOG(INFO, PIPE_LOG) << "m_task_name: " << m_task_name ;
     CLOG(INFO, PIPE_LOG) << "m_expand_pipe: " << m_expand_pipe ;
     CLOG(INFO, PIPE_LOG) << "m_channel_num: " << m_channel_num ;
     CLOG(INFO, PIPE_LOG) << "m_nodeparams.size(): " << m_nodeparams.size() ;
     for (auto & node : m_nodeparams) 
     {
-        CLOG(INFO, PIPE_LOG) << "node.m_node_type: " << node.m_node_type ;
-        CLOG(INFO, PIPE_LOG) << "node.m_node_name: " << node.m_node_name ;
-        CLOG(INFO, PIPE_LOG) << "node.m_channels: " << node.m_channels ;
-        CLOG(INFO, PIPE_LOG) << "node.m_cfg_file: " << node.m_cfg_file  ;
-        CLOG(INFO, PIPE_LOG) << "node.m_channel_id: " << node.m_channel_id  ;
+        CLOG(INFO, PIPE_LOG) << "   node.m_node_type: " << node.m_node_type ;
+        CLOG(INFO, PIPE_LOG) << "   node.m_node_name: " << node.m_node_name ;
+        CLOG(INFO, PIPE_LOG) << "   node.m_channels: " << node.m_channels ;
+        CLOG(INFO, PIPE_LOG) << "   node.m_cfg_file: " << node.m_cfg_file  ;
+        CLOG(INFO, PIPE_LOG) << "   node.m_channel_id: " << node.m_channel_id  ;
+        CLOG(INFO, PIPE_LOG) << "   ----------------------------------";
     }
-    CLOG(INFO, PIPE_LOG) << "m_connect_list.size(): " << m_connect_list.size() ;
+    CLOG(INFO, PIPE_LOG) << "   m_connect_list.size(): " << m_connect_list.size() ;
     for (auto & item : m_connect_list) 
     {
-        CLOG(INFO, PIPE_LOG) << "m_connect_list: " << item.first << " " << item.second ;
+        CLOG(INFO, PIPE_LOG) << "       " << item.first << " ===> " << item.second ;
     }
     CLOG(INFO, PIPE_LOG) ;
 
@@ -312,7 +316,7 @@ int Pipeline::init()
         std::string next = connection.second;
         // 创建安全队列
         std::shared_ptr<FlowQueue> queue = std::make_shared<FlowQueue>();
-        m_connectQueue.insert({prior+"_"+next, queue});
+        m_connectQueue.insert({prior+"-"+next, queue});
 
         m_node_map[prior]->connect_add_output(m_node_map[next]->get_name(), queue);
         m_node_map[next]->connect_add_input(m_node_map[prior]->get_name(), queue);
@@ -339,22 +343,22 @@ int Pipeline::init()
         m_node_map[node_id]->connect_add_output(m_node_map[node_id]->get_name(), queue);
     }
     // m_connectQueue
-    CLOG(INFO, PIPE_LOG) << "m_connectQueue.size(): " << m_connectQueue.size() ;
+    CLOG(INFO, PIPE_LOG) << "m_connectQueue.size: " << m_connectQueue.size() ;
     for (auto & item : m_connectQueue) 
     {
-        CLOG(INFO, PIPE_LOG) << "m_connectQueue: " << item.first ;
+        CLOG(INFO, PIPE_LOG) << "   m_connectQueue: " << item.first ;
     }
 
     // m_dstQueueList， m_srcQueueList， 的数量及其ID或名称
     CLOG(INFO, PIPE_LOG) << "m_srcQueueList.size(): " << m_srcQueueList.size() ;
     for (auto & item : m_srcQueueList) 
     {
-        CLOG(INFO, PIPE_LOG) << "m_srcQueueList: " << item.first ;
+        CLOG(INFO, PIPE_LOG) << "   m_srcQueueList: " << item.first ;
     }
     CLOG(INFO, PIPE_LOG) << "m_dstQueueList.size(): " << m_dstQueueList.size() ;
     for (auto & item : m_dstQueueList) 
     {
-        CLOG(INFO, PIPE_LOG) << "m_dstQueueList: " << item.first ;
+        CLOG(INFO, PIPE_LOG) << "   m_dstQueueList: " << item.first ;
     }
 
     CLOG(INFO, PIPE_LOG) << "Pipeline initialized" ;

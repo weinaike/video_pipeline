@@ -28,6 +28,7 @@ BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
     }
 
     // 输出节点信息
+    CLOG(INFO, BASENODE_LOG) << "--------------" << m_nodeparam.m_node_name<<" create info--------------------";
     CLOG(INFO, BASENODE_LOG) << "node name: " << m_nodeparam.m_node_name;
     CLOG(INFO, BASENODE_LOG) << "node type: " << m_nodeparam.m_node_type;
     CLOG(INFO, BASENODE_LOG) << "node channels: " << m_nodeparam.m_channels;
@@ -36,12 +37,12 @@ BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
     CLOG(INFO, BASENODE_LOG) << "node output datas: " << m_nodeparam.m_output_datas.size();
     for (const auto & item : m_nodeparam.m_output_datas) 
     {
-        CLOG(INFO, BASENODE_LOG) << "output data: " << item;
+        CLOG(INFO, BASENODE_LOG) << "       output data: " << item;
     }
     CLOG(INFO, BASENODE_LOG) << "node input node datas: " << m_nodeparam.m_input_node_datas.size();
     for (const auto & item : m_nodeparam.m_input_node_datas) 
     {
-        CLOG(INFO, BASENODE_LOG) << "input node data: " << item.first << " " << item.second;
+        CLOG(INFO, BASENODE_LOG) << "       input node data: " << item.first << " " << item.second;
     }
     CLOG(INFO, BASENODE_LOG) << "node batch process: " << m_nodeparam.m_channels;
 
@@ -111,12 +112,12 @@ int BaseNode::start()
     std::unique_lock<std::mutex> lk(m_base_mutex);
     if (m_run) 
     {
-        CLOG(INFO, BASENODE_LOG)<<"该线程重复启动";
+        CLOG(INFO, BASENODE_LOG)<< m_nodeparam.m_node_name <<" thread is started already";
         return ZJV_STATUS_OK;
     }
     if(m_input_buffers.size() == 0 || m_output_buffers.size() == 0)
     {
-        CLOG(ERROR, BASENODE_LOG)<<"无输入或者输出队列";
+        CLOG(ERROR, BASENODE_LOG)<<m_nodeparam.m_node_name << " not set input or output queue";
         return ZJV_STATUS_ERROR;
     }
     else
@@ -126,12 +127,12 @@ int BaseNode::start()
         // 打印队列名称
         for(const auto & input :m_input_buffers)
         {
-            CLOG(INFO, BASENODE_LOG)<<"        input queue "<<input.first<<" ptr: "<<input.second.get();
+            CLOG(INFO, BASENODE_LOG)<<"        "<<input.first<<" ptr: "<<input.second.get();
         }
         CLOG(INFO, BASENODE_LOG) <<  m_nodeparam.m_node_name << " output queue size :" << m_output_buffers.size() ;
         for(const auto & output :m_output_buffers)
         {
-            CLOG(INFO, BASENODE_LOG)<<"        output queue "<<output.first<<" ptr: "<<output.second.get();
+            CLOG(INFO, BASENODE_LOG)<<"        "<<output.first<<" ptr: "<<output.second.get();
         }
     }
 
@@ -176,7 +177,7 @@ int BaseNode::stop()
 {
     if (!m_run) 
     {
-        CLOG(INFO, BASENODE_LOG)<< m_nodeparam.m_node_name << " tread exited already";
+        CLOG(INFO, BASENODE_LOG)<< m_nodeparam.m_node_name << " thread exited already";
         return ZJV_STATUS_OK;
     }
     
