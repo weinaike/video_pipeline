@@ -53,8 +53,8 @@ int main()
             camera_id++;
         }
         // 延时10ms
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        //pipeline.show_debug_info();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        pipeline.show_debug_info();
         for(auto & name :dst_node_name)
         {
             while (1)

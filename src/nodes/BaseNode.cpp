@@ -27,6 +27,7 @@ BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
         m_max_batch_size = 8;
     }
 
+
     // 输出节点信息
     CLOG(INFO, BASENODE_LOG) << "--------------" << m_nodeparam.m_node_name<<" create info--------------------";
     CLOG(INFO, BASENODE_LOG) << "node name: " << m_nodeparam.m_node_name;
@@ -258,9 +259,11 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
             {
                 if (buffer.second->size() > 0) 
                 {
+                    // earliest_queue = buffer.first;
                     std::shared_ptr<FlowData> data = nullptr;
                     buffer.second->front(data);
                     auto time = data->create_time;
+
                     if (time < earliest_time) 
                     {
                         earliest_time = time;
@@ -281,8 +284,33 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                 if(data->has_extras(m_input_data_names))
                 {
                     m_input_buffers[earliest_queue]->Pop(data);
-                    datas.push_back(data);
-                    cnt++;
+                    // data.get()已处理队列中
+                    bool repeat = false;
+                    for(const auto & item : m_dealed_smaple)
+                    {
+                        if(data->create_time == item)
+                        {
+                            // std::cout<<m_nodeparam.m_node_name<<" repeat data " << data.get()<<std::endl;
+                            repeat = true;
+                            continue;
+                        }
+                    }
+                    if(!repeat)
+                    {
+                        datas.push_back(data);
+                        cnt++;
+                        if(m_dealed_smaple.size()>=32)
+                        {
+                            m_dealed_smaple.pop_front(); 
+                            m_dealed_smaple.push_back(data->create_time);                       
+                        }
+                        else
+                        {
+                            m_dealed_smaple.push_back(data->create_time);
+                        }
+                    } 
+
+                    
                     for (const auto & buffer :m_input_buffers)
                     {
                         if(earliest_queue == buffer.first)
@@ -294,6 +322,7 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                         {                            
                             if (data.get() ==  temp.get())  // 指向同一对象
                             {
+                                // std::cout<<m_nodeparam.m_node_name<<" repeat data " << data.get()<<std::endl;
                                 buffer.second->Pop(temp);
                             }
                         }

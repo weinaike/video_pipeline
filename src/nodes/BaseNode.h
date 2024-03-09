@@ -1,6 +1,6 @@
 #ifndef ZJVIDEO_BASENODE_H
 #define ZJVIDEO_BASENODE_H
-
+#include <deque>
 #include <string>
 #include <memory>
 #include <vector>
@@ -85,6 +85,9 @@ protected:
     std::map<std::string, std::shared_ptr<FlowQueue>> m_output_buffers; //输出队列集合
     std::string                         m_cfg_file;                 // 配置文件路径
     int                                 m_node_position_type;
+
+    std::deque<std::chrono::system_clock::time_point >                 m_dealed_smaple;               // 额外数据
+
 };
 
 }
