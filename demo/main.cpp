@@ -11,6 +11,24 @@ void signalHandler(int signum) {
 }
 
 
+int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )> func, int camera_id)
+{
+    int cnt = 0;
+    // int camera_id = 0;
+    while (!flag)
+    {
+        std::shared_ptr<ZJVIDEO::FrameData>  frame= std::make_shared<ZJVIDEO::FrameData>();
+        frame->camera_id = camera_id;
+        frame->frame_id = cnt;
+        cnt++;
+        func(frame);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    
+    return 0;
+}
+
+
 int main()
 {  
 
@@ -40,51 +58,40 @@ int main()
     pipeline.start();
     
 
-    std::vector<std::string> src_node_name = pipeline.get_src_node_name();
-    std::vector<std::string> dst_node_name = pipeline.get_dst_node_name();
+    // std::vector<std::string> src_node_name = pipeline.get_src_node_name();
+    // std::vector<std::string> dst_node_name = pipeline.get_dst_node_name();
     
     // 打印源节点数量
-    std::cout<< "src_node_name.size(): " << src_node_name.size()  <<std::endl;
+    // std::cout<< "src_node_name.size(): " << src_node_name.size()  <<std::endl;
 
-    for (auto & name : src_node_name)
+
+    std::vector<std::thread > threads;
+    //
+    for(int i = 0; i < 2; i++)
     {
-        std::cout<< "src_node_name: " << name <<std::endl;
+        std::thread t1(input_worker, std::bind(&ZJVIDEO::Pipeline::set_input_data, &pipeline, std::placeholders::_1), i);
+        threads.emplace_back(std::move(t1));
     }
 
     int frame_id = 0;
     while(!flag)
     {
-        // std::cout<< frame_id<<std::endl;
-        frame_id++;
-        int camera_id = 0;
-        for (auto & name : src_node_name)
+        std::vector< std::shared_ptr<ZJVIDEO::EventData> >datas;
+        datas.clear();
+        pipeline.get_output_data(datas);
+        for(const auto & data :datas)
         {
-            std::shared_ptr<ZJVIDEO::FrameData> data =  std::make_shared<ZJVIDEO::FrameData>();
-            data->frame_id = frame_id;
-            data->camera_id = camera_id;
-            std::shared_ptr<ZJVIDEO::FlowData> flowdata= std::make_shared<ZJVIDEO::FlowData>(data);
-            pipeline.set_input_data(name, flowdata);
-            camera_id++;
+            std::cout<<  " camera_id: " << data->frame->camera_id << " frame_id: " << data->frame->frame_id << std::endl;
+        
         }
-        // 延时10ms
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         // pipeline.show_debug_info();
-        for(auto & name :dst_node_name)
-        {
-            while (1)
-            {
-                std::shared_ptr<ZJVIDEO::FlowData> flowdata = nullptr;
-                pipeline.get_output_data(name, flowdata);
-                if (flowdata)
-                {
-                    std::cout<< "get_output_data: "<<flowdata->get_channel_id() <<std::endl;
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
+
+    }
+
+    for(auto & t : threads)
+    {
+        if(t.joinable())   t.join();
     }
 
     pipeline.stop();

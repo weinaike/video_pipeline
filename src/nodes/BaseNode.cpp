@@ -12,22 +12,48 @@ BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
     el::Loggers::getLogger(BASENODE_LOG);
 
     m_batch_process = param.m_channels;
-    for (const auto & item : m_nodeparam.m_input_node_datas) 
-    {
-        if(item.second == "Frame")
-        {
-            continue;
-        }
-        std::string extra_nmae= item.first + "_" + item.second;
-        m_input_data_names.push_back(extra_nmae);
-    }
-
-
     // 支持的最大批处理数量设置，这个应该直接从节点信息中获取，临时固定赋值。
     if(m_batch_process)
     {
         m_max_batch_size = 8;
     }
+    if(m_batch_process)
+    {
+        for(const auto & item : m_nodeparam.m_input_node_datas)
+        {
+            int channel_id = parse_id(item.first);
+            if(m_input_data_names_batch.find(channel_id)==m_input_data_names_batch.end())
+            {
+                m_input_data_names_batch[channel_id] = std::vector<std::string>();
+                m_input_data_names_batch[channel_id].push_back(item.first + "." + item.second);        
+            }
+            else
+            {
+                // 通道id已经存在
+                m_input_data_names_batch[channel_id].push_back(item.first + "." + item.second);
+            }
+        }
+
+        for(const auto & item : m_input_data_names_batch[-1])
+        {
+            for(auto & a : m_input_data_names_batch)
+            {
+                if(a.first != -1)
+                {
+                    a.second.push_back(item);
+                }                
+            }
+        }       
+    }
+    else
+    {
+        for (const auto & item : m_nodeparam.m_input_node_datas) 
+        {
+            std::string extra_nmae= item.first + "." + item.second;
+            m_input_data_names.push_back(extra_nmae);
+        }
+    }
+
 
 
     // 输出节点信息
@@ -217,7 +243,7 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
     // 单输入队列
     if(m_input_buffers.size() == 1)
     {
-        // std::cout <<m_nodeparam.m_node_name << "单输入队列"<<std::endl;
+        // std::cout<<m_nodeparam.m_node_name << " single input queue"<<std::endl;
         for (const auto & buffer :m_input_buffers)
         {
             std::shared_ptr<FlowData> data;
@@ -240,6 +266,7 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
     }
     else // 多输入情况，先遍历队列，均摊负载
     {
+        // std::cout<<m_nodeparam.m_node_name << " multi input queue"<<std::endl;
         if(m_nodeparam.m_channels == false)
         {
             assert(m_max_batch_size == 1);
@@ -283,8 +310,19 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
             {   
                 std::shared_ptr<FlowData> data = nullptr;
                 m_input_buffers[earliest_queue]->front(data);
+                // data->debug();
+                // std::cout<<m_nodeparam.m_node_name <<  m_input_data_names.size()<<std::endl;
+                // for(const auto & a :m_input_data_names)
+                // {
+                //     std::cout << m_nodeparam.m_node_name <<  a <<std::endl;
+                // }
+                if(m_batch_process)
+                {
+                    m_input_data_names = m_input_data_names_batch[data->get_channel_id()];
+                }
                 if(data->has_extras(m_input_data_names))
                 {
+                    // std::cout<<m_nodeparam.m_node_name<<" data ready"<<std::endl;
                     m_input_buffers[earliest_queue]->Pop(data);
                     // data.get()已处理队列中
                     bool repeat = false;
@@ -332,12 +370,12 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                 }
                 else
                 {
+                    // std::cout<<m_nodeparam.m_node_name<<" data not ready"<<std::endl;
                     m_input_buffers[earliest_queue]->Pop(data);
                 }                
             }
         }
     }
-
 
     return ZJV_STATUS_OK;
 }
@@ -366,6 +404,8 @@ int BaseNode::send_output_data(const std::vector<std::shared_ptr<FlowData>> &dat
                 for (const auto & data : datas) 
                 {
                     item.second->Push(data);
+                    // std::cout<< m_nodeparam.m_node_name << " " << item.first<<std::endl;
+                    // data->debug();
                 }
             }
             else
@@ -376,6 +416,8 @@ int BaseNode::send_output_data(const std::vector<std::shared_ptr<FlowData>> &dat
                     if(id == data->get_channel_id())
                     {
                         item.second->Push(data);
+                        // std::cout<< m_nodeparam.m_node_name << " " << item.first<<std::endl;
+                        // data->debug();
                     }   
                 } 
             }
@@ -401,9 +443,10 @@ int BaseNode::worker()
 
         if (datas.size() == 0) 
         {
-            // std::cout<<m_nodeparam.m_node_name <<" worker wait for no data"<<std::endl;
+            // std::cout<<m_nodeparam.m_node_name <<" worker is wait "<<std::endl;
             std::unique_lock<std::mutex> lk(m_base_mutex);
             m_base_cond->wait(lk);
+            // std::cout<<m_nodeparam.m_node_name <<" worker wait is notified"<<std::endl;
             continue;
         }
         else
@@ -417,20 +460,162 @@ int BaseNode::worker()
     return ZJV_STATUS_OK;
 }
 
+int BaseNode::process_batch(const std::vector<std::vector<std::shared_ptr<const BaseData> >> & in_metas_batch, 
+                    std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch)
+{
+    // 根据需要批量处理
+    for(const auto & in_metas : in_metas_batch)
+    {
+        std::vector<std::shared_ptr<BaseData> > out_metas;
+        process_single(in_metas, out_metas);
+        out_metas_batch.push_back(out_metas);
+    }
+    return ZJV_STATUS_OK;
+}
+
+
+int BaseNode::process_single(const std::vector<std::shared_ptr<const BaseData> > & in_metas, 
+                    std::vector<std::shared_ptr<BaseData> > & out_metas)
+
+{
+    // 仅供调试使用， 每个示例都需要重写该代码， 根据输出类型明确构建输出数据
+    for (const auto & output_data : m_nodeparam.m_output_datas)
+    {
+        std::shared_ptr<ExtraData> data = std::make_shared<ExtraData>();
+        data->data_name = output_data;
+        out_metas.push_back(data);
+        // std::cout<<__LINE__<<output_data<<std::endl;
+    }
+    return ZJV_STATUS_OK;
+}
+
+
 int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
 {
-
-    for(const auto & data :datas)
+    // std::cout<<m_nodeparam.m_node_name << " process , input size: " << datas.size()<<std::endl;
+    if(m_batch_process)
     {
-        std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > metas;
-
-        for (const auto & output_data : m_nodeparam.m_output_datas)
+        std::vector<std::vector<std::shared_ptr<const BaseData> >> in_metas_batch;
+        for(const auto & data :datas)
         {
-            std::string name = m_nodeparam.m_node_name + "_"+ output_data;
-            std::shared_ptr<const ExtraData> meta = std::make_shared<ExtraData>();
-            metas.push_back({name, meta});
+            std::vector<std::string > tags;
+            int channel_id = data->get_channel_id();
+            tags = m_input_data_names_batch[channel_id];
+            std::vector<std::shared_ptr<const BaseData>> in_metas;
+            if((tags.size()>0) )
+            {
+                if(data->get_extras(tags, in_metas) == ZJV_STATUS_ERROR)
+                {
+                    // data->debug();
+                    std::cout<<m_nodeparam.m_node_name << " get_extras error"<<std::endl;
+                    assert(0);
+                }
+            }
+
+            in_metas_batch.push_back(in_metas);
         }
-        data->push_back(metas);
+
+        std::vector<std::vector<std::shared_ptr<BaseData>>> out_metas_batch;
+        
+        process_batch(in_metas_batch, out_metas_batch);
+
+
+        if(in_metas_batch.size() != out_metas_batch.size())
+        {
+            std::cout<< m_nodeparam.m_node_name << "in_metas_batch.size() " <<in_metas_batch.size() 
+                << " out_metas_batch.size() " <<out_metas_batch.size()<<std::endl;
+            assert(0);
+        }
+
+
+        for(int i = 0 ; i < datas.size(); i++)
+        {
+            const auto & out = out_metas_batch[i];
+            std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > result;
+            assert(out.size() == m_nodeparam.m_output_datas.size());
+
+            for (const auto & output_data : m_nodeparam.m_output_datas)
+            {
+                bool not_found = true;
+                for(const auto & out : out_metas_batch[i])
+                {
+                    if(out->data_name == output_data)
+                    {
+                        std::string name = m_nodeparam.m_node_name + "."+ output_data;
+                        result.push_back({name, out});
+                        // std::cout<<m_nodeparam.m_node_name<< name<<std::endl;
+                        not_found = false;
+                    }
+                }
+                if(not_found)
+                {
+                    CLOG(ERROR, BASENODE_LOG) << "output data ["<< output_data <<"] is not found in " << m_nodeparam.m_node_name ;
+                    return ZJV_STATUS_ERROR;
+                }
+            }
+
+            datas[i]->push_back(result);
+        }
+    }
+    else
+    {        
+        for(const auto & data :datas)
+        {            
+            std::vector<std::string > tags;
+            for (const auto & input_data : m_nodeparam.m_input_node_datas)
+            {
+                tags.push_back(input_data.first + "." + input_data.second);
+            }
+            std::vector<std::shared_ptr<const BaseData>> in_metas;
+            if(tags.size() > 0)
+            {
+                if(data->get_extras(tags, in_metas) == ZJV_STATUS_ERROR)
+                {
+                    assert(0);
+                }
+            }
+            else if(m_node_position_type == ZJV_NODE_POSITION_SRC) // 起始节点
+            {
+                in_metas.push_back(data->get_frame());
+            }
+            
+            std::vector<std::shared_ptr<BaseData> > out_metas;
+
+            process_single(in_metas, out_metas);    
+
+            if(out_metas.size() != m_nodeparam.m_output_datas.size())
+            {
+                std::cout<<m_nodeparam.m_node_name<<" out_metas.size() "<<out_metas.size()<<std::endl;
+                for(const auto & out :out_metas)
+                {
+                    std::cout<<out->data_name<<std::endl;
+                }
+                assert(0);
+            }
+
+            std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > result;
+            for (const auto & output_data : m_nodeparam.m_output_datas)
+            {
+                bool not_found = true;
+                for(const auto & out : out_metas)
+                {
+                    if(out->data_name == output_data)
+                    {
+                        std::string name = m_nodeparam.m_node_name + "."+ output_data;
+                        result.push_back({name, out});
+                        // std::cout<<name<<std::endl;
+                        not_found = false;
+                    }
+                }
+                if(not_found)
+                {
+                    CLOG(ERROR, BASENODE_LOG) << "output data ["<< output_data <<"] is not found in " << m_nodeparam.m_node_name ;
+                    return ZJV_STATUS_ERROR;
+                }
+            }
+            data->push_back(result);
+        }
+
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));

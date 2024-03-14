@@ -7,7 +7,7 @@
 #include "BaseData.h"
 #include <vector>
 #include <memory>
-
+#include "memory/SyncedMemory.h"
 namespace ZJVIDEO {
 
 enum FrameType {
@@ -38,9 +38,43 @@ enum ImageFormat{
 // 用于存储帧数据的类
 class FrameData : public BaseData {
 public:
-    explicit FrameData(): BaseData(ZJV_DATATYPE_FRAME) {}
+    explicit FrameData(): BaseData(ZJV_DATATYPE_FRAME) 
+    {
+        data_name = "Frame";
+        width = 0;
+        height = 0;
+        channel = 0;
+        depth = 0;
+        format = ZJV_IMAGEFORMAT_UNKNOWN;
+        fps = 0;
+        pts = 0;
+        camera_id = 0;
+        frame_id = 0;
+        frame_type = ZJV_FRAMETYPE_UNKNOWN;
+        data = std::make_shared<SyncedMemory>(0);
+    }
     // 析构函数
     ~FrameData() override = default;
+    // 拷贝构造函数
+    FrameData(const FrameData &other): BaseData(ZJV_DATATYPE_FRAME)
+    {
+        width = other.width;
+        height = other.height;
+        channel = other.channel;
+        depth = other.depth;
+        format = other.format;
+        fps = other.fps;
+        
+        pts = other.pts;
+        camera_id = other.camera_id;
+        frame_id = other.frame_id;
+        frame_type = other.frame_type;
+
+        // 深度拷贝内存
+        data = std::make_shared<SyncedMemory>(other.data.get());
+
+        data_name = other.data_name;
+    }
 
     int width;   // 图像宽度
     int height;  // 图像高度
@@ -49,11 +83,11 @@ public:
     int format;  // 图像格式 ImageFormat
     int fps;     // 帧率
 
-    void *data;  // 图像数据
-    int64_t pts; // 时间戳
-    int camera_id; // 相机ID
-    int64_t frame_id; // 帧号
-    int64_t frame_type; // 帧类型   FrameType
+    std::shared_ptr<SyncedMemory> data;  // 图像数据
+    int64_t pts;            // 时间戳
+    int camera_id;          // 相机ID
+    int64_t frame_id;       // 帧号
+    int64_t frame_type;     // 帧类型   FrameType
 };
 
 }  // namespace ZJVIDEO

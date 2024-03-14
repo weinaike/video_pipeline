@@ -41,6 +41,8 @@ int Pipeline::start()
 
 int Pipeline::stop() 
 {
+    std::unique_lock<std::mutex> lk(m_mutex);
+
     if(m_initialized)
     {
         for (auto & node : m_node_map) 
@@ -366,6 +368,11 @@ int Pipeline::init()
 
 
     m_initialized = true;
+
+
+    get_src_node_name();
+    get_dst_node_name();
+
     return ZJV_STATUS_OK;
 }
 
@@ -428,12 +435,12 @@ std::vector<std::string> Pipeline::getZeroOutDegreeNodes(const std::vector<std::
 // 获取源节点
 std::vector<std::string> Pipeline::get_src_node_name() 
 {
-    std::vector<std::string> src_node_name;
+    
     for (auto & item : m_srcQueueList) 
     {
-        src_node_name.push_back(item.first);
+        m_src_node_name.push_back(item.first);
     }
-    return src_node_name;
+    return m_src_node_name;
 }
 
 // 获取末尾节点
@@ -448,56 +455,91 @@ std::vector<std::string> Pipeline::get_dst_node_name()
 }
 
 // 给源节点添加数据
-int Pipeline::set_input_data(const std::string & tag, const std::shared_ptr<FlowData> & data) 
+int Pipeline::set_input_data(const std::shared_ptr<FrameData> & data) 
 {
-    if (m_srcQueueList.find(tag) != m_srcQueueList.end()) 
+    std::unique_lock<std::mutex> lk(m_mutex);
+    if(m_srcQueueList.size() == 1)
     {
-        
-        if(m_srcQueueList.size() > 1)
+        // 仅有单通道
+        std::shared_ptr<FlowData> flowdata = std::make_shared<FlowData>(data);
+
+        int channel_id = parse_id(m_src_node_name[0]);
+        flowdata->set_channel_id(channel_id);        
+        m_srcQueueList[m_src_node_name[0]]->Push(flowdata);
+    }
+    else
+    {
+        if(m_src_map.find(data->camera_id) != m_src_map.end())
         {
-            // 无法解析，采用默认管道编号（-1）
-            // 解析后，设置flowdata管道编号
-            int id = parse_id(tag);
-            if (id >= 0 ) 
-            {
-                data->set_channel_id(id);
-            }
-            m_srcQueueList[tag]->Push(data);
-            // CLOG(INFO, PIPE_LOG) << "set_input_data " << m_srcQueueList[tag]->size() ;
+            const auto & node_tag = m_src_map[data->camera_id];
+            std::shared_ptr<FlowData> flowdata = std::make_shared<FlowData>(data);
+
+            int channel_id = parse_id(node_tag);
+            flowdata->set_channel_id(channel_id);
+            m_srcQueueList[node_tag]->Push(flowdata);
         }
         else
         {
-            // 仅有单通道
-            m_srcQueueList[tag]->Push(data);
-        }
+            if(m_src_map.size() < m_src_node_name.size())
+            {
+                std::vector<std::string> used;
+                for(const auto & item : m_src_map)
+                {
+                    used.push_back(item.second);
+                }
 
-        return ZJV_STATUS_OK;
+                for(const auto & item : m_src_node_name)
+                {
+                    if(std::find(used.begin(), used.end(), item) == used.end())
+                    {
+                        m_src_map.insert({data->camera_id, item});
+                        std::shared_ptr<FlowData> flowdata = std::make_shared<FlowData>(data);
+
+                        int channel_id = parse_id(item);
+                        flowdata->set_channel_id(channel_id);
+                        m_srcQueueList[item]->Push(flowdata);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                CLOG(INFO, PIPE_LOG) <<" this frame camera_id is " << data->camera_id << 
+                    ",  input camera_ids is more the channels " << m_src_node_name.size() << " , please check the config file";
+                for(const auto & item : m_src_map)
+                {
+                    CLOG(INFO, PIPE_LOG) << "       camera_id ["<<item.first<<"] ---> " <<item.second;
+                }
+            }
+        }
     }
-    else
-    {
-        CLOG(INFO, PIPE_LOG) << "No such src node: " << tag ;
-        return ZJV_STATUS_ERROR;
-    }
+
+    return ZJV_STATUS_OK;
+
 }
 
 // 从末尾节点提取数据
-int Pipeline::get_output_data(const std::string & tag, std::shared_ptr<FlowData> & data) 
+int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData>> & data) 
 {
-    if (m_dstQueueList.find(tag) != m_dstQueueList.end()) 
+    for(const auto & item : m_dstQueueList)
     {
-        m_dstQueueList[tag]->Pop(data);
-        return ZJV_STATUS_OK;
+        std::shared_ptr<FlowData> flowdata = nullptr;
+        item.second->Pop(flowdata);
+        if(flowdata)
+        {
+            std::shared_ptr<EventData> eventdata = std::make_shared<EventData>();
+            eventdata->frame = flowdata->get_frame();
+            data.push_back(eventdata);
+        }
     }
-    else
-    {
-        CLOG(INFO, PIPE_LOG) << "No such dst node: " << tag ;
-        return ZJV_STATUS_ERROR;
-    }
+    // CLOG(INFO, PIPE_LOG) << "get_output_data " <<data.size();
+    return ZJV_STATUS_OK;
 }
 
 
 int Pipeline::show_debug_info()
 {
+    
     std::string str = "queue_size: ";
     for(const auto & buffer: m_srcQueueList)
     {

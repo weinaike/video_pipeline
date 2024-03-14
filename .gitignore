@@ -3,3 +3,4 @@ cmake_template-main
 .file-templates/
 .vscode/
 libs
+3rdparty/

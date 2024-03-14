@@ -1,16 +1,16 @@
 {
     "task_name": "ExampleTask",
     "expand_pipe": true,
-    "channel_num": 4,
+    "channel_num": 2,
     "nodes": [
         {
-            "node_type": "Base",
+            "node_type": "ImageSrc",
             "node_name": "Node1",
             "channels": false,
             "cfg_file": "",
             "input_datas":
             [
-                
+
             ],
             "output_datas":
             [

@@ -15,6 +15,10 @@
 #include "FrameData.h"
 #include "FlowMetaData.h"
 
+
+namespace ZJVIDEO {
+
+    
 // 通道重命名
 static std::string join_string(std::string str, int i)
 {
@@ -38,5 +42,5 @@ static int parse_id(std::string str)
     }
 }
 
-
+}
 #endif  // ZJVIDEO_BASEDATA_H

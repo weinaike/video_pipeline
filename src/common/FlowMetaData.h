@@ -12,6 +12,24 @@
 
 namespace ZJVIDEO {
 
+struct Rect
+{
+    int x;          //left
+    int y;          //top
+    int width;
+    int height;
+};
+
+struct DetectBox {
+    float       left        = -1;
+    float       top         = -1;
+    float       right       = -1;
+    float       bottom      = -1;
+    float       confidence  = -1;
+    int         class_label = -1;
+    int         track_id    = -1;
+};
+
 class FrameData;
 class ExtraData;
 // pipeline中流转的数据流
@@ -21,6 +39,7 @@ public:
     explicit FlowData(const std::shared_ptr<FrameData> &data ): BaseData(ZJV_DATATYPE_FLOW) 
     {
         frame = data;
+        data_name = "Flow";
     }
     ~FlowData() override = default;
      
@@ -77,6 +96,20 @@ public:
     {
         return m_channel_id;
     }
+    inline std::shared_ptr<const FrameData> get_frame()
+    {
+        return frame;
+    }
+
+    inline void debug()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        std::cout<<"------------flow data-----------"<<m_extras.size()<<std::endl;
+        for(const auto & extra:m_extras)
+        {
+            std::cout<<"------------flow data-----------"<<extra.first<<std::endl;
+        }
+    }
 
 private:
     // 流转过程中，create_time和指针地址是标识
@@ -93,10 +126,46 @@ private:
 class ExtraData : public BaseData 
 {
 public:
-    explicit ExtraData(): BaseData(ZJV_DATATYPE_EXTRA) {}
+    explicit ExtraData(): BaseData(ZJV_DATATYPE_EXTRA) {
+        data_name = "Extra";
+    }
     ~ExtraData() override = default;
 
 };
+
+class EventData: public BaseData 
+{
+public:
+    explicit EventData(): BaseData(ZJV_DATATYPE_EVENT) {
+        data_name = "Event";
+    }
+    ~EventData() override = default;
+    std::shared_ptr<const FrameData > frame; //帧数据
+};
+
+
+class BlobData: public BaseData 
+{
+public:
+    explicit BlobData(): BaseData(ZJV_DATATYPE_EVENT) {
+        data_name = "Blob";
+    }
+    ~BlobData() override = default;
+};
+
+
+
+class DetectResultData: public BaseData 
+{
+public:
+    explicit DetectResultData(): BaseData(ZJV_DATATYPE_EVENT) {
+        data_name = "DetectResult";
+    }
+    ~DetectResultData() override = default;
+    std::vector<DetectBox> detect_boxes;
+};
+
+
 
 
 }  // namespace ZJVIDEO

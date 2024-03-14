@@ -103,7 +103,7 @@ public:
     NodeRegisterer(const std::string& type, 
         std::shared_ptr<AbstractNode > (*creator)(const NodeParam&)) 
     {
-        std::cout << "Registering layer type: " << type << std::endl;
+        std::cout << "Registering node type: " << type << std::endl;
         NodeRegister::AddCreator(type, creator);
     }
 

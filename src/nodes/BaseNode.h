@@ -20,8 +20,6 @@ namespace ZJVIDEO {
 // 4. worker中包含核心处理流程， 保护获取数据， 处理数据，发送数据等
 // 5. 结束线程
 
-#define BASENODE_LOG "BaseNode"
-
 enum NODE_POSITION_TYPE {
     ZJV_NODE_POSITION_UNKNOWN   = 0,
     ZJV_NODE_POSITION_SRC,
@@ -60,18 +58,28 @@ protected:
     virtual int parse_configure(std::string cfg_file); 
     //根据配置文件， 初始化对象,输入输出队列
     virtual int init(); 
+
+            
+    virtual int process_batch( const std::vector<std::vector<std::shared_ptr<const BaseData> >> & in_metas_batch, 
+                                std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch);
+           
+
+    virtual int process_single(const  std::vector<std::shared_ptr<const BaseData> > & in_metas, 
+                                std::vector<std::shared_ptr<BaseData> > & out_metas);
+
+
+
     //实际主处理, 不能更改指针指向的对象， 但可以修改添加对象属性
-    virtual int process(const std::vector<std::shared_ptr<FlowData>> & datas); 
+    int process(const std::vector<std::shared_ptr<FlowData>> & datas); 
 
     int get_input_data(std::vector<std::shared_ptr<FlowData>> &data);
     int send_output_data(const std::vector<std::shared_ptr<FlowData>> &data);
 
 protected:
-    std::string                         m_log_name = "BaseNode";
-
     NodeParam                           m_nodeparam;                // 节点参数
     bool                                m_batch_process = false;    // 是否需要批处理
     std::vector<std::string>            m_input_data_names;         // 所需的输入数据
+    std::map<int, std::vector<std::string>> m_input_data_names_batch;     //  多通道输入数据
 
     std::thread                         m_worker;                   // 运行进程
     bool                                m_run = false;              // 进程状态
@@ -86,7 +94,7 @@ protected:
     std::string                         m_cfg_file;                 // 配置文件路径
     int                                 m_node_position_type;
 
-    std::deque<void* >                 m_dealed_smaple;               // 额外数据
+    std::deque<void* >                 m_dealed_smaple;               // 历史处理样本
 
 };
 

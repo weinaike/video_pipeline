@@ -1,6 +1,8 @@
 
 #ifndef _ZJ_VIDEO_PIPELINE_H
 #define _ZJ_VIDEO_PIPELINE_H
+
+// #define ELPP_EXPERIMENTAL_ASYNC
 #include "../logger/easylogging++.h"
 
 INITIALIZE_EASYLOGGINGPP
@@ -33,11 +35,9 @@ public:
 
 
     // 给源节点添加数据
-    std::vector<std::string> get_src_node_name();
-    std::vector<std::string> get_dst_node_name();
-    int set_input_data(const std::string & tag, const std::shared_ptr<FlowData> & data);
+    int set_input_data(const std::shared_ptr<FrameData> & data);
     // 从末尾节点提取数据
-    int get_output_data(const std::string & tag, std::shared_ptr<FlowData> & );
+    int get_output_data(std::vector<std::shared_ptr<EventData>> & );
 
     int show_debug_info();
 
@@ -49,10 +49,10 @@ protected:
     std::vector<std::string> getZeroOutDegreeNodes(const std::vector<std::pair<std::string ,std::string >>& connect_list);
 
     int expand_pipe();
+    std::vector<std::string> get_src_node_name();
+    std::vector<std::string> get_dst_node_name();
 
 protected:
-
-    const std::string                                               m_log_name = "Pipeline";
     // 解析配置文件，存储
     std::string                                                     m_task_name;
     std::vector<NodeParam>                                          m_nodeparams;
@@ -64,6 +64,10 @@ protected:
 
     std::map<std::string, std::shared_ptr<FlowQueue>>               m_srcQueueList ;//每个连接的队列
     std::map<std::string, std::shared_ptr<FlowQueue>>               m_dstQueueList ;//每个连接的队列
+    std::map<int, std::string>                                      m_src_map ;//
+    std::map<int, std::string>                                      m_dst_map ;//
+    std::vector<std::string>                                        m_src_node_name;
+    std::vector<std::string>                                        m_dst_node_name;
 
     bool                                                            m_expand_pipe = false;
     int                                                             m_channel_num = 1;

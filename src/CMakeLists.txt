@@ -17,7 +17,7 @@ endforeach(f)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/libs)
 
 # # 生成zj_video_pipeline库
-# add_library(logger SHARED  ${CMAKE_SOURCE_DIR}/src/logger/easylogging++.cc)
+# add_library(logger  ${CMAKE_SOURCE_DIR}/src/logger/easylogging++.cc)
 
 add_library(zj_pipe SHARED ${SRC_LIST})
 
