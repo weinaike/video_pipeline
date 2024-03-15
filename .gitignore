@@ -4,3 +4,5 @@ cmake_template-main
 .vscode/
 libs
 3rdparty/
+models/
+data

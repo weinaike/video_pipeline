@@ -38,6 +38,7 @@ public:
     int set_input_data(const std::shared_ptr<FrameData> & data);
     // 从末尾节点提取数据
     int get_output_data(std::vector<std::shared_ptr<EventData>> & );
+    int get_output_data(std::vector<std::shared_ptr<const BaseData>> & data) ;
 
     int show_debug_info();
 

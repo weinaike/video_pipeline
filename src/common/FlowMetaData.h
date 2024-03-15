@@ -80,6 +80,18 @@ public:
         }
         return ZJV_STATUS_OK;
     }
+    inline int get_all_extras(std::vector<std::shared_ptr<const BaseData>>& data)
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        for(const auto & m_extra :m_extras)
+        {
+            auto it = m_extra.second;
+            data.push_back(std::ref(it)); // Pass the vector by reference
+        }
+        return ZJV_STATUS_OK;
+    }
+
     // 判断额外数据是否存在
     inline bool has_extras(const std::vector<std::string> & tags)
     {   
@@ -144,17 +156,6 @@ public:
 };
 
 
-class BlobData: public BaseData 
-{
-public:
-    explicit BlobData(): BaseData(ZJV_DATATYPE_EVENT) {
-        data_name = "Blob";
-    }
-    ~BlobData() override = default;
-};
-
-
-
 class DetectResultData: public BaseData 
 {
 public:
@@ -163,6 +164,7 @@ public:
     }
     ~DetectResultData() override = default;
     std::vector<DetectBox> detect_boxes;
+    std::vector<int> image_id;
 };
 
 

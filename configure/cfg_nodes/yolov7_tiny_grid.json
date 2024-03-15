@@ -2,25 +2,26 @@
     "model": 
     {
         "version": "1.0",
-        "model_name": "yolov3",
+        "model_name": "yolov7_tiny_grid",
         "encrypt": false,
         "num_thread" : 4,
         "device" : "CPU",
-        "model_file": "/path/to/model/file",
-        "weight_file": "/path/to/weight/file",
+        "model_file": "../models/yolov7/yolov7-tiny-grid.onnx",
+        "weight_file": "../models/yolov7/yolov7-tiny-grid.onnx",        
         "backend": "ONNX",
         "dynamic_batch": false
     },
     "preprocess": 
     {
-        "shape":[416,416],
+        "shape":[640,640],
         "mean": [0, 0, 0],
-        "std": [1, 1, 1],
+        "std": [255.0, 255.0, 255.0],
         "resize": "letterbox",
         "letterbox_color": [114, 114, 114],
         "channel_first": true,
         "format": "RGB",
         "dtype": "FLOAT32",
+        "inputformat":"NCHW",
         "normalize": false,
         "scale": 1.0,
         "swapRB": false,
@@ -30,9 +31,9 @@
 
     "infer": 
     {
-        "input_names": ["input.1", "input.2"],
-        "input_dims": [[1,3,320,320],[1,3,320,320]],
-        "output_names": ["output.1"]
+        "input_names": ["images"],
+        "input_dims": [[1,3,640,640]],
+        "output_names": ["output"]
     },
 
     "postprocess": 

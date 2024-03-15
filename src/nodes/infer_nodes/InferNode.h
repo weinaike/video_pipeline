@@ -2,8 +2,8 @@
 #define ZJVIDEO_INFERNODE_H
 
 #include "../BaseNode.h"
-#include "backend/EngineFactory.h"
-
+#include "../backend/EngineFactory.h"
+#include "../common/Blob.h"
 
 namespace ZJVIDEO {
 
@@ -13,6 +13,8 @@ struct FrameROI
     std::shared_ptr<const FrameData> frame;
     Rect roi;                              // 原图坐标系
 };
+
+
 
 class InferNode : public BaseNode {
 
@@ -39,19 +41,19 @@ protected:
     // the 2nd step, has a default implementation.
     // preprocess data, such as normalization, mean substract. 
     // load to engine's inputs
-    virtual int preprocess(const std::vector<FrameROI> &frame_rois, std::vector<std::shared_ptr<BlobData>> inputs); 
+    virtual int preprocess(const std::vector<FrameROI> &frame_rois, std::vector<FBlob> &inputs); 
 
     // the 3rd step, has a default implementation.
     // infer and retrive raw outputs.
-    virtual int infer(std::vector<std::shared_ptr<BlobData>> inputs, std::vector<std::shared_ptr<BlobData>> outputs); 
+    virtual int infer(std::vector<FBlob> &inputs, std::vector<FBlob> &outputs); 
     
     // the 4th step, MUST implement in specific derived class.
     // postprocess on raw outputs and create/update something back to frame meta again.
-    virtual int postprocess(std::vector<std::shared_ptr<BlobData>> outputs,
+    virtual int postprocess(const std::vector<FBlob> & outputs,
                     std::vector<std::shared_ptr<BaseData>>& frame_roi_results);
 
-    virtual int summary(const std::vector<std::shared_ptr<BaseData>>& frame_roi_results, 
-                    std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch);
+    virtual int summary(const std::vector<FrameROI> &frame_rois, const std::vector<std::shared_ptr<BaseData>>& frame_roi_results,
+                        std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch);
 
 
 protected:

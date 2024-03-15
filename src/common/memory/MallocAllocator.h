@@ -4,7 +4,8 @@
 #include <exception>
 #include "BaseAllocator.h"
 #include <memory>
-
+#include <cstring>
+#include <cstdlib>
 
 namespace	ZJVIDEO {
 

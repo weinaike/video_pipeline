@@ -1,0 +1,42 @@
+{
+    "task_name": "InferExampleTask",
+    "expand_pipe": true,
+    "channel_num": 1,
+    "nodes": [
+        {
+            "node_type": "ImageSrc",
+            "node_name": "Node1",
+            "channels": false,
+            "cfg_file": "",
+            "input_datas":
+            [
+
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "Frame"
+                }
+            ]            
+        },
+        {
+            "node_type": "Infer",
+            "node_name": "Node2",
+            "channels": true,
+            "cfg_file": "../configure/cfg_nodes/yolov7_tiny_grid.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                }                
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "DetectResult"
+                }
+            ]     
+        }
+    ]
+}

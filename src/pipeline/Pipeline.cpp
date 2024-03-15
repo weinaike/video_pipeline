@@ -536,6 +536,21 @@ int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData>> & data)
     return ZJV_STATUS_OK;
 }
 
+int Pipeline::get_output_data(std::vector<std::shared_ptr<const BaseData>> & data) 
+{
+    for(const auto & item : m_dstQueueList)
+    {
+        std::shared_ptr<FlowData> flowdata = nullptr;
+        item.second->Pop(flowdata);
+        if(flowdata)
+        {
+            flowdata->get_all_extras(data);
+            break;        
+        }
+    }
+    // CLOG(INFO, PIPE_LOG) << "get_output_data " <<data.size();
+    return ZJV_STATUS_OK;
+}
 
 int Pipeline::show_debug_info()
 {

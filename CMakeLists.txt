@@ -3,6 +3,7 @@ project(VideoPipeline)
 
 set(CMAKE_CXX_STANDARD 11)
 find_package(Threads REQUIRED)
+find_package(X11 REQUIRED)
 # OPTION(ENABLE_CUDA "使用CUDA,TensorRT" OFF)
 # OPTION(ENABLE_TENSORRT "使用TensorRT" OFF)
 # OPTION(ENABLE_HWCODEC "使用硬件编解码能力" OFF)
@@ -24,11 +25,14 @@ find_package(Threads REQUIRED)
 add_subdirectory(src)
 # 头文件目录
 include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
 add_executable(demo demo/main.cpp)
 
 # 添加链接库目录
 link_directories(${CMAKE_SOURCE_DIR}/libs)
-target_link_libraries(demo zj_pipe pthread)
+# link_directories(/home/wnk/code/software/onnxruntime-linux-x64-1.17.1/lib)
+# target_link_libraries(demo onnxruntime)
+target_link_libraries(demo zj_pipe ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread ${X11_LIBRARIES})
 
 

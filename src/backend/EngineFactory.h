@@ -118,7 +118,7 @@ public:
     {                                                                                       \
         return std::shared_ptr<AbstractEngine>(new type##Engine(param));                    \
     }                                                                                       \
-    REGISTER_ENGINE_CREATOR(type, Creator_##type##Node)
+    REGISTER_ENGINE_CREATOR(type, Creator_##type##Engine)
 
 }  // namespace ZJVIDEO
 

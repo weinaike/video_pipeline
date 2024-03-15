@@ -1,7 +1,7 @@
 #include "ONNXEngine.h"
 #include <numeric>
 #include <assert.h>
-#include "logger/easylogging++.h"
+#include "../logger/easylogging++.h"
 
 namespace ZJVIDEO{
 
@@ -80,6 +80,7 @@ int ONNXEngine::forward(const void *frame, int frame_width, int frame_height, in
         ::memcpy(outputs[index].data(), ort_output.GetTensorData<float>(), sizeof(float)*output_len);
 
     }
+    return ZJV_STATUS_OK;
 }
 
 int ONNXEngine::init(const EngineParameter &param)
@@ -185,7 +186,7 @@ int ONNXEngine::forward(const std::vector<void*> &input, const std::vector<std::
         ::memcpy(outputs[index].data(), ort_output.GetTensorData<float>(), sizeof(float)*output_len);
 
     }
-
+    return ZJV_STATUS_OK;
 }
 
 

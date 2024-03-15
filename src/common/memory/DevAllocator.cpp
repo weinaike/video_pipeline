@@ -28,6 +28,21 @@ void DevAllocator::operator()(void* p) {
 }
 
 void DevAllocator::Copy(void* dst, void* src, const size_t count) {
+	cudaError_t error = cudaMemcpy(dst, src, count, cudaMemcpyDeviceToDevice);
+	if (error != cudaSuccess) {
+		fprintf(stderr, "Memory copy error: %s\n", cudaGetErrorString(error));
+	}
+}
+
+void DevAllocator::CopyDevToHost(void* dst, void* src, const size_t count)
+{
+	cudaError_t error = cudaMemcpy(dst, src, count, cudaMemcpyDeviceToHost);
+	if (error != cudaSuccess) {
+		fprintf(stderr, "Memory copy error: %s\n", cudaGetErrorString(error));
+	}
+}
+void DevAllocator::CopyHostToDev(void* dst, void* src, const size_t count)
+{
 	cudaError_t error = cudaMemcpy(dst, src, count, cudaMemcpyHostToDevice);
 	if (error != cudaSuccess) {
 		fprintf(stderr, "Memory copy error: %s\n", cudaGetErrorString(error));
@@ -37,6 +52,7 @@ void DevAllocator::Copy(void* dst, void* src, const size_t count) {
 #else
 
 void* DevAllocator::allocate(size_t bytesCount) {
+	return NULL;
 }
 
 void DevAllocator::deallocate(void* p) {
@@ -46,6 +62,15 @@ void DevAllocator::operator()(void* p) {
 }
 
 void DevAllocator::Copy(void* dst, void* src, const size_t count) {
+}
+
+void DevAllocator::CopyDevToHost(void* dst, void* src, const size_t count)
+{
+
+}
+void DevAllocator::CopyHostToDev(void* dst, void* src, const size_t count)
+{
+
 }
 
 #endif

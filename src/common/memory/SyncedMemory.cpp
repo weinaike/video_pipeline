@@ -4,9 +4,9 @@
 namespace ZJVIDEO
 {
 
-SyncedMemory::SyncedMemory(size_t size, void *ptr, SyncedHead head = HEAD_AT_CPU)        
+SyncedMemory::SyncedMemory(size_t size, void *ptr, SyncedHead head = ZJV_SYNCEHEAD_HEAD_AT_CPU)        
 {
-    if(head == HEAD_AT_CPU)
+    if(head == ZJV_SYNCEHEAD_HEAD_AT_CPU)
     {
         cpu_ptr_ = ptr;
         own_cpu_data_ = true;
@@ -15,7 +15,7 @@ SyncedMemory::SyncedMemory(size_t size, void *ptr, SyncedHead head = HEAD_AT_CPU
         head_ = head;
         size_ = size;
     }
-    else if(head == HEAD_AT_GPU)
+    else if(head == ZJV_SYNCEHEAD_HEAD_AT_GPU)
     {
         cpu_ptr_ = NULL;
         own_cpu_data_ = false;
@@ -31,10 +31,21 @@ SyncedMemory::SyncedMemory(size_t size, void *ptr, SyncedHead head = HEAD_AT_CPU
     }
 }
 
-SyncedMemory::SyncedMemory(size_t size)
-    : cpu_ptr_(NULL), gpu_ptr_(NULL), size_(size), own_cpu_data_(false),  own_gpu_data_(false),head_(UNINITIALIZED)
+SyncedMemory::SyncedMemory()
+    : cpu_ptr_(NULL), gpu_ptr_(NULL), size_(0), own_cpu_data_(false),  own_gpu_data_(false),head_(ZJV_SYNCEHEAD_UNINITIALIZED)
 {
 
+}
+
+
+SyncedMemory::SyncedMemory(size_t size)
+{
+    cpu_ptr_ = malloc_allocator_.allocate(size);
+    own_cpu_data_ = true;
+    gpu_ptr_ = NULL;
+    own_gpu_data_ = false;
+    head_ = ZJV_SYNCEHEAD_HEAD_AT_CPU;
+    size_ = size;
 }
 
 SyncedMemory::SyncedMemory(size_t size, void *ptr, void* gpu_ptr)        
@@ -45,7 +56,7 @@ SyncedMemory::SyncedMemory(size_t size, void *ptr, void* gpu_ptr)
     own_cpu_data_ = true;
     gpu_ptr_ = gpu_ptr;
     own_gpu_data_ = true;
-    head_ = SYNCED;
+    head_ = ZJV_SYNCEHEAD_SYNCED;
     size_ = size;
 }
 
@@ -120,9 +131,9 @@ inline void SyncedMemory::to_gpu()
 
 const void* SyncedMemory::cpu_data()
 {
-    if(head_ == UNINITIALIZED)
+    if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return (const void *)cpu_ptr_;
+        return (const void *)NULL;
     }
     else
     {
@@ -135,9 +146,9 @@ const void* SyncedMemory::cpu_data()
 const void* SyncedMemory::gpu_data()
 {
 
-    if(head_ == UNINITIALIZED)
+    if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return (const void *)gpu_ptr_;
+        return (const void *)NULL;
     }
     else
     {
@@ -148,9 +159,9 @@ const void* SyncedMemory::gpu_data()
 
 void* SyncedMemory::mutable_cpu_data()
 {
-    if(head_ == UNINITIALIZED)
+    if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return cpu_ptr_;
+        return NULL;
     }
     else
     {
@@ -161,9 +172,9 @@ void* SyncedMemory::mutable_cpu_data()
 
 void* SyncedMemory::mutable_gpu_data()
 {
-    if(head_ == UNINITIALIZED)
+    if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return gpu_ptr_;
+        return NULL;
     }
     else
     {

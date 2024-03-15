@@ -4,6 +4,7 @@
 #include <chrono>
 #include <thread>
 #include <csignal>
+#include "CImg/CImg.h"
 
 volatile std::sig_atomic_t flag = 0;
 void signalHandler(int signum) {
@@ -14,12 +15,22 @@ void signalHandler(int signum) {
 int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )> func, int camera_id)
 {
     int cnt = 0;
+    cimg_library::CImg<unsigned char> img("../data/test.bmp");
     // int camera_id = 0;
     while (!flag)
     {
-        std::shared_ptr<ZJVIDEO::FrameData>  frame= std::make_shared<ZJVIDEO::FrameData>();
+        std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>();
+
+        frame->width = img.width();
+        frame->height = img.height();
+        frame->channel = img.spectrum();
+        frame->depth = 8;
+        frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_BGR24;
+        frame->fps = 25;      
         frame->camera_id = camera_id;
         frame->frame_id = cnt;
+        frame->data.reset(new ZJVIDEO::SyncedMemory(img.size(),img.data(), ZJVIDEO::ZJV_SYNCEHEAD_HEAD_AT_CPU));
+
         cnt++;
         func(frame);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -48,7 +59,7 @@ int main()
     signal(SIGINT, signalHandler);  
     std::cout<< "Hello, World!\n" ;
 
-    std::string cfg_file = "../configure/pipeline_sample.json";
+    std::string cfg_file = "../configure/pipeline_sample_infer.json";
 
     ZJVIDEO::Pipeline pipeline(cfg_file);
 

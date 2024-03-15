@@ -51,7 +51,7 @@ public:
         camera_id = 0;
         frame_id = 0;
         frame_type = ZJV_FRAMETYPE_UNKNOWN;
-        data = std::make_shared<SyncedMemory>(0);
+        data = std::make_shared<SyncedMemory>();
     }
     // 析构函数
     ~FrameData() override = default;
@@ -71,7 +71,7 @@ public:
         frame_type = other.frame_type;
 
         // 深度拷贝内存
-        data = std::make_shared<SyncedMemory>(other.data.get());
+        data = std::make_shared<SyncedMemory>(*(other.data.get()));
 
         data_name = other.data_name;
     }
