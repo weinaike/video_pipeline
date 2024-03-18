@@ -66,7 +66,8 @@ protected:
     // postprocess on raw outputs and create/update something back to frame meta again.
     virtual int postprocess(const std::vector<FBlob> & outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois);
 
-    virtual int summary(std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch);
+    virtual int summary(const std::vector<std::shared_ptr<FrameROI>>  &frame_rois, 
+                std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch);
 
 
 protected:

@@ -141,16 +141,8 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
         infer(inputs, outputs);
         postprocess(outputs, batch_frame_rois);
     }
-    for(int i = 0; i < frame_rois.size(); i++)
-    {
-        int img_id = frame_rois[i]->input_vector_id;
-        for(auto & frame_roi_result : frame_rois[i]->result)
-        {   
-            out_metas_batch[img_id].push_back(frame_roi_result);
-        }
-    }
 
-    summary(out_metas_batch);
+    summary(frame_rois, out_metas_batch);
     return ZJV_STATUS_OK;
 }
 
@@ -413,7 +405,6 @@ int InferNode::postprocess(const std::vector<FBlob> & outputs, std::vector<std::
 
         for(int j = 0; j < bs; j++)
         {
-
             std::shared_ptr<DetectResultData> detect_result_data = std::make_shared<DetectResultData>();
             detect_result_data->data_name = "DetectResult";
             detect_result_data->detect_boxes.clear();
@@ -425,7 +416,7 @@ int InferNode::postprocess(const std::vector<FBlob> & outputs, std::vector<std::
                 
                 int max_index = -1;
 
-                float max_obj_conf = std::numeric_limits<float>::lowest();
+                float max_obj_conf = 0.0;
                 for (int t = 0; t < nc; t++) {
                     auto obj_conf = output_data[j*num*dim + k*dim + 5 + t];;
                     if (obj_conf >= max_obj_conf) {
@@ -459,7 +450,6 @@ int InferNode::postprocess(const std::vector<FBlob> & outputs, std::vector<std::
 
             Rect roi = frame_roi_results[j]->roi;
 
-
             float scalex  = frame_roi_results[j]->scale_x;
             float scaley  = frame_roi_results[j]->scale_y;
             int padx = frame_roi_results[j]->padx;
@@ -467,13 +457,11 @@ int InferNode::postprocess(const std::vector<FBlob> & outputs, std::vector<std::
 
             for(int k = 0; k < detect_result_data->detect_boxes.size(); k++)
             {
-                
                 detect_result_data->detect_boxes[k].x1 = detect_result_data->detect_boxes[k].x1 / scalex + roi.x - padx / scalex;
                 detect_result_data->detect_boxes[k].y1 = detect_result_data->detect_boxes[k].y1 / scaley + roi.y - pady / scaley;
                 detect_result_data->detect_boxes[k].x2 = detect_result_data->detect_boxes[k].x2 / scalex + roi.x - padx / scalex;
                 detect_result_data->detect_boxes[k].y2 = detect_result_data->detect_boxes[k].y2 / scaley + roi.y - pady / scaley;
-
-                CLOG(INFO, INFER_LOG) << "detect_boxes: " << detect_result_data->detect_boxes[k].x1 << " " << detect_result_data->detect_boxes[k].y1 << " " << detect_result_data->detect_boxes[k].x2 << " " << detect_result_data->detect_boxes[k].y2 << " " << detect_result_data->detect_boxes[k].score << " " << detect_result_data->detect_boxes[k].label;
+                // CLOG(INFO, INFER_LOG) << "detect_boxes: " << detect_result_data->detect_boxes[k].x1 << " " << detect_result_data->detect_boxes[k].y1 << " " << detect_result_data->detect_boxes[k].x2 << " " << detect_result_data->detect_boxes[k].y2 << " " << detect_result_data->detect_boxes[k].score << " " << detect_result_data->detect_boxes[k].label;
             }          
 
             frame_roi_results[j]->result.push_back(detect_result_data);
@@ -485,27 +473,29 @@ int InferNode::postprocess(const std::vector<FBlob> & outputs, std::vector<std::
     return ZJV_STATUS_OK;
 }
 
-int InferNode::summary(std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch)
+int InferNode::summary(const std::vector<std::shared_ptr<FrameROI>>  &frame_rois, 
+                        std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch)
 {
-    for(auto & out_metas:out_metas_batch)
+    for(int i = 0; i < out_metas_batch.size(); i++)        
     {
+        auto & out_metas = out_metas_batch[i];
         for(auto & output_name: m_nodeparam.m_output_datas)
         {
-            
             std::shared_ptr<BaseData> data = DataRegister::CreateData(output_name);
+            // 合并同一帧，相同目标类型的结果，如果有必要，进行nms
+            for(auto & frame_roi_result:frame_rois)
+            {
+                if(frame_roi_result->input_vector_id != i) continue;
 
-            for(auto & out_meta:out_metas)
-            {
-                data->append(out_meta);
-            }
-            for (auto it = out_metas.begin(); it != out_metas.end(); ) 
-            {
-                if ((*it)->data_name == output_name) {
-                    it = out_metas.erase(it);
-                } else {
-                    ++it;
+                for(auto & result: frame_roi_result->result)
+                {
+                    if(result->data_name == output_name)
+                    {
+                        data->append(result);
+                    }
                 }
             }
+            
             if(data->data_name == "DetectResult")
             {
                 float nms_thresh = 0.2;

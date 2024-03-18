@@ -80,8 +80,6 @@ public:
     // Get a BaseData using a type.
     static std::shared_ptr< BaseData > CreateData(const std::string& type) 
     {
-        std::cout<<"Creating BaseData " << type << std::endl;
-
         CreatorRegistry& registry = Registry();
         // 判断是否存在
         if (registry.find(type) == registry.end()) 
