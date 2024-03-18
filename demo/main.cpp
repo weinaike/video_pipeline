@@ -124,14 +124,14 @@ int main()
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         pipeline.show_debug_info();
-
-        cil::CImgDisplay disp(img,"result");
-        while (!disp.is_closed()) {
-            disp.wait();
-            if (disp.is_key()) {
-                std::cout << "Key pressed: " << disp.key() << std::endl;
-            }
-        }
+        img.save("../data/result.bmp");
+        // cil::CImgDisplay disp(img,"result");
+        // while (!disp.is_closed()) {
+        //     disp.wait();
+        //     if (disp.is_key()) {
+        //         std::cout << "Key pressed: " << disp.key() << std::endl;
+        //     }
+        // }
 
     }
 

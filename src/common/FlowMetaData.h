@@ -8,29 +8,10 @@
 #include <memory>
 #include <map>
 #include <algorithm>
+#include "ExtraData.h"
 
 namespace ZJVIDEO
 {
-
-    struct Rect
-    {
-        int x; // left
-        int y; // top
-        int width;
-        int height;
-    };
-
-    struct DetectBox
-    {
-        float x1 = -1;
-        float y1 = -1;
-        float x2 = -1;
-        float y2 = -1;
-        float score = -1;
-        int label = -1;
-        int track_id = -1;
-    };
-
     class FrameData;
     class ExtraData;
     // pipeline中流转的数据流
@@ -135,40 +116,6 @@ namespace ZJVIDEO
         // 锁
         std::mutex m_mutex;
         int m_channel_id = -1;
-    };
-
-    // 检测结果，分类结果等
-    class ExtraData : public BaseData
-    {
-    public:
-        explicit ExtraData() : BaseData(ZJV_DATATYPE_EXTRA)
-        {
-            data_name = "Extra";
-        }
-        ~ExtraData() override = default;
-    };
-
-    class EventData : public BaseData
-    {
-    public:
-        explicit EventData() : BaseData(ZJV_DATATYPE_EVENT)
-        {
-            data_name = "Event";
-        }
-        ~EventData() override = default;
-        std::shared_ptr<const FrameData> frame; // 帧数据
-    };
-
-    class DetectResultData : public BaseData
-    {
-    public:
-        explicit DetectResultData() : BaseData(ZJV_DATATYPE_EVENT)
-        {
-            data_name = "DetectResult";
-        }
-        ~DetectResultData() override = default;
-        std::vector<DetectBox> detect_boxes;
-        std::vector<int> image_id;
     };
 
 } // namespace ZJVIDEO

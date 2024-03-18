@@ -139,16 +139,16 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
         preprocess(batch_frame_rois, inputs);
         std::vector<FBlob> outputs;
         infer(inputs, outputs);
-        // postprocess(outputs, batch_frame_rois);
+        postprocess(outputs, batch_frame_rois);
     }
-    // for(int i = 0; i < frame_rois.size(); i++)
-    // {
-    //     int img_id = frame_rois[i]->input_vector_id;
-    //     for(auto & frame_roi_result : frame_rois[i]->result)
-    //     {   
-    //         out_metas_batch[img_id].push_back(frame_roi_result);
-    //     }
-    // }
+    for(int i = 0; i < frame_rois.size(); i++)
+    {
+        int img_id = frame_rois[i]->input_vector_id;
+        for(auto & frame_roi_result : frame_rois[i]->result)
+        {   
+            out_metas_batch[img_id].push_back(frame_roi_result);
+        }
+    }
 
     summary(out_metas_batch);
     return ZJV_STATUS_OK;
@@ -489,27 +489,32 @@ int InferNode::summary(std::vector<std::vector<std::shared_ptr<BaseData>>> & out
 {
     for(auto & out_metas:out_metas_batch)
     {
-        m_nodeparam.m_output_datas
-        
-        for(auto & out_meta:out_metas)
+        for(auto & output_name: m_nodeparam.m_output_datas)
         {
-            if(out_meta->data_name == "DetectResult")
+            
+            std::shared_ptr<BaseData> data = DataRegister::CreateData(output_name);
+
+            for(auto & out_meta:out_metas)
             {
-                std::shared_ptr<DetectResultData> detect_result_data = std::dynamic_pointer_cast<DetectResultData>(out_meta);
-                for(int i = 0; i < detect_result_data->detect_boxes.size(); i++)
-                {
-                    detect_boxes.push_back(detect_result_data->detect_boxes[i]);
+                data->append(out_meta);
+            }
+            for (auto it = out_metas.begin(); it != out_metas.end(); ) 
+            {
+                if ((*it)->data_name == output_name) {
+                    it = out_metas.erase(it);
+                } else {
+                    ++it;
                 }
             }
+            if(data->data_name == "DetectResult")
+            {
+                float nms_thresh = 0.2;
+                std::shared_ptr<DetectResultData> detect_result_data_all = std::dynamic_pointer_cast<DetectResultData>(data);
+                NMS(detect_result_data_all->detect_boxes,nms_thresh);  
+            }
+          
+            out_metas.push_back(data);
         }
-        float nms_thresh = 0.2;
-        NMS(detect_boxes,nms_thresh);
-        std::shared_ptr<DetectResultData> detect_result_data = std::make_shared<DetectResultData>();
-        detect_result_data->data_name = "DetectResult";
-        detect_result_data->detect_boxes = detect_boxes;
-
-        out_metas.clear();
-        out_metas.push_back(detect_result_data);
     }
     return ZJV_STATUS_OK;
 }

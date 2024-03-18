@@ -14,6 +14,7 @@
 #include "NodeFactory.h"
 #include "FrameData.h"
 #include "FlowMetaData.h"
+#include "ExtraData.h"
 
 
 namespace ZJVIDEO {
