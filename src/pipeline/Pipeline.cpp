@@ -593,6 +593,20 @@ int Pipeline::show_debug_info()
 
 
     CLOG(INFO, PIPE_LOG) << str ;
+
+    str = "fps: ";
+    for(const auto & node :m_node_map)
+    {
+        std::shared_ptr<GetFPSControlData> data = std::make_shared<GetFPSControlData>();
+        std::shared_ptr<ControlData> base = std::dynamic_pointer_cast<ControlData>(data);
+        node.second->get_control_info(base);
+        str += node.first;
+        str +="[";
+        str +=std::to_string(data->get_fps());
+        str +="] ";
+    }
+    str += "| ";
+    CLOG(INFO, PIPE_LOG) << str ;
     return ZJV_STATUS_OK;
 }
 

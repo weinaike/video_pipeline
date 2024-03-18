@@ -133,7 +133,7 @@ const void* SyncedMemory::cpu_data()
 {
     if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return (const void *)NULL;
+        return (const void *)cpu_ptr_;
     }
     else
     {
@@ -148,7 +148,7 @@ const void* SyncedMemory::gpu_data()
 
     if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return (const void *)NULL;
+        return (const void *)gpu_ptr_;
     }
     else
     {
@@ -161,7 +161,7 @@ void* SyncedMemory::mutable_cpu_data()
 {
     if(head_ == ZJV_SYNCEHEAD_UNINITIALIZED)
     {
-        return NULL;
+        return cpu_ptr_;
     }
     else
     {

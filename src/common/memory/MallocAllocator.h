@@ -23,11 +23,20 @@ public:
 	}
 
 	void deallocate(void* p) {
-		free(p);
+		if(p != NULL)
+		{
+			free(p);
+			p = NULL;
+		}
+		
 	}
 
 	void operator()(void* p) {
-		free(p);
+		if(p != NULL)
+		{
+			free(p);
+			p = NULL;
+		}
 	}
 
 	static void Copy(void* dst, void* src, const size_t count)

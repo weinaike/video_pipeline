@@ -493,6 +493,8 @@ int BaseNode::process_single(const std::vector<std::shared_ptr<const BaseData> >
 int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
 {
     // std::cout<<m_nodeparam.m_node_name << " process , input size: " << datas.size()<<std::endl;
+
+    auto start = std::chrono::system_clock::now();
     if(m_batch_process)
     {
         std::vector<std::vector<std::shared_ptr<const BaseData> >> in_metas_batch;
@@ -549,7 +551,7 @@ int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
                 }
                 if(not_found)
                 {
-                    CLOG(ERROR, BASENODE_LOG) << "output data ["<< output_data <<"] is not found in " << m_nodeparam.m_node_name ;
+                    CLOG(ERROR, BASENODE_LOG) << m_nodeparam.m_node_name << " output data ["<< output_data <<"] is not found in " << m_nodeparam.m_node_name ;
                     return ZJV_STATUS_ERROR;
                 }
             }
@@ -618,7 +620,18 @@ int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
 
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    auto end = std::chrono::system_clock::now();
+
+
+    std::chrono::duration<double> elapsed_seconds = end - start; // Calculate elapsed time
+
+    double fps = datas.size() * 1000.0 / elapsed_seconds.count() ; 
+    m_fps = m_fps*m_fps_count/(m_fps_count+1) + fps/(m_fps_count+1);
+    m_fps_count++;
+    if(m_fps_count > 100)
+    {
+        m_fps_count = 0;
+    }
     return ZJV_STATUS_OK;
 }
 
@@ -626,6 +639,16 @@ bool BaseNode::get_run_status()
 {
     return m_run;
 }
+int BaseNode::get_control_info(std::shared_ptr<ControlData>& data ) 
+{
+    if(data->get_control_type() == ZJV_CONTROLTYPE_GET_FPS)
+    {
+        std::shared_ptr<GetFPSControlData> ptr = std::dynamic_pointer_cast<GetFPSControlData>(data);
+        ptr->set_fps(m_fps);
+    }
+    return ZJV_STATUS_OK;
+}
+
 std::string BaseNode::get_name()
 {
     return m_nodeparam.m_node_name;

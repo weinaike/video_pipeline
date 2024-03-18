@@ -49,6 +49,7 @@ public:
     virtual int stop() override;  
 
     virtual bool get_run_status() override;  
+    virtual int get_control_info(std::shared_ptr<ControlData>& data ) override ;  
     virtual std::string get_name() override;
 
 protected:
@@ -94,7 +95,9 @@ protected:
     std::string                         m_cfg_file;                 // 配置文件路径
     int                                 m_node_position_type;
 
-    std::deque<void* >                 m_dealed_smaple;               // 历史处理样本
+    std::deque<void* >                  m_dealed_smaple;               // 历史处理样本
+    float                               m_fps;
+    int                                 m_fps_count = 0;
 
 };
 

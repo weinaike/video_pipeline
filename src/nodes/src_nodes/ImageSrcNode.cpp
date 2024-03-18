@@ -1,7 +1,7 @@
 
 
 #include "ImageSrcNode.h"
-#define IMAGESRC_LOG "ImageSrc"
+#define IMAGESRC_LOG "ImageSrcNode"
 namespace ZJVIDEO {
 
 ImageSrcNode::ImageSrcNode(const NodeParam & param) : BaseNode(param)
@@ -43,7 +43,7 @@ int ImageSrcNode::process_single(const std::vector<std::shared_ptr<const BaseDat
         }
         
     }
-    
+    std::this_thread::sleep_for(std::chrono::milliseconds(40));
 
     // CLOG(INFO, IMAGESRC_LOG) << "ImageSrcNode::process_single";
     return 0;

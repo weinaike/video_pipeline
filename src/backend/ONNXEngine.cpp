@@ -186,6 +186,7 @@ int ONNXEngine::forward(const std::vector<void*> &input, const std::vector<std::
         ::memcpy(outputs[index].data(), ort_output.GetTensorData<float>(), sizeof(float)*output_len);
 
     }
+    std::cout<<"onnx"<<std::endl;
     return ZJV_STATUS_OK;
 }
 

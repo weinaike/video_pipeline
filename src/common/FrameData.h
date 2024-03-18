@@ -25,7 +25,7 @@ enum ImageFormat{
     ZJV_IMAGEFORMAT_GRAY16LE,  // GRAY16LE
     ZJV_IMAGEFORMAT_RGB24,  // RGB24
     ZJV_IMAGEFORMAT_BGR24,  // BGR24
-
+    ZJV_IMAGEFORMAT_PRGB24,  // PRGB24
     ZJV_IMAGEFORMAT_YUV420P,  // YUV420P
     ZJV_IMAGEFORMAT_YUV422P,  // YUV422P
     ZJV_IMAGEFORMAT_YUV444P,  // YUV444P
@@ -42,6 +42,7 @@ public:
     {
         data_name = "Frame";
         width = 0;
+        stride = 0;
         height = 0;
         channel = 0;
         depth = 0;
@@ -51,7 +52,7 @@ public:
         camera_id = 0;
         frame_id = 0;
         frame_type = ZJV_FRAMETYPE_UNKNOWN;
-        data = std::make_shared<SyncedMemory>();
+        data = nullptr;
     }
     // 析构函数
     ~FrameData() override = default;
@@ -59,6 +60,7 @@ public:
     FrameData(const FrameData &other): BaseData(ZJV_DATATYPE_FRAME)
     {
         width = other.width;
+        stride = other.stride;
         height = other.height;
         channel = other.channel;
         depth = other.depth;
@@ -77,6 +79,7 @@ public:
     }
 
     int width;   // 图像宽度
+    int stride;  // 图像步长
     int height;  // 图像高度
     int channel; // 图像通道数
     int depth;   // 图像深度

@@ -3,6 +3,7 @@
 
 #include "memory/SyncedMemory.h"
 #include <vector>
+#include <assert.h>
 
 namespace ZJVIDEO
 {
@@ -11,7 +12,7 @@ namespace ZJVIDEO
     class Blob
     {
     public:
-        Blob() : data_(NULL), count_(0), capacity_(0) {}
+        Blob() : data_(NULL), count_(0), capacity_(0) {shape_.clear();}
         explicit Blob(const std::vector<int> &shape)
         {
             shape_ = shape;
@@ -20,11 +21,8 @@ namespace ZJVIDEO
             {
                 count_ *= shape[i];
             }
-            if (count_ > capacity_)
-            {
-                capacity_ = count_;
-                data_.reset(new SyncedMemory(capacity_ * sizeof(Dtype)));
-            }
+            capacity_ = count_;
+            data_ = std::make_shared<SyncedMemory>(capacity_ * sizeof(Dtype));
         }
         inline const Dtype *cpu_data() const
         {
@@ -37,11 +35,13 @@ namespace ZJVIDEO
 
         inline Dtype *mutable_cpu_data()
         {
+            assert(data_!=nullptr);
             return (Dtype*)data_->cpu_data();
         }
 
         inline Dtype *mutable_gpu_data()
         {
+            assert(data_!=nullptr);
             return (Dtype*)data_->gpu_data();
         }
        
