@@ -53,6 +53,7 @@ namespace ZJVIDEO
         inline int count() const { return count_; }
 
         inline const std::vector<int> &shape() const { return shape_; }
+        std::string name_;
 
     protected:
         std::shared_ptr<SyncedMemory> data_;

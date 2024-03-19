@@ -3,32 +3,11 @@
 
 #include "../BaseNode.h"
 #include "../backend/EngineFactory.h"
-#include "../common/Blob.h"
+#include "InferDefine.h"
+#include "PreProcessor.h"
+#include "PostProcessor.h"
 
 namespace ZJVIDEO {
-
-struct FrameROI
-{
-    int input_vector_id;
-    std::shared_ptr<const FrameData> frame;
-    // 原图坐标系下的roi
-    Rect roi;                              
-    // 网络输入宽
-    int input_width;                        
-    // 网络输入高
-    int input_height;                       
-    // 缩放比例x，roi宽/网络输入宽
-    float scale_x;
-    // 缩放比例y, roi高/网络输入高        
-    float scale_y;
-    // 对于letterbox的缩放模式，填充起始点x，y          
-    int padx;
-    int pady;
-    // 模型推理结果，可以支持多种结果同时输出
-    std::vector< std::shared_ptr<BaseData>> result;  
-
-};
-
 
 
 class InferNode : public BaseNode {
@@ -72,7 +51,11 @@ protected:
 
 protected:
     std::shared_ptr<AbstractEngine>     m_engine;
+    std::shared_ptr<PreProcessor>       m_preprocess;
+    std::shared_ptr<PostProcessor>      m_postprocess;
     EngineParameter                     m_engine_param;
+    PreProcessParameter                 m_preprocess_param; 
+
 
 }; // class InferNode
 

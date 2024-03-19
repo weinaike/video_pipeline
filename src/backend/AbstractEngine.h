@@ -27,14 +27,14 @@ enum EngineID {
 
 };  /*!< Engine类型*/
 
-enum Device { CPU = 0, GPU = 1}; /*!< 模型加载device*/
+enum Device { ZJV_DEVICE_CPU = 0, ZJV_DEVICE_GPU = 1}; /*!< 模型加载device*/
 
 struct EngineParameter {
     std::string                                 m_engine_type;          /*!< 引擎名称*/
     std::string                                 m_model_name;           /*!< 模型名称*/
-    int                                         m_numThread = 4;
+    int                                         m_max_batch_size = 8;   /*!< 最大batch size*/
     bool                                        m_encrypt   = false;    /*!< 模型是否加密*/
-    Device                                      m_device    = CPU;
+    Device                                      m_device    = ZJV_DEVICE_CPU;
     bool                                        m_dynamic   = false;
     std::string                                 m_model_path;
     std::string                                 m_param_path;

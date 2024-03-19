@@ -1,10 +1,20 @@
 {
+    "comment":
+    {
+        "device":["CPU","GPU"],
+        "backend":["ONNX"],
+        "resize_type":["Stretch", "LetterBox", "Fill"],
+        "interp_mode":["Linear","Nearest","Cubic"],
+        "channel_format":["RGB","BGR"],
+        "dtype":["float32","uint8"],
+        "input_format":["NCHW","NHWC"]
+    },
     "model": 
     {
         "version": "1.0",
         "model_name": "yolov7_tiny_grid",
         "encrypt": false,
-        "num_thread" : 4,
+        "max_batch_size" : 4,
         "device" : "CPU",
         "model_file": "../models/yolov7/yolov7-tiny-grid.onnx",
         "weight_file": "../models/yolov7/yolov7-tiny-grid.onnx",        
@@ -13,20 +23,21 @@
     },
     "preprocess": 
     {
-        "shape":[640,640],
+        "resize_type": "Stretch",
+        "resize_channel": 3,
+        "resize_width": 640,
+        "resize_height": 640,
+        "interp_mode": "Linear",
+        "letterbox_color": [114, 114, 114],
+        "channel_format": "RGB",
+
+        "normalize": true,
         "mean": [0, 0, 0],
         "std": [255.0, 255.0, 255.0],
-        "resize": "letterbox",
-        "letterbox_color": [114, 114, 114],
-        "channel_first": true,
-        "format": "RGB",
-        "dtype": "FLOAT32",
-        "inputformat":"NCHW",
-        "normalize": false,
-        "scale": 1.0,
-        "swapRB": false,
-        "crop": false,
-        "resize_mode": "LINEAR"
+
+        "dtype": "float32",
+        "input_format":"NCHW"
+
     },
 
     "infer": 
@@ -38,13 +49,10 @@
 
     "postprocess": 
     {
-        "type": "YOLO",
-        "anchors": [10,13, 16,30, 33,23, 30,61, 62,45, 59,119, 116,90, 156,198, 373,326],
-        "mask": [0,1,2],
+        "post_process_type": "YoloGrid",
+        "output_data_type": "DetectResult",
         "num_classes": 80,
-        "input_shape": [416,416],
-        "anchors_scale": 32,
-        "conf_thres": 0.5,
-        "iou_thres": 0.4
+        "confidence_threshold": 0.5,
+        "nms_threshold":0.4
     }
 }
