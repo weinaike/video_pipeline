@@ -10,8 +10,14 @@ namespace ZJVIDEO
         PostProcessor() = default;
         ~PostProcessor() = default;
 
-        virtual int parse_configure(const std::string &cfg_file) = 0; 
-        virtual int run(const std::vector<FBlob> &outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois) = 0;
+        virtual int parse_json(const nlohmann::json & j) = 0; 
+        virtual int run(std::vector<FBlob> &outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois) = 0;
+    protected:
+        std::string m_output_data_type;
+        std::string m_post_type;
+        std::vector<std::string> m_input_names;
+        std::vector<int> m_main_categories;
+        std::vector<int> m_sub_categories;
     };
 
     class PostRegister

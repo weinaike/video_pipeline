@@ -112,35 +112,49 @@ PreProcessor::PreProcessor(int lib_type = ZJV_PREPROCESS_LIB_CIMG): m_lib_type(l
     el::Loggers::getLogger(PRELOG);
 }
 
-int PreProcessor::parse_configure(const std::string & cfg_file)
+int PreProcessor::parse_json(const nlohmann::json & j)
 {
-    std::ifstream i(cfg_file);
-    if(i.is_open() == false)
-    {
-        CLOG(ERROR, PRELOG) << "open cfg_file failed";
-        return ZJV_STATUS_ERROR;
-    }
-    nlohmann::json j;
-    i >> j;
-
-    if (j.contains("preprocess") ) 
+    m_param.output_name = j["output_name"];
+    if (j.contains("param") ) 
     {
         try {
-            m_param.letterbox_value = j["preprocess"]["letterbox_color"].get<std::vector<int>>();
-            m_param.do_normalize = j["preprocess"]["normalize"];
-            m_param.resize_width = j["preprocess"]["resize_width"];
-            m_param.resize_height = j["preprocess"]["resize_height"];
-            m_param.resize_channel = j["preprocess"]["resize_channel"];
-            m_param.mean_value = j["preprocess"]["mean"].get<std::vector<float>>();
-            m_param.std_value = j["preprocess"]["std"].get<std::vector<float>>();
-            if( m_param.mean_value.size() != m_param.resize_channel 
-                || m_param.std_value.size() != m_param.resize_channel)
+            m_param.letterbox_value = j["param"]["letterbox_color"].get<std::vector<int>>();
+            m_param.do_normalize = j["param"]["normalize"];
+
+            m_param.output_dims = j["param"]["output_diims"].get<std::vector<int>>();
+
+            std::string output_format = j["param"]["output_format"];
+            if(output_format == "NCHW")
             {
-                CLOG(ERROR, PRELOG) << "mean or std size not match resize_channel in " << cfg_file;
+                m_param.output_format = ZJV_PREPROCESS_OUTPUT_FORMAT_NCHW;
+                m_param.resize_channel = m_param.output_dims[1];
+                m_param.resize_height = m_param.output_dims[2];
+                m_param.resize_width = m_param.output_dims[3];
+            }
+            else if(output_format == "NHWC") 
+            {
+                m_param.output_format = ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC;
+                m_param.resize_height = m_param.output_dims[1];
+                m_param.resize_width = m_param.output_dims[2];
+                m_param.resize_channel = m_param.output_dims[3];
+            }
+            else 
+            {
+                m_param.output_format = ZJV_PREPROCESS_OUTPUT_FORMAT_UNKNOWN;
+                CLOG(ERROR, PRELOG)<<"output_format not supported now in " ;
                 assert(0);
             }
 
-            std::string resize_type = j["preprocess"]["resize_type"];
+            m_param.mean_value = j["param"]["mean"].get<std::vector<float>>();
+            m_param.std_value = j["param"]["std"].get<std::vector<float>>();
+            if( m_param.mean_value.size() != m_param.resize_channel 
+                || m_param.std_value.size() != m_param.resize_channel)
+            {
+                CLOG(ERROR, PRELOG) << "mean or std size not match resize_channel in " ;
+                assert(0);
+            }
+
+            std::string resize_type = j["param"]["resize_type"];
             if(resize_type == "Stretch") m_param.resize_type = ZJV_PREPROCESS_RESIZE_STRETCH;
             else if(resize_type == "LetterBox") m_param.resize_type = ZJV_PREPROCESS_RESIZE_LETTERBOX;
             else if(resize_type == "Fill") m_param.resize_type = ZJV_PREPROCESS_RESIZE_FILL;
@@ -148,11 +162,11 @@ int PreProcessor::parse_configure(const std::string & cfg_file)
 
             if(m_param.resize_type == ZJV_PREPROCESS_RESIZE_UNKNOWN ) 
             {
-                CLOG(ERROR, PRELOG)<<"resize_type not supported now in " << cfg_file;
+                CLOG(ERROR, PRELOG)<<"resize_type not supported now in " ;
                 assert(0);
             }
 
-            std::string interp_type = j["preprocess"]["interp_mode"];
+            std::string interp_type = j["param"]["interp_mode"];
             if(interp_type == "Linear") m_param.interp_type = ZJV_PREPROCESS_INTERP_LINEAR;
             else if(interp_type == "Nearest") m_param.interp_type = ZJV_PREPROCESS_INTERP_NEAREST;
             else if(interp_type == "Cubic") m_param.interp_type = ZJV_PREPROCESS_INTERP_CUBIC;
@@ -160,45 +174,34 @@ int PreProcessor::parse_configure(const std::string & cfg_file)
 
             if(m_param.interp_type == ZJV_PREPROCESS_INTERP_UNKNOWN ) 
             {
-                CLOG(ERROR, PRELOG)<< "interp_type not supported now in " << cfg_file;
+                CLOG(ERROR, PRELOG)<< "interp_type not supported now in " ;
                 assert(0);
             }
 
-            std::string channel_format = j["preprocess"]["channel_format"];
+            std::string channel_format = j["param"]["channel_format"];
             if(channel_format == "RGB") m_param.channel_format = ZJV_PREPROCESS_CHANNEL_FORMAT_RGB;
             else if(channel_format == "BGR") m_param.channel_format = ZJV_PREPROCESS_CHANNEL_FORMAT_BGR;
             else m_param.channel_format = ZJV_PREPROCESS_CHANNEL_FORMAT_UNKNOWN;
 
             if(m_param.channel_format == ZJV_PREPROCESS_CHANNEL_FORMAT_UNKNOWN ) 
             {
-                CLOG(ERROR, PRELOG)<<"channel_format not supported now in " << cfg_file;
+                CLOG(ERROR, PRELOG)<<"channel_format not supported now in " ;
                 assert(0);
             }
 
-            std::string dtype = j["preprocess"]["dtype"];
-            if(dtype == "float32") m_param.dtype = ZJV_PREPROCESS_INPUT_DTYPE_FLOAT32;
-            else if(dtype == "uint8") m_param.dtype = ZJV_PREPROCESS_INPUT_DTYPE_UINT8;
-            else m_param.dtype = ZJV_PREPROCESS_INPUT_DTYPE_UNKNOWN;
+            std::string dtype = j["param"]["output_dtype"];
+            if(dtype == "float32") m_param.dtype = ZJV_PREPROCESS_OUTPUT_DTYPE_FLOAT32;
+            else if(dtype == "uint8") m_param.dtype = ZJV_PREPROCESS_OUTPUT_DTYPE_UINT8;
+            else m_param.dtype = ZJV_PREPROCESS_OUTPUT_DTYPE_UNKNOWN;
 
             if(m_param.dtype == 0 ) 
             {
-                CLOG(ERROR, PRELOG)<<"dtype not supported now in " << cfg_file;
-                assert(0);
-            }
-
-            std::string input_format = j["preprocess"]["input_format"];
-            if(input_format == "NCHW") m_param.input_format = ZJV_PREPROCESS_INPUT_FORMAT_NCHW;
-            else if(input_format == "NHWC") m_param.input_format = ZJV_PREPROCESS_INPUT_FORMAT_NHWC;
-            else m_param.input_format = ZJV_PREPROCESS_INPUT_FORMAT_UNKNOWN;
-
-            if(m_param.input_format == ZJV_PREPROCESS_INPUT_FORMAT_UNKNOWN ) 
-            {
-                CLOG(ERROR, PRELOG)<<"input_format not supported now in " << cfg_file;
+                CLOG(ERROR, PRELOG)<<"dtype not supported now in " ;
                 assert(0);
             }
 
             // 打印预处理配置参数
-            CLOG(INFO, PRELOG) << "------- preprocess config "<<cfg_file<<"------------";
+            CLOG(INFO, PRELOG) << "------- preprocess config ------------";
             CLOG(INFO, PRELOG) << "resize_width   [" << m_param.resize_width << "]";
             CLOG(INFO, PRELOG) << "resize_height  [" << m_param.resize_height<<"]";
             CLOG(INFO, PRELOG) << "resize_channel [" << m_param.resize_channel<< "]";
@@ -227,8 +230,8 @@ int PreProcessor::parse_configure(const std::string & cfg_file)
             CLOG(INFO, PRELOG) << "interp_type:   [" << m_param.interp_type<<"]";
             CLOG(INFO, PRELOG) << "channel_format:[" << m_param.channel_format<<"]";
             CLOG(INFO, PRELOG) << "dtype:         [" << m_param.dtype<<"]";
-            CLOG(INFO, PRELOG) << "input_format:  [" << m_param.input_format<<"]";     
-            CLOG(INFO, PRELOG) << "------- preprocess config "<<cfg_file<<"------------";
+            CLOG(INFO, PRELOG) << "output_format: [" << m_param.output_format<<"]";     
+            CLOG(INFO, PRELOG) << "------- preprocess config ------------";
 
         }
         catch (nlohmann::json::exception& e) {
@@ -327,7 +330,7 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
         }
         #endif
 
-        if(param.input_format == ZJV_PREPROCESS_INPUT_FORMAT_NHWC)
+        if(param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC)
         {
             img_float.permute_axes("cxyz");
         }

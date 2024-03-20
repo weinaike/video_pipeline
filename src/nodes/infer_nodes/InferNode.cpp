@@ -89,32 +89,74 @@ int InferNode::parse_configure(std::string cfg_file)
         }catch (nlohmann::json::exception& e) {
             CLOG(ERROR, INFER_LOG) << "'input_dims' is not an array"<< e.what();
         }
-        
-
     }
-
-
-    // 2. preprocess
+    
+    // 2. 解析出 preprocess
+    int lib_type = ZJV_PREPROCESS_LIB_CIMG;
     if(m_engine_param.m_device == ZJV_DEVICE_CPU)
     {
-        m_preprocess = std::make_shared<PreProcessor>(ZJV_PREPROCESS_LIB_CIMG);
+        lib_type = ZJV_PREPROCESS_LIB_CIMG;
     }
     else if(m_engine_param.m_device == ZJV_DEVICE_GPU)
     {
-        m_preprocess = std::make_shared<PreProcessor>(ZJV_PREPROCESS_LIB_CUDA);
+        lib_type = ZJV_PREPROCESS_LIB_CUDA;
+    }
+    else
+    {
+        CLOG(ERROR, INFER_LOG) << "device not supported now";
     }
 
-    // 2. 解析出 preprocess
-    m_preprocess->parse_configure(cfg_file);
-    m_preprocess_param = m_preprocess->get_param();
+    if(j.contains("preprocess"))
+    {
+        if(j["preprocess"].contains("ImageType"))
+        {
+            nlohmann::json image_types = j["preprocess"]["ImageType"];
+            for(auto & image_type: image_types)
+            {
+                std::shared_ptr<PreProcessor> img_preproc = std::make_shared<PreProcessor>(lib_type);
+                img_preproc->parse_json(image_type);
+                PreProcessParameter param = img_preproc->get_param();
+                m_img_preprocs.push_back(img_preproc);
+                m_img_preproc_params.push_back(param);
+            }
+        }
+        
+        if(j["preprocess"].contains("VideoType"))
+        {
+            nlohmann::json video_types = j["preprocess"]["VideoType"];
+            if(video_types.size() > 0)
+            {
+                CLOG(ERROR, INFER_LOG) << "video_type not supported now";
+            }
+        }
+        if(j["preprocess"].contains("FeatureType"))
+        {
+            nlohmann::json feature_types = j["preprocess"]["FeatureType"];
+            if(feature_types.size() > 0)
+            {
+                CLOG(ERROR, INFER_LOG) << "feature_type not supported now";
+            }
+        }
+
+        
+    } 
+    else
+    {
+        CLOG(ERROR, INFER_LOG) << "preprocess not found";
+        assert(0);
+    }
+
+
     // 3. 解析出 postprocess
 
     if (j.contains("postprocess"))
     {
-        std::string post_process_type = j["postprocess"]["post_process_type"];
-
-        m_postprocess = PostRegister::CreatePost(post_process_type);
-        m_postprocess->parse_configure(cfg_file);
+        for (nlohmann::json::iterator it = j["postprocess"].begin(); it != j["postprocess"].end(); ++it) 
+        {
+            std::shared_ptr<PostProcessor> postproc = PostRegister::CreatePost(it.key());
+            postproc->parse_json(it.value());
+            m_postprocess.push_back(postproc);
+        }
     } 
     else
     {
@@ -162,8 +204,7 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
         preprocess(batch_frame_rois, inputs);
         std::vector<FBlob> outputs;
         infer(inputs, outputs);
-        m_postprocess->run(outputs, batch_frame_rois);
-        // postprocess(outputs, batch_frame_rois);
+        postprocess(outputs, batch_frame_rois);
     }
 
     summary(frame_rois, out_metas_batch);
@@ -190,6 +231,7 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
                 frame_roi->roi.y = 0;
                 frame_roi->roi.width = frame_data->width/2*2 ;
                 frame_roi->roi.height = frame_data->height/2* 2 ;
+                frame_roi->original = nullptr;
                 frame_rois.push_back(frame_roi);
             }
             else
@@ -220,7 +262,12 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
                         roi.y = roi_data->detect_boxes[k].y1;
                         roi.width = (roi_data->detect_boxes[k].x2 - roi_data->detect_boxes[k].x1)/2*2;
                         roi.height = (roi_data->detect_boxes[k].y2 - roi_data->detect_boxes[k].y1)/2*2;
-                        rois.push_back(roi);
+
+                        frame_roi->frame = frame_data;
+                        frame_roi->roi = roi;
+                        frame_roi->input_vector_id = i;
+                        frame_roi->original = &(roi_data->detect_boxes[k]);
+                        frame_rois.push_back(frame_roi);                        
                     }
                 }
                 else
@@ -229,13 +276,7 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
                     assert(0);
                 }
             }
-            for(int j = 0; j < rois.size(); j++) 
-            {
-                frame_roi->frame = frame_data;
-                frame_roi->roi = rois[j];
-                frame_roi->input_vector_id = i;
-                frame_rois.push_back(frame_roi);
-            }
+            
         }
     }
     return ZJV_STATUS_OK;
@@ -243,41 +284,15 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
 
 int InferNode::preprocess(std::vector<std::shared_ptr<FrameROI>>  &frame_rois, std::vector<FBlob> & inputs)
 {
-    if(m_engine->m_input_nodes.size() > 1)
+    for(int i = 0; i < m_img_preprocs.size(); i++)
     {
-        CLOG(ERROR, INFER_LOG) << m_nodeparam.m_node_name << "input_blobs size ["<<m_engine->m_input_nodes.size() <<"] more than 1 is not supported now";
-    }
-    
-    for(int j = 0; j < m_engine->m_input_nodes.size(); j++)
-    {
-        
-        int bs = frame_rois.size();
-
-        std::vector<int> resize_dims;
-        resize_dims.push_back(bs);
-        if(m_preprocess_param.input_format == ZJV_PREPROCESS_INPUT_FORMAT_NCHW)
-        {
-            resize_dims.push_back(m_preprocess_param.resize_channel);
-            resize_dims.push_back(m_preprocess_param.resize_height);
-            resize_dims.push_back(m_preprocess_param.resize_width);
-        }
-        else if(m_preprocess_param.input_format == ZJV_PREPROCESS_INPUT_FORMAT_NHWC)
-        {
-            resize_dims.push_back(m_preprocess_param.resize_height);
-            resize_dims.push_back(m_preprocess_param.resize_width);
-            resize_dims.push_back(m_preprocess_param.resize_channel);
-        }
-        else
-        {
-            CLOG(ERROR, INFER_LOG) << "input_format not supported now";
-            assert(0);
-        }
-
+        std::vector<int> resize_dims = m_img_preproc_params[i].output_dims;
+        resize_dims[0] = frame_rois.size();
         FBlob input_blob(resize_dims);
-        m_preprocess->run(frame_rois, input_blob, m_preprocess_param);
+        input_blob.name_ = m_img_preproc_params[i].output_name;
+        m_img_preprocs[i]->run(frame_rois, input_blob, m_img_preproc_params[i]);
         inputs.push_back(input_blob);
     }
-
 
     return ZJV_STATUS_OK;
 }
@@ -308,10 +323,12 @@ int InferNode::infer(std::vector<FBlob> & inputs, std::vector<FBlob> & outputs)
 
 }
 
-int InferNode::postprocess(const std::vector<FBlob> & outputs, std::vector<std::shared_ptr<FrameROI>> & frame_roi_results)
+int InferNode::postprocess( std::vector<FBlob> & outputs, std::vector<std::shared_ptr<FrameROI>> & frame_roi_results)
 {
-
-    m_postprocess->run(outputs, frame_roi_results);
+    for(int i = 0; i < m_postprocess.size(); i++)
+    {
+        m_postprocess[i]->run(outputs, frame_roi_results);
+    }
 
     return ZJV_STATUS_OK;
 }

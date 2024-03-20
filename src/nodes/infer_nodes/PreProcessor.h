@@ -15,7 +15,7 @@ namespace ZJVIDEO
         ~PreProcessor() = default;
 
         int run(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
-        int parse_configure(const std::string & cfg_file);
+        int parse_json(const nlohmann::json & j);
         PreProcessParameter get_param() { return m_param; }
     protected:
         int run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);

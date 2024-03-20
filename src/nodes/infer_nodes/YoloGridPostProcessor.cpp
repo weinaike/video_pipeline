@@ -9,55 +9,48 @@ namespace ZJVIDEO
 YoloGridPostProcessor::YoloGridPostProcessor()
 {
     el::Loggers::getLogger(YoloLOG);
+    m_post_type = "YoloGrid";
 }
 
-int YoloGridPostProcessor::parse_configure(const std::string &cfg_file)
+int YoloGridPostProcessor::parse_json(const nlohmann::json & j)
 {           
-    std::ifstream i(cfg_file);
-    if(i.is_open() == false)
-    {
-        std::cout << "open cfg_file failed";
-        return ZJV_STATUS_ERROR;
-    }
-    nlohmann::json j;
-    i >> j;    
-    try{
-        if (j.contains("postprocess"))
-        {
-            m_post_type = j["postprocess"]["post_process_type"];
-            m_output_data_type = j["postprocess"]["output_data_type"];
-            m_num_classes = j["postprocess"]["num_classes"];
-            m_conf_thres = static_cast<float>(j["postprocess"]["confidence_threshold"]);
-            m_iou_thres = static_cast<float>(j["postprocess"]["nms_threshold"]);
-        }
-    }
-    catch (nlohmann::json::exception& e) {
-        CLOG(ERROR, YoloLOG) << "parse postprocess failed" << e.what();
-    } 
-
+    
+    m_input_names = j["input_names"].get<std::vector<std::string>>();
+    m_output_data_type = j["output_data_type"];
+    m_num_classes = j["num_classes"];
+    m_conf_thres = j["confidence_threshold"];
+    m_iou_thres = j["nms_threshold"];
     assert(m_output_data_type == "DetectResult");
-    assert(m_post_type == "YoloGrid");
+
+    m_main_categories = j["main_category"].get<std::vector<int>>();
+    m_sub_categories = j["sub_category"].get<std::vector<int>>();
     // 打印配置信息
-    CLOG(INFO, YoloLOG) << "-------------YoloGrid "<<cfg_file<<"----------------";
+    CLOG(INFO, YoloLOG) << "-------------YoloGrid ----------------";
     CLOG(INFO, YoloLOG) << "post_type:          " << m_post_type;
+    for (size_t i = 0; i < m_input_names.size(); i++)
+    {
+        CLOG(INFO, YoloLOG) << "input_names:        " << m_input_names[i];
+    }
+    
+    
     CLOG(INFO, YoloLOG) << "output_data_type:   " << m_output_data_type;
     CLOG(INFO, YoloLOG) << "num_classes: [" << m_num_classes << "]";
     CLOG(INFO, YoloLOG) << "conf_thresh: [" << m_conf_thres << "]";
     CLOG(INFO, YoloLOG) << "iou_thresh:  [" << m_iou_thres << "]";
-    CLOG(INFO, YoloLOG) << "-----------------------------------------------------";
+    CLOG(INFO, YoloLOG) << "---------------------------------------";
     
     return ZJV_STATUS_OK;
 }
 
-int YoloGridPostProcessor::run(const std::vector<FBlob> &outputs, std::vector<std::shared_ptr<FrameROI>> &frame_roi_results)
+int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::shared_ptr<FrameROI>> &frame_roi_results)
 {
     for(int i = 0; i < outputs.size(); i++)
     {
-        if(outputs[i].name_ != "output")
+        // 判断字符串是否存在
+        if (std::find(m_input_names.begin(), m_input_names.end(), outputs[i].name_) == m_input_names.end()) 
         {
-            CLOG(ERROR, YoloLOG) << "output node name not supported now";
-            assert(0);
-        }      
+            continue;
+        }
 
         const float * output_data = outputs[i].cpu_data();
         std::vector<int> output_shape = outputs[i].shape();
@@ -93,6 +86,8 @@ int YoloGridPostProcessor::run(const std::vector<FBlob> &outputs, std::vector<st
                 if(conf < m_conf_thres) continue;
 
 
+
+
                 float x1 = output_data[j*num*dim + k*dim] - output_data[j*num*dim + k*dim + 2]/2;
                 float y1 = output_data[j*num*dim + k*dim + 1] - output_data[j*num*dim + k*dim + 3]/2;
                 float x2 = x1 + output_data[j*num*dim + k*dim + 2];
@@ -104,6 +99,13 @@ int YoloGridPostProcessor::run(const std::vector<FBlob> &outputs, std::vector<st
                 detect_box.y2 = y2;
                 detect_box.score = conf;
                 detect_box.label = max_index;
+
+                if(m_main_categories.size() > 0) detect_box.main_category = m_main_categories[max_index];
+                else detect_box.main_category = 0;
+
+                if(m_sub_categories.size() > 0) detect_box.sub_category = m_sub_categories[max_index];
+                else detect_box.sub_category = 0;
+
                 detect_result_data->detect_boxes.push_back(detect_box);
             }
             NMS(detect_result_data->detect_boxes, m_iou_thres ) ;

@@ -22,7 +22,8 @@ enum BaseDataType {
     ZJV_DATATYPE_EXTRA,    // 额外数据，检测结果，识别结果等
     ZJV_DATATYPE_FLOW,     // 流数据
     ZJV_DATATYPE_EVENT,    // 事件数据
-    ZJV_DATATYPE_DETECTRESULT,    //目标检测
+    ZJV_DATATYPE_DETECTRESULT,    //多个目标集合
+    ZJV_DATATYPE_OBJECT,    //目标
     ZJV_DATATYPE_MAX
 };
 

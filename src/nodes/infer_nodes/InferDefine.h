@@ -24,11 +24,11 @@ namespace ZJVIDEO
         ZJV_PREPROCESS_INTERP_CUBIC = 3,   // "Cubic"
     };
 
-    enum PreProcessInputFormat
+    enum PreProcessOutputFormat
     {
-        ZJV_PREPROCESS_INPUT_FORMAT_UNKNOWN = 0, // "Unknown"
-        ZJV_PREPROCESS_INPUT_FORMAT_NCHW = 1,    // "NCHW"
-        ZJV_PREPROCESS_INPUT_FORMAT_NHWC = 2,    // "NHWC"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_UNKNOWN = 0, // "Unknown"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NCHW = 1,    // "NCHW"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC = 2,    // "NHWC"
     };
 
     enum PreProcessChannelFormat
@@ -38,30 +38,32 @@ namespace ZJVIDEO
         ZJV_PREPROCESS_CHANNEL_FORMAT_BGR = 2,     // "BGR"
     };
 
-    enum PreProcessInputDtype
+    enum PreProcessOutputDtype
     {
-        ZJV_PREPROCESS_INPUT_DTYPE_UNKNOWN = 0, // "Unknown"
-        ZJV_PREPROCESS_INPUT_DTYPE_FLOAT32 = 1, // "float32"
-        ZJV_PREPROCESS_INPUT_DTYPE_UINT8 = 2,   // "uint8"
+        ZJV_PREPROCESS_OUTPUT_DTYPE_UNKNOWN = 0, // "Unknown"
+        ZJV_PREPROCESS_OUTPUT_DTYPE_FLOAT32 = 1, // "float32"
+        ZJV_PREPROCESS_OUTPUT_DTYPE_UINT8 = 2,   // "uint8"
     };
 
     struct PreProcessParameter
     {
+        std::string output_name;
         bool do_normalize;
 
         int resize_type; // PreProcessResizeType
         int interp_type; // PreProcessInterpType
 
-        int resize_width;
-        int resize_height;
-        int resize_channel;
-
         int channel_format; // PreProcessChannelFormat
-        int dtype;          // PreProcessInputDtype
-        int input_format;   // PreProcessInputFormat
+        int dtype;          // PreProcessOutputDtype
+        int output_format;   // PreProcessOutputFormat
         std::vector<float> mean_value;
         std::vector<float> std_value;
         std::vector<int> letterbox_value;
+        std::vector<int> output_dims;
+
+        int resize_width;
+        int resize_height;
+        int resize_channel;
     };
 
     enum PreProcessLibType
@@ -76,6 +78,7 @@ namespace ZJVIDEO
     {
         int input_vector_id;
         std::shared_ptr<const FrameData> frame;
+        const DetectBox * original;                     // roi的原始目标
         // 原图坐标系下的roi
         Rect roi;
         // 网络输入宽

@@ -43,18 +43,18 @@ protected:
     
     // the 4th step, MUST implement in specific derived class.
     // postprocess on raw outputs and create/update something back to frame meta again.
-    virtual int postprocess(const std::vector<FBlob> & outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois);
+    virtual int postprocess(std::vector<FBlob> & outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois);
 
     virtual int summary(const std::vector<std::shared_ptr<FrameROI>>  &frame_rois, 
                 std::vector<std::vector<std::shared_ptr<BaseData>>> & out_metas_batch);
 
 
 protected:
-    std::shared_ptr<AbstractEngine>     m_engine;
-    std::shared_ptr<PreProcessor>       m_preprocess;
-    std::shared_ptr<PostProcessor>      m_postprocess;
-    EngineParameter                     m_engine_param;
-    PreProcessParameter                 m_preprocess_param; 
+    std::shared_ptr<AbstractEngine>                 m_engine;
+    EngineParameter                                 m_engine_param;
+    std::vector<std::shared_ptr<PreProcessor>>      m_img_preprocs; 
+    std::vector<PreProcessParameter>                m_img_preproc_params; 
+    std::vector<std::shared_ptr<PostProcessor>>     m_postprocess;
 
 
 }; // class InferNode

@@ -1,27 +1,25 @@
-#ifndef __ZJV_YOLOGRIDPOSTPROCESS_H__
-#define __ZJV_YOLOGRIDPOSTPROCESS_H__
+#ifndef __ZJV_CLASSIFYPOSTPROCESS_H__
+#define __ZJV_CLASSIFYPOSTPROCESS_H__
 
 #include "PostProcessor.h"
 
 namespace ZJVIDEO
 {
 
-    class YoloGridPostProcessor:public PostProcessor
+    class ClassifyPostProcessor:public PostProcessor
     {
     public:
-        YoloGridPostProcessor();
-        ~YoloGridPostProcessor() = default;
+        ClassifyPostProcessor();
+        ~ClassifyPostProcessor() = default;
 
         virtual int parse_json(const nlohmann::json & j) override;
         virtual int run(std::vector<FBlob> &outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois) override;
     private:
         int                         m_num_classes;
-        float                       m_conf_thres;
-        float                       m_iou_thres;
     };
 
 
 } // namespace ZJV
 
 
-#endif // __ZJV_POSTPROCESS_H__
+#endif // __ZJV_CLASSIFYPOSTPROCESS_H__

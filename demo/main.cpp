@@ -11,6 +11,35 @@ void signalHandler(int signum) {
     flag = 1;
 }
 
+std::string pic_path = "../data/cat.bmp";
+
+std::string imagenet_file = "../data/synset.txt";
+
+std::vector<std::pair<std::string, std::string>> load_synset(const std::string& filename) 
+{
+    std::vector<std::pair<std::string, std::string>> synset;
+    std::ifstream file(filename);
+
+    if (file.is_open()) {
+        std::string line;
+
+        while (std::getline(file, line)) {
+            std::stringstream ss(line);
+            std::string id;
+            std::string label;
+            ss >> id; // 读取每行的第一个单词作为ID
+            std::getline(ss, label); // 读取剩余的部分作为标签
+            synset.push_back({id, label});
+        }
+
+        file.close();
+    } else {
+        std::cout << "Unable to open file: " << filename << std::endl;
+    }
+
+    return synset;
+}
+
 static const char* coco_labels[] = {
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
         "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
@@ -25,8 +54,9 @@ static const char* coco_labels[] = {
 
 int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )> func, int camera_id)
 {
+    
     int cnt = 0;
-    cil::CImg<unsigned char> img("../data/test.bmp");
+    cil::CImg<unsigned char> img("../data/cat.bmp");
     // img.display("My Image");
     // int camera_id = 0;
     while (!flag)
@@ -56,7 +86,7 @@ int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )
 
 int main()
 {  
-
+    std::vector<std::pair<std::string, std::string>> synset = load_synset(imagenet_file);
 
     auto time1 = std::chrono::system_clock::now();
     auto time2 = std::chrono::system_clock::now();
@@ -73,7 +103,8 @@ int main()
     signal(SIGINT, signalHandler);  
     std::cout<< "Hello, World!\n" ;
 
-    std::string cfg_file = "../configure/pipeline_sample_infer.json";
+    std::string cfg_file = "../configure/pipeline_sample_classification.json";
+    // std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
@@ -99,7 +130,7 @@ int main()
     }
 
     int frame_id = 0;
-    cil::CImg<unsigned char> img("../data/test.bmp");
+    cil::CImg<unsigned char> img("../data/cat.bmp");
     unsigned char red[] = { 255, 0, 0 };  
     while(!flag)
     {
@@ -120,6 +151,16 @@ int main()
                     img.draw_text(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y1, 
                         coco_labels[detect_result->detect_boxes[i].label], red, 0, 1);
                 }
+            }
+            else if(data->data_name == "ClassifyResult")
+            {
+                std::shared_ptr<const ZJVIDEO::ClassifyResultData> result = std::dynamic_pointer_cast<const ZJVIDEO::ClassifyResultData>(data);
+                int label = result->detect_box_categories[0].label;
+                float score = result->detect_box_categories[0].score;              
+
+                std::cout << "cat: " << synset[label].second << "  " << score << std::endl;
+
+                // img.draw_text(50, 50, synset[label].second, red, 0, 1);
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

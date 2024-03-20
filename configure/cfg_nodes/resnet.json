@@ -14,12 +14,12 @@
     "model": 
     {
         "version": "1.0",
-        "model_name": "yolov7_tiny_grid",
+        "model_name": "resnet18-v1-7",
         "encrypt": false,
         "max_batch_size" : 4,
         "device" : "CPU",
-        "model_file": "../models/yolov7/yolov7-tiny-grid.onnx",
-        "weight_file": "../models/yolov7/yolov7-tiny-grid.onnx",        
+        "model_file": "../models/resnet/resnet18-v1-7.onnx",
+        "weight_file": "../models/resnet/resnet18-v1-7.onnx",        
         "backend": "ONNX",
         "dynamic_batch": false
     },
@@ -28,11 +28,11 @@
         "ImageType":
         [
             {
-                "output_name": "images",
+                "output_name": "data",
                 "param":
                 {
                     "resize_type": "Stretch",
-                    "output_diims": [1,3,640,640],
+                    "output_diims": [1,3,224,224],
                     "output_format":"NCHW",
                     "output_dtype": "float32",
 
@@ -41,8 +41,8 @@
                     "channel_format": "RGB",
             
                     "normalize": true,
-                    "mean": [0, 0, 0],
-                    "std": [255.0, 255.0, 255.0]                    
+                    "mean": [123.675, 116.28, 103.53],
+                    "std": [58.395, 57.12, 57.375]                    
                 }
             }
         ],
@@ -54,25 +54,22 @@
 
     "infer": 
     {
-        "input_names": ["images"],
-        "input_dims": [[1,3,640,640]],
-        "output_names": ["output"]
+        "input_names": ["data"],
+        "input_dims": [[1,3,224,224]],
+        "output_names": ["resnetv15_dense0_fwd"]
     },
 
     "postprocess": 
     {
-        "YoloGrid" :
+        "Classify" :
         {
-            "input_names":["output"],
-            "output_data_type": "DetectResult",
+            "input_names":["resnetv15_dense0_fwd"],
+            "output_data_type": "ClassifyResult",
             "main_category":[],
             "sub_category":[],
-            "num_classes": 80,
-            "confidence_threshold": 0.5,
-            "nms_threshold":0.4
+            "num_classes": 1000
 
-        }
-        
+        }        
     }
     
 }
