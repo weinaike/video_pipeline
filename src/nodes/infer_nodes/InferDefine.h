@@ -1,9 +1,10 @@
 #ifndef __ZJV_INFER_DEFINE_H__
 #define __ZJV_INFER_DEFINE_H__
 
-#include "../../common/CommonDefine.h"
-#include "../../common/Blob.h"
-#include "../../common/ExtraData.h"
+#include "common/CommonDefine.h"
+#include "common/Blob.h"
+#include "common/ExtraData.h"
+#include "nlohmann/json.hpp"
 
 namespace ZJVIDEO
 {
@@ -38,12 +39,6 @@ namespace ZJVIDEO
         ZJV_PREPROCESS_CHANNEL_FORMAT_BGR = 2,     // "BGR"
     };
 
-    enum PreProcessOutputDtype
-    {
-        ZJV_PREPROCESS_OUTPUT_DTYPE_UNKNOWN = 0, // "Unknown"
-        ZJV_PREPROCESS_OUTPUT_DTYPE_FLOAT32 = 1, // "float32"
-        ZJV_PREPROCESS_OUTPUT_DTYPE_UINT8 = 2,   // "uint8"
-    };
 
     struct PreProcessParameter
     {
@@ -54,7 +49,7 @@ namespace ZJVIDEO
         int interp_type; // PreProcessInterpType
 
         int channel_format; // PreProcessChannelFormat
-        int dtype;          // PreProcessOutputDtype
+        int dtype;          // PixelDtype
         int output_format;   // PreProcessOutputFormat
         std::vector<float> mean_value;
         std::vector<float> std_value;
@@ -92,6 +87,9 @@ namespace ZJVIDEO
         // 对于letterbox的缩放模式，填充起始点x，y
         int padx;
         int pady;
+        int resize_type ;
+        // 预处理指针
+        PreProcessParameter * pre_process;
         // 模型推理结果，可以支持多种结果同时输出
         std::vector<std::shared_ptr<BaseData>> result;
     };

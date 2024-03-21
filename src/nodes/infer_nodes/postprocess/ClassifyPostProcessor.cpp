@@ -1,7 +1,7 @@
 
 #include "ClassifyPostProcessor.h"
 
-#include "../../logger/easylogging++.h"
+#include "logger/easylogging++.h"
 #define clsLOG "Classify"
 
 namespace ZJVIDEO
@@ -10,6 +10,14 @@ ClassifyPostProcessor::ClassifyPostProcessor()
 {
     el::Loggers::getLogger(clsLOG);
     m_post_type = "Classify";
+    m_input_names.clear();
+    m_output_data_type = "";
+    m_main_categories.clear();
+    m_sub_categories.clear();
+    
+    // private
+    m_num_classes = 0;
+
 }
 
 int ClassifyPostProcessor::parse_json(const nlohmann::json & j)
@@ -17,10 +25,12 @@ int ClassifyPostProcessor::parse_json(const nlohmann::json & j)
     
     m_input_names = j["input_names"].get<std::vector<std::string>>();
     m_output_data_type = j["output_data_type"];
-    m_num_classes = j["num_classes"];
     m_main_categories = j["main_category"].get<std::vector<int>>();
     m_sub_categories = j["sub_category"].get<std::vector<int>>();
     assert(m_output_data_type == "ClassifyResult");
+
+    // private
+    m_num_classes = j["num_classes"];
     // 打印配置信息
     CLOG(INFO, clsLOG) << "-------------YoloGrid ----------------";
     CLOG(INFO, clsLOG) << "post_type:          " << m_post_type;
@@ -28,27 +38,11 @@ int ClassifyPostProcessor::parse_json(const nlohmann::json & j)
     {
         CLOG(INFO, clsLOG) << "input_names:        " << m_input_names[i];
     }
-    
-    
     CLOG(INFO, clsLOG) << "output_data_type:   " << m_output_data_type;
     CLOG(INFO, clsLOG) << "num_classes: [" << m_num_classes << "]";
     CLOG(INFO, clsLOG) << "---------------------------------------";
     
     return ZJV_STATUS_OK;
-}
-
-static void softmax(float* output, int num) {
-    float max_output = *std::max_element(output, output + num);
-    float sum = 0.0f;
-
-    for (int i = 0; i < num; i++) {
-        output[i] = std::exp(output[i] - max_output);
-        sum += output[i];
-    }
-
-    for (int i = 0; i < num; i++) {
-        output[i] /= sum;
-    }
 }
 
 
@@ -62,6 +56,7 @@ int ClassifyPostProcessor::run( std::vector<FBlob> &outputs, std::vector<std::sh
         }
 
         std::vector<int> output_shape = outputs[i].shape();
+        assert(output_shape.size() == 2);
         int bs = output_shape[0];
         int num = output_shape[1];
         assert(num == m_num_classes);

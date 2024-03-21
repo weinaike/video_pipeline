@@ -3,7 +3,7 @@
 //
 
 #include "Pipeline.h"
-#include <../nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 #include <fstream>
 
 namespace ZJVIDEO {

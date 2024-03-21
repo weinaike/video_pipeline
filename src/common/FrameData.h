@@ -35,6 +35,14 @@ enum ImageFormat{
     ZJV_IMAGEFORMAT_MAX
 };
 
+enum PixelDtype
+{
+    ZJV_PIXEL_DTYPE_UNKNOWN = 0, // "Unknown"
+    ZJV_PIXEL_DTYPE_FLOAT32 = 1, // "float32"
+    ZJV_PIXEL_DTYPE_UINT8 = 2,   // "uint8"
+};
+
+
 // 用于存储帧数据的类
 class FrameData : public BaseData {
 public:
@@ -52,8 +60,38 @@ public:
         camera_id = 0;
         frame_id = 0;
         frame_type = ZJV_FRAMETYPE_UNKNOWN;
+        dtype = 0;
         data = nullptr;
     }
+
+    explicit FrameData(int w, int h, int c, int dtype=ZJV_PIXEL_DTYPE_UINT8): 
+        width(w), height(h), channel(c), dtype(dtype), BaseData(ZJV_DATATYPE_FRAME) 
+    {
+        data_name = "Frame";
+        stride = w;
+
+        format = ZJV_IMAGEFORMAT_UNKNOWN;
+        frame_type = ZJV_FRAMETYPE_UNKNOWN;
+        fps = 0;
+        pts = 0;
+        camera_id = 0;
+        frame_id = 0;
+
+        if(dtype == ZJV_PIXEL_DTYPE_UINT8)
+        {
+            depth = sizeof(unsigned char) * 8;
+        }
+        else if(dtype == ZJV_PIXEL_DTYPE_FLOAT32)
+        {
+            depth = sizeof(float) * 8;
+        }
+        else
+        {
+            depth = 0;
+        }
+        data = std::make_shared<SyncedMemory>(w * h * c * (depth/8));
+    }
+
     // 析构函数
     ~FrameData() override = default;
     // 拷贝构造函数
@@ -71,6 +109,7 @@ public:
         camera_id = other.camera_id;
         frame_id = other.frame_id;
         frame_type = other.frame_type;
+        dtype = other.dtype;
 
         // 深度拷贝内存
         data = std::make_shared<SyncedMemory>(*(other.data.get()));
@@ -85,6 +124,7 @@ public:
     int depth;   // 图像深度
     int format;  // 图像格式 ImageFormat
     int fps;     // 帧率
+    int dtype;   // 数据类型 0: uint8, 1: float32
 
     std::shared_ptr<SyncedMemory> data;  // 图像数据
     int64_t pts;            // 时间戳

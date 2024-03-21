@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 #include "InferDefine.h"
-#include "../nlohmann/json.hpp"
+
 namespace ZJVIDEO
 {
     class PreProcessor

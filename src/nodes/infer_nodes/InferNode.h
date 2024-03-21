@@ -2,7 +2,7 @@
 #define ZJVIDEO_INFERNODE_H
 
 #include "../BaseNode.h"
-#include "../backend/EngineFactory.h"
+#include "backend/EngineFactory.h"
 #include "InferDefine.h"
 #include "PreProcessor.h"
 #include "PostProcessor.h"

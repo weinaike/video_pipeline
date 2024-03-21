@@ -52,11 +52,60 @@ static const char* coco_labels[] = {
         "hair drier", "toothbrush"
 };
 
+void amplify(cil::CImg<unsigned char>& img, int factor) {
+    cimg_forXY(img, x, y) {
+        for (int c = 0; c < img.spectrum(); ++c) {
+            img(x, y, 0, c) = std::min(255, img(x, y, 0, c) * factor);
+        }
+    }
+}
+void HSVtoRGB(float h, float s, float v, float& r, float& g, float& b) {
+    int i = h * 6;
+    float f = h * 6 - i;
+    float p = v * (1 - s);
+    float q = v * (1 - f * s);
+    float t = v * (1 - (1 - f) * s);
+    switch (i % 6) {
+        case 0: r = v, g = t, b = p; break;
+        case 1: r = q, g = v, b = p; break;
+        case 2: r = p, g = v, b = t; break;
+        case 3: r = p, g = q, b = v; break;
+        case 4: r = t, g = p, b = v; break;
+        case 5: r = v, g = p, b = q; break;
+    }
+}
+
+cil::CImg<unsigned char> create_color_mask(const cil::CImg<unsigned char>& mask, int num_classes) 
+{
+    cil::CImg<unsigned char> color_mask(mask.width(), mask.height(), 1, 3, 0);
+    cimg_forXY(mask, x, y) 
+    {
+        int label = mask(x, y);
+        // 在HSV颜色空间中平均分配颜色
+        float hue =  1.0f * label / num_classes;
+        float saturation = 1.0f;
+        float value = 1.0f;
+        // 将HSV颜色转换为RGB颜色
+        float r, g, b;
+        HSVtoRGB(hue, saturation, value, r, g, b);
+        color_mask(x, y, 0, 0) = r * 255;
+        color_mask(x, y, 0, 1) = g * 255;
+        color_mask(x, y, 0, 2) = b * 255;
+    }
+    return color_mask;
+}
+
+// 将彩色的mask叠加到原图上
+void overlay_mask(cil::CImg<unsigned char>& img, const cil::CImg<unsigned char>& color_mask) 
+{
+    img.draw_image(0, 0, 0, 0, color_mask, 0.1f);
+}
+
 int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )> func, int camera_id)
 {
     
     int cnt = 0;
-    cil::CImg<unsigned char> img("../data/cat.bmp");
+    cil::CImg<unsigned char> img(pic_path.c_str());
     // img.display("My Image");
     // int camera_id = 0;
     while (!flag)
@@ -103,7 +152,7 @@ int main()
     signal(SIGINT, signalHandler);  
     std::cout<< "Hello, World!\n" ;
 
-    std::string cfg_file = "../configure/pipeline_sample_classification.json";
+    std::string cfg_file = "../configure/pipeline_sample_segment.json";
     // std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
@@ -130,7 +179,7 @@ int main()
     }
 
     int frame_id = 0;
-    cil::CImg<unsigned char> img("../data/cat.bmp");
+    cil::CImg<unsigned char> img(pic_path.c_str());
     unsigned char red[] = { 255, 0, 0 };  
     while(!flag)
     {
@@ -161,6 +210,15 @@ int main()
                 std::cout << "cat: " << synset[label].second << "  " << score << std::endl;
 
                 // img.draw_text(50, 50, synset[label].second, red, 0, 1);
+            }
+            else if(data->data_name == "SegmentResult")
+            {
+                std::shared_ptr<const ZJVIDEO::SegmentResultData> result = std::dynamic_pointer_cast<const ZJVIDEO::SegmentResultData>(data);
+                cil::CImg<unsigned char> mask(result->mask->width, result->mask->height, 1, 1, 0);
+                memcpy(mask.data(), result->mask->data->cpu_data(), mask.size()*sizeof(unsigned char));
+                cil::CImg<unsigned char> color_mask = create_color_mask(mask, 20);
+                overlay_mask(img, color_mask);
+
             }
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

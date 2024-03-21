@@ -1,0 +1,75 @@
+{
+    "comment":
+    {
+        "device":["CPU","GPU"],
+        "backend":["ONNX"],
+        "resize_type":["Stretch", "LetterBox", "Fill"],
+        "interp_mode":["Linear","Nearest","Cubic"],
+        "channel_format":["RGB","BGR"],
+        "dtype":["float32","uint8"],
+        "input_format":["NCHW","NHWC"],
+        "preprocess":["ImageType","VideoType","FeatureType"],
+        "postprocess":["YoloGrid","...comsumer-defined..."]
+    },
+    "model": 
+    {
+        "version": "1.0",
+        "model_name": "fcn-resnet50-11",
+        "encrypt": false,
+        "max_batch_size" : 4,
+        "device" : "CPU",
+        "model_file": "../models/fcn/fcn-resnet50-11.onnx",
+        "weight_file": "../models/fcn/fcn-resnet50-11.onnx",        
+        "backend": "ONNX",
+        "dynamic_batch": false
+    },
+    "preprocess": 
+    {
+        "ImageType":
+        [
+            {
+                "output_name": "input",
+                "param":
+                {
+                    "resize_type": "Fill",
+                    "output_diims": [1,3,224,224],
+                    "output_format":"NCHW",
+                    "output_dtype": "float32",
+
+                    "interp_mode": "Linear",
+                    "letterbox_color": [114, 114, 114],
+                    "channel_format": "RGB",
+            
+                    "normalize": true,
+                    "mean": [123.7, 116.3, 103.5],
+                    "std": [58.4, 57.1, 57.4]                    
+                }
+            }
+        ],
+        "VideoType":
+        [],
+        "FeatureType":
+        []
+    },
+
+    "infer": 
+    {
+        "input_names": ["input"],
+        "input_dims": [[1,3,224,224]],
+        "output_names": ["out"]
+    },
+
+    "postprocess": 
+    {
+        "Segment" :
+        {
+            "input_names":["out"],
+            "output_data_type": "SegmentResult",
+            "main_category":[],
+            "sub_category":[],
+            "num_classes": 20,
+            "confidence_threshold": 0.01
+        }        
+    }
+    
+}

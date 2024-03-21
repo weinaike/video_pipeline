@@ -3,7 +3,7 @@
 #define _ZJ_VIDEO_PIPELINE_H
 
 // #define ELPP_EXPERIMENTAL_ASYNC
-#include "../logger/easylogging++.h"
+#include "logger/easylogging++.h"
 
 INITIALIZE_EASYLOGGINGPP
 
@@ -13,7 +13,7 @@ INITIALIZE_EASYLOGGINGPP
 #include <atomic>
 #include <memory>
 #include <map>
-#include "../common/CommonDefine.h"
+#include "common/CommonDefine.h"
 
 
 #define PIPE_LOG "pipe"

@@ -1,7 +1,7 @@
 
 
 #include "InferNode.h"
-#include "../nlohmann/json.hpp"
+#include "nlohmann/json.hpp"
 
 namespace ZJVIDEO {
 

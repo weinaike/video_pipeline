@@ -1,7 +1,7 @@
 #ifndef __ZJV_POSTPROCESS_H__
 #define __ZJV_POSTPROCESS_H__
 #include "InferDefine.h"
-#include "../nlohmann/json.hpp"
+
 namespace ZJVIDEO
 {
     class PostProcessor

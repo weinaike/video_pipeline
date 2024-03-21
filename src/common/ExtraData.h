@@ -3,12 +3,9 @@
 #define __ZJV_EXTRASDATA_H__
 
 #include "BaseData.h"
-
+#include "FrameData.h"
 namespace ZJVIDEO
 {
-
-class FrameData;
-
     struct Rect
     {
         int x; // left
@@ -27,7 +24,9 @@ class FrameData;
         int label = -1;         // 网络输出标签
         int main_category;      // 标签系统的主类别
         int sub_category;       // 标签系统的子类别
-        int track_id = -1;
+        int track_id = -1;      // 跟踪ID
+        int instance_id;
+        std::shared_ptr<FrameData> mask;    // 实例分割掩码
     };
 
     struct DetectBoxCategory
@@ -39,7 +38,7 @@ class FrameData;
         float score;
     };
     
-
+    // 检测结果，实例分割结果
     class DetectResultData : public BaseData
     {
     public:
@@ -57,12 +56,26 @@ class FrameData;
     class ClassifyResultData : public BaseData
     {
     public:
-        explicit ClassifyResultData() : BaseData(ZJV_DATATYPE_DETECTRESULT)
+        explicit ClassifyResultData() : BaseData(ZJV_DATATYPE_CLASSIFYRESULT)
         {
             data_name = "ClassifyResult";
         }
         ~ClassifyResultData() override = default;
         std::vector<DetectBoxCategory> detect_box_categories;
+
+        virtual int append(std::shared_ptr<BaseData>& data_ptr) override;    
+    };
+    // 语义分割结果
+    class SegmentResultData : public BaseData
+    {
+    public:
+        explicit SegmentResultData() : BaseData(ZJV_DATATYPE_SEGMENTRESULT)
+        {
+            data_name = "SegmentResult";
+        }
+        ~SegmentResultData() override = default;
+        std::shared_ptr<FrameData> mask;
+        std::shared_ptr<FrameData> confidence_map;
 
         virtual int append(std::shared_ptr<BaseData>& data_ptr) override;    
     };

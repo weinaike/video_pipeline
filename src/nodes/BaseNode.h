@@ -8,8 +8,8 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-#include "../common/CommonDefine.h"
-#include "../logger/easylogging++.h"
+#include "common/CommonDefine.h"
+#include "logger/easylogging++.h"
 
 namespace ZJVIDEO {
 

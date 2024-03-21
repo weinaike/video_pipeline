@@ -1,7 +1,7 @@
 
 #include "YoloGridPostProcessor.h"
 
-#include "../../logger/easylogging++.h"
+#include "logger/easylogging++.h"
 #define YoloLOG "YoloGrid"
 
 namespace ZJVIDEO
@@ -10,6 +10,15 @@ YoloGridPostProcessor::YoloGridPostProcessor()
 {
     el::Loggers::getLogger(YoloLOG);
     m_post_type = "YoloGrid";
+    m_input_names.clear();
+    m_output_data_type = "";
+    m_main_categories.clear();
+    m_sub_categories.clear();
+
+    // private
+    m_num_classes = 0;
+    m_conf_thres = 0.5;
+    m_iou_thres = 0.5;
 }
 
 int YoloGridPostProcessor::parse_json(const nlohmann::json & j)
@@ -54,6 +63,8 @@ int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::sha
 
         const float * output_data = outputs[i].cpu_data();
         std::vector<int> output_shape = outputs[i].shape();
+        assert(output_shape.size() == 3);
+        
         int bs = output_shape[0];
         int num = output_shape[1];
         int dim = output_shape[2];

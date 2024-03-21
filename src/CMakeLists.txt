@@ -2,8 +2,7 @@
 # 提取当前目录及其子目录下所有文件，形成源文件列表
 
 # 设置头文件路径
-include_directories(common)
-include_directories(src)
+include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
 file(GLOB_RECURSE SRC_LIST "*.cpp" "*.h" "*.cc" "*.hpp" )

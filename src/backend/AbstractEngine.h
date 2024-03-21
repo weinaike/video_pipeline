@@ -5,9 +5,9 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "NodeParam.h"
-#include "ThreadSaveQueue.h"
-#include "StatusCode.h"
+#include "common/NodeParam.h"
+#include "common/ThreadSaveQueue.h"
+#include "common/StatusCode.h"
 #include <map>
 
 

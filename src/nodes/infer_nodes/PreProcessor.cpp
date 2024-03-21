@@ -1,7 +1,7 @@
 #include "PreProcessor.h"
-#include "../../logger/easylogging++.h"
+#include "logger/easylogging++.h"
 
-#include "../../CImg/CImg.h"
+#include "CImg/CImg.h"
 
 #define PRELOG "PreProc"
 using namespace cimg_library;
@@ -190,9 +190,9 @@ int PreProcessor::parse_json(const nlohmann::json & j)
             }
 
             std::string dtype = j["param"]["output_dtype"];
-            if(dtype == "float32") m_param.dtype = ZJV_PREPROCESS_OUTPUT_DTYPE_FLOAT32;
-            else if(dtype == "uint8") m_param.dtype = ZJV_PREPROCESS_OUTPUT_DTYPE_UINT8;
-            else m_param.dtype = ZJV_PREPROCESS_OUTPUT_DTYPE_UNKNOWN;
+            if(dtype == "float32") m_param.dtype = ZJV_PIXEL_DTYPE_FLOAT32;
+            else if(dtype == "uint8") m_param.dtype = ZJV_PIXEL_DTYPE_UINT8;
+            else m_param.dtype = ZJV_PIXEL_DTYPE_UNKNOWN;
 
             if(m_param.dtype == 0 ) 
             {
@@ -260,12 +260,15 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
     assert(input_data != nullptr);
     int count = param.resize_channel * param.resize_height * param.resize_width;
 
+    
     for(int i = 0; i < frame_rois.size(); i++)
     {
+        frame_rois[i]->pre_process = &param;
+        frame_rois[i]->resize_type = param.resize_type;
+        frame_rois[i]->input_width = param.resize_width;
+        frame_rois[i]->input_height = param.resize_height;
         if(param.resize_type == ZJV_PREPROCESS_RESIZE_STRETCH)
         {
-            frame_rois[i]->input_width = param.resize_width;
-            frame_rois[i]->input_height = param.resize_height;
             frame_rois[i]->scale_x = (float)param.resize_width/frame_rois[i]->roi.width;
             frame_rois[i]->scale_y = (float)param.resize_height/ frame_rois[i]->roi.height;
             frame_rois[i]->padx = 0;
@@ -273,6 +276,7 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
         }
         else if(param.resize_type == ZJV_PREPROCESS_RESIZE_LETTERBOX)
         {
+
             float scale = std::min( (float)param.resize_width/frame_rois[i]->roi.width, 
                                     (float)param.resize_height/ frame_rois[i]->roi.height);
             frame_rois[i]->scale_x = scale;

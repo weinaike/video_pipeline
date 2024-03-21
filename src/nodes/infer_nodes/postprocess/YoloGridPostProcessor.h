@@ -1,7 +1,7 @@
 #ifndef __ZJV_YOLOGRIDPOSTPROCESS_H__
 #define __ZJV_YOLOGRIDPOSTPROCESS_H__
 
-#include "PostProcessor.h"
+#include "../PostProcessor.h"
 
 namespace ZJVIDEO
 {
