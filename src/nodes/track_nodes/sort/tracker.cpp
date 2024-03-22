@@ -189,7 +189,7 @@ namespace ZJVIDEO
         /*** Delete lose tracked tracks ***/
         for (auto it = tracks_.begin(); it != tracks_.end();)
         {
-            if (it->second.coast_cycles_ > kMaxCoastCycles)
+            if (it->second.coast_cycles_ > m_kMaxCoastCycles)
             {
                 it = tracks_.erase(it);
             }
