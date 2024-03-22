@@ -6,14 +6,6 @@
 #include "FrameData.h"
 namespace ZJVIDEO
 {
-    struct Rect
-    {
-        int x; // left
-        int y; // top
-        int width;
-        int height;
-    };
-
     struct DetectBox
     {
         float x1 = -1;

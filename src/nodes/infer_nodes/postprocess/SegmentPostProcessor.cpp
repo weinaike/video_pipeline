@@ -69,7 +69,7 @@ namespace ZJVIDEO
             
             int bs = output_shape[0];
             int num = output_shape[1];
-            assert(num == m_num_classes + 1);
+            assert(num == m_num_classes);
 
             int height = output_shape[2];
             int width = output_shape[3];

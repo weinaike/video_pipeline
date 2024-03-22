@@ -152,8 +152,8 @@ int main()
     signal(SIGINT, signalHandler);  
     std::cout<< "Hello, World!\n" ;
 
-    std::string cfg_file = "../configure/pipeline_sample_segment.json";
-    // std::string cfg_file = "../configure/pipeline_sample_infer.json";
+    // std::string cfg_file = "../configure/pipeline_sample_segment.json";
+    std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
 

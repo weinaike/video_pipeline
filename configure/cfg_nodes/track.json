@@ -1,0 +1,7 @@
+{
+    "comment":"// 多目标跟踪的配置参数",
+    "version": "1.0",
+    "max_track_num": 10,
+    "min_track_score": 0.3
+    
+}

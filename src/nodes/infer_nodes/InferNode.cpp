@@ -1,7 +1,7 @@
 
 
 #include "InferNode.h"
-#include "nlohmann/json.hpp"
+
 
 namespace ZJVIDEO {
 
@@ -257,7 +257,7 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
                     std::shared_ptr<const DetectResultData> roi_data = std::dynamic_pointer_cast<const DetectResultData>(in_metas_batch[i][j]);
                     for(int k = 0; k < roi_data->detect_boxes.size(); k++)
                     {
-                        Rect roi = {0};
+                        Rect roi;
                         roi.x = roi_data->detect_boxes[k].x1;
                         roi.y = roi_data->detect_boxes[k].y1;
                         roi.width = (roi_data->detect_boxes[k].x2 - roi_data->detect_boxes[k].x1)/2*2;

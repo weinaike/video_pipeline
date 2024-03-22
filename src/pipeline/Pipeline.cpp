@@ -602,7 +602,7 @@ int Pipeline::show_debug_info()
         node.second->get_control_info(base);
         str += node.first;
         str +="[";
-        str +=std::to_string(data->get_fps());
+        str +=std::to_string((int)data->get_fps());
         str +="] ";
     }
     str += "| ";

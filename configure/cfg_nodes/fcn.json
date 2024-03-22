@@ -67,7 +67,7 @@
             "output_data_type": "SegmentResult",
             "main_category":[],
             "sub_category":[],
-            "num_classes": 20,
+            "num_classes": 21,
             "confidence_threshold": 0.01
         }        
     }

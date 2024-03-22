@@ -16,5 +16,5 @@
 #include "FlowMetaData.h"
 #include "ExtraData.h"
 #include "Function.h"
-
+#include "Shape.h"
 #endif  // ZJVIDEO_BASEDATA_H
