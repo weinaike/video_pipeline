@@ -14,7 +14,7 @@ namespace ZJVIDEO
     class Tracker
     {
     public:
-        Tracker();
+        Tracker(int max_coast_cycles = 5, float iou_threshold = 0.3);
         ~Tracker() = default;
 
         void Run(const std::vector<Rect> &detections);
@@ -47,7 +47,8 @@ namespace ZJVIDEO
 
         // Assigned ID for each bounding box
         int id_;
-        int m_kMaxCoastCycles = 3;
+        int kMaxCoastCycles_;
+        float kIOUthreshold_;
     };
 
 } // namespace ZJVIDEO

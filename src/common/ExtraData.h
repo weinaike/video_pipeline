@@ -4,21 +4,37 @@
 
 #include "BaseData.h"
 #include "FrameData.h"
+#include "Shape.h"
 namespace ZJVIDEO
 {
+
+    enum TrackStatus
+    {
+        ZJV_TRACK_STATUS_INIT = 0,
+        ZJV_TRACK_STATUS_DETECTED = 1,
+        ZJV_TRACK_STATUS_PREDICTED = 2,
+        ZJV_TRACK_STATUS_LOST = 3,
+    };
+
+
     struct DetectBox
     {
-        float x1 = -1;
-        float y1 = -1;
-        float x2 = -1;
-        float y2 = -1;
-        float score = -1;       // 置信度
-        int label = -1;         // 网络输出标签
+        // 基本检测框信息
+        float x1;
+        float y1;
+        float x2;
+        float y2;
+        float score;       // 置信度
+        int label;         // 网络输出标签
         int main_category;      // 标签系统的主类别
         int sub_category;       // 标签系统的子类别
-        int track_id = -1;      // 跟踪ID
+        // 实例分割相关参数
         int instance_id;
         std::shared_ptr<FrameData> mask;    // 实例分割掩码
+        // 跟踪相关参数
+        int track_id;      // 跟踪ID
+        int track_status;  // 跟踪状态  TrackStatus
+        std::vector<Rect> track_boxes; // 跟踪框
     };
 
     struct DetectBoxCategory

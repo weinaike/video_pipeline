@@ -3,7 +3,8 @@
 namespace ZJVIDEO
 {
 
-    Tracker::Tracker()
+    Tracker::Tracker(int max_coast_cycles, float iou_threshold):
+        kMaxCoastCycles_(max_coast_cycles), kIOUthreshold_(iou_threshold)
     {
         id_ = 0;
     }
@@ -167,7 +168,7 @@ namespace ZJVIDEO
         // return values - matched, unmatched_det
         if (!detections.empty())
         {
-            AssociateDetectionsToTrackers(detections, tracks_, matched, unmatched_det);
+            AssociateDetectionsToTrackers(detections, tracks_, matched, unmatched_det, kIOUthreshold_);
         }
 
         /*** Update tracks with associated bbox ***/
@@ -189,7 +190,7 @@ namespace ZJVIDEO
         /*** Delete lose tracked tracks ***/
         for (auto it = tracks_.begin(); it != tracks_.end();)
         {
-            if (it->second.coast_cycles_ > m_kMaxCoastCycles)
+            if (it->second.coast_cycles_ > kMaxCoastCycles_)
             {
                 it = tracks_.erase(it);
             }

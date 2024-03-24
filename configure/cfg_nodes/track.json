@@ -1,7 +1,9 @@
 {
     "comment":"// 多目标跟踪的配置参数",
     "version": "1.0",
+    "main_category": 0,
+    "sub_category": 0,
     "max_track_num": 10,
-    "min_track_score": 0.3
-    
+    "max_track_length": 10,
+    "min_confidence": 0.0        
 }
