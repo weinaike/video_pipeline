@@ -76,16 +76,7 @@ namespace ZJVIDEO
     int TrackNode::process_single(const std::vector<std::shared_ptr<const BaseData>> &in_metas,
                                   std::vector<std::shared_ptr<BaseData>> &out_metas)
     {
-        CLOG(INFO, TrkLOG) << "TrackNode::process_single";
-
-        if (in_metas.size() < 2)
-        {
-            CLOG(ERROR, TrkLOG) << "in_metas size < 2";
-            return ZJV_STATUS_ERROR;
-        }
-
         std::shared_ptr<const FrameData> frame_data;
-
         std::vector<Rect> rois;
         for (int i = 0; i < in_metas.size(); i++)
         {
@@ -121,15 +112,18 @@ namespace ZJVIDEO
         if(rois.size() == 0)
         {
             CLOG(INFO, TrkLOG) << "no roi to track";
-            return ZJV_STATUS_OK;
+            // std::shared_ptr<DetectResultData> out_data = std::make_shared<DetectResultData>();
+            // out_data->data_type = ZJV_DATATYPE_DETECTRESULT_TRACK;
+            // return ZJV_STATUS_OK;
         }
 
         m_tracker->Run(rois);
-        std::map<int, Track>  tracks= m_tracker->GetTracks();
+        std::map<int, Track>  tracks = m_tracker->GetTracks();
         
 
         // 生成输出数据
         std::shared_ptr<DetectResultData> out_data = std::make_shared<DetectResultData>();
+        out_data->data_type = ZJV_DATATYPE_DETECTRESULT_TRACK;
         std::shared_ptr<DetectResultData> in_data = std::make_shared<DetectResultData>();
         for (auto &track : tracks)
         {
@@ -194,4 +188,8 @@ namespace ZJVIDEO
         return 0;
     }
 
-}
+
+REGISTER_NODE_CLASS(Track)
+
+}   // namespace ZJVIDEO
+

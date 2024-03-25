@@ -305,9 +305,30 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
         Rect roi = frame_roi->roi;
         // 2. 转为CIimg格式，格式为RRRRRRRRRRGGGGGGGGGGBBBBBBBBBBBBB，unsigned char
         const unsigned char* data = (unsigned char*)frame_data->data->cpu_data();
-        CImg<unsigned char> img(frame_data->width, frame_data->height, 1, frame_data->channel);            
-        assert(frame_data->data->size() == img.size());
-        memcpy(img.data(), data, img.size());
+
+        CImg<unsigned char> img ;
+        if(frame_data->format == ZJV_IMAGEFORMAT_RGB24)
+        {
+            img = CImg<unsigned char>(frame_data->channel, frame_data->width, frame_data->height, 1);
+            assert(frame_data->data->size() == img.size());
+            memcpy(img.data(), data, img.size());
+            img.permute_axes("yzcx");
+        }
+        else if(frame_data->format == ZJV_IMAGEFORMAT_PRGB24)
+        {
+            img = CImg<unsigned char>(frame_data->width, frame_data->height, 1, frame_data->channel);
+            assert(frame_data->data->size() == img.size());
+            memcpy(img.data(), data, img.size());
+        }
+        else
+        {
+            CLOG(ERROR, PRELOG) << "frame_data format not supported now, only support RGB24 and PRGB24";
+            assert(0);
+        }
+        
+
+
+
         // 3. 裁剪
         CImg<unsigned char> roi_img = img.get_crop(roi.x, roi.y, roi.x+roi.width - 1, roi.y+roi.height - 1);
 

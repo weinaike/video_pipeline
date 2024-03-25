@@ -23,6 +23,7 @@ enum BaseDataType {
     ZJV_DATATYPE_FLOW,     // 流数据
     ZJV_DATATYPE_EVENT,    // 事件数据
     ZJV_DATATYPE_DETECTRESULT,    //检测结果，实例分割结果
+    ZJV_DATATYPE_DETECTRESULT_TRACK,    //跟踪结果
     ZJV_DATATYPE_CLASSIFYRESULT,  //分类结果
     ZJV_DATATYPE_SEGMENTRESULT,   //语义分割结果
     ZJV_DATATYPE_MAX

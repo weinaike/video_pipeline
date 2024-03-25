@@ -6,12 +6,20 @@
 #include <csignal>
 #include "CImg/CImg.h"
 
+#include "opencv2/videoio.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#define use_opencv 
+
 volatile std::sig_atomic_t flag = 0;
 void signalHandler(int signum) {
     flag = 1;
 }
 
 std::string pic_path = "../data/cat.bmp";
+std::string video_path = "../data/video/person_tracker.flv";
+
 
 std::string imagenet_file = "../data/synset.txt";
 
@@ -102,32 +110,64 @@ void overlay_mask(cil::CImg<unsigned char>& img, const cil::CImg<unsigned char>&
 }
 
 int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )> func, int camera_id)
-{
-    
-    int cnt = 0;
-    cil::CImg<unsigned char> img(pic_path.c_str());
-    // img.display("My Image");
-    // int camera_id = 0;
-    while (!flag)
-    {
-        std::this_thread::sleep_for(std::chrono::milliseconds(40));
-        std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>();
+{   
+    #ifdef use_opencv
+        cv::VideoCapture cap(video_path);
+        int cnt = 0;
+        while (!flag)
+        {
+            cv::Mat img;
+            cap >> img;
+            if (img.empty()) {
+                cap.set(cv::CAP_PROP_POS_FRAMES, 0);
+                continue;
+                // break;
+            }
+            cv::Mat rz ;
+            cv::resize(img,rz,cv::Size(640,480));           
+            cv::cvtColor(rz, rz, cv::COLOR_BGR2RGB);
+            // cv::imshow("img", rz);
+            // std::cout<< "rz.cols: " << rz.cols << " rz.rows: " << rz.rows << " rz.channels: " << rz.channels() 
+            //         << " rz.step" << rz.step << " img.isContinuous() " << img.isContinuous()<< std::endl;
+            // cv::waitKey(1000);
 
-        frame->width = img.width();
-        frame->width = img.width();
-        frame->height = img.height();
-        frame->channel = img.spectrum();
-        frame->depth = 1;
-        frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_PRGB24;
-        frame->fps = 25;      
-        frame->camera_id = camera_id;
-        frame->frame_id = cnt;       
-        frame->data = std::make_shared<ZJVIDEO::SyncedMemory>(img.size()); 
-        std::memcpy(frame->data->mutable_cpu_data(), img.data(), img.size());
-        cnt++;
-        func(frame);
-        
-    }
+            std::this_thread::sleep_for(std::chrono::milliseconds(60));
+            std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>(
+                rz.cols, rz.rows, rz.channels());
+
+            frame->fps = 25;      
+            frame->camera_id = camera_id;
+            frame->frame_id = cnt;       
+            frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_RGB24;
+            std::memcpy(frame->data->mutable_cpu_data(), rz.data, frame->data->size());
+            cnt++;
+            func(frame);
+            
+        }
+    #else
+        int cnt = 0;
+        cil::CImg<unsigned char> img(pic_path.c_str());
+        while (!flag)
+        {
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(40));
+            std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>();
+            frame->width = img.width();
+            frame->stride = img.width();
+            frame->height = img.height();
+            frame->channel = img.spectrum();
+            frame->depth = 1;
+            frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_PRGB24;
+            frame->fps = 25;      
+            frame->camera_id = camera_id;
+            frame->frame_id = cnt;       
+            frame->data = std::make_shared<ZJVIDEO::SyncedMemory>(img.size()); 
+            std::memcpy(frame->data->mutable_cpu_data(), img.data(), img.size());
+            cnt++;
+            func(frame);
+            
+        }
+    #endif
     
     return 0;
 }
@@ -153,8 +193,8 @@ int main()
     std::cout<< "Hello, World!\n" ;
 
     // std::string cfg_file = "../configure/pipeline_sample_segment.json";
-    std::string cfg_file = "../configure/pipeline_sample_infer.json";
-    // std::string cfg_file = "../configure/pipeline_sample.json";
+    // std::string cfg_file = "../configure/pipeline_sample_infer.json";
+    std::string cfg_file = "../configure/pipeline_sample.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
     std::cout<< "pipeline.init()\n" ;
@@ -179,13 +219,51 @@ int main()
     }
 
     int frame_id = 0;
-    cil::CImg<unsigned char> img(pic_path.c_str());
+    
     unsigned char red[] = { 255, 0, 0 };  
+    unsigned char blue[] = { 0, 0, 255 };  
+    unsigned char white[] = { 255, 255, 255 };  
     while(!flag)
     {
         std::vector< std::shared_ptr<const ZJVIDEO::BaseData> >datas;
         datas.clear();
         pipeline.get_output_data(datas);
+
+        if(datas.size() == 0)
+        {
+            continue;
+        }
+
+        cil::CImg<unsigned char> img;
+        for(const auto & data :datas)
+        {
+            if(data->data_name == "Frame")
+            {                
+                std::shared_ptr<const ZJVIDEO::FrameData> frame = std::dynamic_pointer_cast<const ZJVIDEO::FrameData>(data);
+                if(frame->format == ZJVIDEO::ZJV_IMAGEFORMAT_RGB24)
+                {
+                    img = cil::CImg<unsigned char>(frame->channel, frame->width, frame->height, 1);
+                    std::memcpy(img.data(), frame->data->cpu_data(), img.size());
+                    img.permute_axes("yzcx");
+                }
+                else if(frame->format == ZJVIDEO::ZJV_IMAGEFORMAT_PRGB24)
+                {
+                    img = cil::CImg<unsigned char>(frame->width, frame->height, 1, frame->channel);
+                    memcpy(img.data(), frame->data->cpu_data(), img.size());
+                }
+                else
+                {
+                    img = cil::CImg<unsigned char>(frame->width, frame->height, 1, frame->channel);
+                    memcpy(img.data(), frame->data->cpu_data(), img.size());
+                }
+        
+                frame_id = frame->frame_id;
+                img.draw_text(50, 50, std::to_string(frame_id).c_str(), white, 0, 1);
+                // std::cout<< frame->width << " " << frame->height << " " << frame->channel << std::endl;
+            }
+        }
+
+
         for(const auto & data :datas)
         {
             if(data->data_name == "DetectResult")
@@ -193,12 +271,27 @@ int main()
                 std::shared_ptr<const ZJVIDEO::DetectResultData> detect_result = std::dynamic_pointer_cast<const ZJVIDEO::DetectResultData>(data);
                 for(int i = 0; i < detect_result->detect_boxes.size(); i++)
                 {
-                    std::cout << " detect_boxes: " << detect_result->detect_boxes[i].x1 << " " << detect_result->detect_boxes[i].y1
-                        << " " << detect_result->detect_boxes[i].x2 << " " << detect_result->detect_boxes[i].y2 << std::endl;
+                    // std::cout << " detect_boxes: " << detect_result->detect_boxes[i].x1 << " " << detect_result->detect_boxes[i].y1
+                    //     << " " << detect_result->detect_boxes[i].x2 << " " << detect_result->detect_boxes[i].y2 << std::endl;
                     img.draw_rectangle(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y1,
                         detect_result->detect_boxes[i].x2, detect_result->detect_boxes[i].y2, red,1.0f, ~0U);
                     img.draw_text(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y1, 
                         coco_labels[detect_result->detect_boxes[i].label], red, 0, 1);
+
+                    if(detect_result->data_type == ZJVIDEO::ZJV_DATATYPE_DETECTRESULT_TRACK)
+                    {
+                        img.draw_rectangle(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y1,
+                                detect_result->detect_boxes[i].x2, detect_result->detect_boxes[i].y2, blue,1.0f, ~0U);
+                        int id = detect_result->detect_boxes[i].track_id;
+                        img.draw_text(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y2, std::to_string(id).c_str(), blue, 0, 1);
+                        for(int j = 0; j < detect_result->detect_boxes[i].track_boxes.size(); j++)
+                        {
+                            int centerx = detect_result->detect_boxes[i].track_boxes[j].x + detect_result->detect_boxes[i].track_boxes[j].width/2;
+                            int centery = detect_result->detect_boxes[i].track_boxes[j].y + detect_result->detect_boxes[i].track_boxes[j].height/2;
+                            img.draw_point(centerx, centery, blue);                                
+                        }
+
+                    }
                 }
             }
             else if(data->data_name == "ClassifyResult")
@@ -221,16 +314,28 @@ int main()
 
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         pipeline.show_debug_info();
         img.save("../data/result.bmp");
         // cil::CImgDisplay disp(img,"result");
+        // disp.wait(40);
         // while (!disp.is_closed()) {
         //     disp.wait();
         //     if (disp.is_key()) {
         //         std::cout << "Key pressed: " << disp.key() << std::endl;
         //     }
         // }
+
+        #ifdef use_opencv
+            int w = img.width();
+            int h = img.height();
+            int c = img.spectrum();
+            img.permute_axes("cxyz");
+            cv::Mat cv_img(h, w, CV_8UC3, img.data());
+            cv::cvtColor(cv_img, cv_img, cv::COLOR_RGB2BGR);
+            cv::imshow("result", cv_img);
+            cv::waitKey(1);
+        #endif
 
     }
 
