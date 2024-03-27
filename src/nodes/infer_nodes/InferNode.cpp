@@ -2,7 +2,6 @@
 
 #include "InferNode.h"
 
-
 namespace ZJVIDEO {
 
 #define INFER_LOG "InferNode"
@@ -12,6 +11,7 @@ InferNode::InferNode(const NodeParam & param) : BaseNode(param)
     el::Loggers::getLogger(INFER_LOG);
     
     parse_configure(param.m_cfg_file);
+
     init();
     if(m_engine_param.m_max_batch_size > 8)
     {
@@ -44,11 +44,10 @@ int InferNode::parse_configure(std::string cfg_file)
             m_engine_param.m_model_name = j["model"]["model_name"];
             
             // 字符串转换为枚举类型
-            std::string device = j["model"]["device"];
-            if(device == "CPU") m_engine_param.m_device = ZJV_DEVICE_CPU;
-            else if(device == "GPU") m_engine_param.m_device = ZJV_DEVICE_GPU;
-            else m_engine_param.m_device = ZJV_DEVICE_CPU;
-
+            m_engine_param.m_device_id = j["model"]["device"];
+            m_engine_param.m_int8 = j["model"]["enable_int8"];
+            m_engine_param.m_fp16 = j["model"]["enable_fp16"];
+            
             m_engine_param.m_dynamic = j["model"]["dynamic_batch"];
             m_engine_param.m_encrypt = j["model"]["encrypt"];
             m_engine_param.m_engine_type = j["model"]["backend"];   // 这个最重要
@@ -91,19 +90,12 @@ int InferNode::parse_configure(std::string cfg_file)
         }
     }
     
+    m_device_id = m_engine_param.m_device_id;
     // 2. 解析出 preprocess
     int lib_type = ZJV_PREPROCESS_LIB_CIMG;
-    if(m_engine_param.m_device == ZJV_DEVICE_CPU)
-    {
-        lib_type = ZJV_PREPROCESS_LIB_CIMG;
-    }
-    else if(m_engine_param.m_device == ZJV_DEVICE_GPU)
+    if(m_engine_param.m_device_id >= 0 )
     {
         lib_type = ZJV_PREPROCESS_LIB_CUDA;
-    }
-    else
-    {
-        CLOG(ERROR, INFER_LOG) << "device not supported now";
     }
 
     if(j.contains("preprocess"))
@@ -113,7 +105,7 @@ int InferNode::parse_configure(std::string cfg_file)
             nlohmann::json image_types = j["preprocess"]["ImageType"];
             for(auto & image_type: image_types)
             {
-                std::shared_ptr<PreProcessor> img_preproc = std::make_shared<PreProcessor>(lib_type);
+                std::shared_ptr<PreProcessor> img_preproc = std::make_shared<PreProcessor>(lib_type, m_device_id);
                 img_preproc->parse_json(image_type);
                 PreProcessParameter param = img_preproc->get_param();
                 m_img_preprocs.push_back(img_preproc);
@@ -191,6 +183,11 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
     std::vector<std::shared_ptr<FrameROI>> frame_rois;
     prepare(in_metas_batch, frame_rois);
 
+    float pre_time = 0;
+    float infer_time = 0;
+    float post_time = 0;
+
+
     for(int i = 0; i < frame_rois.size(); i += m_max_batch_size)
     {
         std::vector<std::shared_ptr<FrameROI>> batch_frame_rois;
@@ -200,14 +197,35 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
             if((i+j) >= frame_rois.size()) break;
             batch_frame_rois.push_back(frame_rois[i+j]);
         }
+
+        auto t1 = std::chrono::system_clock::now();
         std::vector<FBlob> inputs;
         preprocess(batch_frame_rois, inputs);
+        auto t2 = std::chrono::system_clock::now();
         std::vector<FBlob> outputs;
         infer(inputs, outputs);
+        auto t3 = std::chrono::system_clock::now();
         postprocess(outputs, batch_frame_rois);
+        auto t4 = std::chrono::system_clock::now();
+
+        std::chrono::duration<double> dt1 = t2 - t1; // Calculate elapsed time
+        std::chrono::duration<double> dt2 = t3 - t2; // Calculate elapsed time
+        std::chrono::duration<double> dt3 = t4 - t3; // Calculate elapsed time
+        pre_time +=  dt1.count() ; 
+        infer_time +=  dt2.count() ;
+        post_time +=  dt3.count() ;
     }
 
+    auto t5 = std::chrono::system_clock::now();
     summary(frame_rois, out_metas_batch);
+    auto t6 = std::chrono::system_clock::now();
+    std::chrono::duration<double> dt4 = t6 - t5; // Calculate elapsed time
+
+    CLOG(INFO, INFER_LOG) <<"cost time: size["<< frame_rois.size()<< "] preprocess: " << pre_time/frame_rois.size() * 1000 << 
+                            "ms infer: " << infer_time/frame_rois.size() * 1000 << 
+                            "ms postprocess: " << post_time/frame_rois.size() * 1000<< 
+                            "ms summary: " << dt4.count() * 1000 << "ms";
+
     return ZJV_STATUS_OK;
 }
 
@@ -298,27 +316,9 @@ int InferNode::preprocess(std::vector<std::shared_ptr<FrameROI>>  &frame_rois, s
 }
 int InferNode::infer(std::vector<FBlob> & inputs, std::vector<FBlob> & outputs)
 {   
-    std::vector<void*> ins;
-    std::vector<std::vector<int>> input_shape;
-    for(int i = 0; i < inputs.size(); i++)
-    {
-        ins.push_back(inputs[i].mutable_cpu_data());
-        input_shape.push_back(inputs[i].shape());
-    }    
-    std::vector<std::vector<float>> outs;
-    std::vector<std::vector<int>> outputs_shape;
 
-    m_engine->forward(ins, input_shape, outs, outputs_shape); 
-
-    for(int i = 0; i < outs.size(); i++)
-    {
-        FBlob output_blob(outputs_shape[i]);
-        output_blob.name_ = m_engine_param.m_output_node_name[i];
-        float * output_data = output_blob.mutable_cpu_data();
-        std::memcpy(output_data, outs[i].data(), outs[i].size() * sizeof(float));
-        outputs.push_back(output_blob);
-    }
-
+    m_engine->forward(inputs, outputs); 
+    
     return ZJV_STATUS_OK;
 
 }

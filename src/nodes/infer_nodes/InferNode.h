@@ -55,6 +55,7 @@ protected:
     std::vector<std::shared_ptr<PreProcessor>>      m_img_preprocs; 
     std::vector<PreProcessParameter>                m_img_preproc_params; 
     std::vector<std::shared_ptr<PostProcessor>>     m_postprocess;
+    int                                             m_device_id;
 
 
 }; // class InferNode

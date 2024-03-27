@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 project(VideoPipeline)
 
+#设置宏
+add_definitions(-DEnable_ONNX)
+
 set(CMAKE_CXX_STANDARD 11)
 find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
-# OPTION(ENABLE_CUDA "使用CUDA,TensorRT" OFF)
-# OPTION(ENABLE_TENSORRT "使用TensorRT" OFF)
+OPTION(ENABLE_CUDA "使用CUDA,TensorRT" ON)
+OPTION(ENABLE_TENSORRT "使用TensorRT" ON)
 # OPTION(ENABLE_HWCODEC "使用硬件编解码能力" OFF)
 find_package(OpenCV REQUIRED)
 
@@ -27,14 +30,16 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 # 基础代码依赖配置
 # include(${CMAKE_SOURCE_DIR}/cmakes/base.cmake)
 
-# if (ENABLE_CUDA)
-#     # CUDA依赖配置
-#     include(${CMAKE_SOURCE_DIR}/cmake/cuda.cmake)
-# endif ()
-# if (ENABLE_TENSORRT)
-#     # TensorRT依赖配置
-#     include(${CMAKE_SOURCE_DIR}/cmake/tensorrt.cmake)
-# endif ()
+if (ENABLE_CUDA)
+    # CUDA依赖配置
+    include(${CMAKE_SOURCE_DIR}/cmakes/cuda.cmake)
+    add_definitions(-DEnable_CUDA)
+endif ()
+if (ENABLE_TENSORRT)
+    # TensorRT依赖配置
+    include(${CMAKE_SOURCE_DIR}/cmakes/tensorrt.cmake)
+    add_definitions(-DEnable_TRT)
+endif ()
 
 
 add_subdirectory(src)
@@ -48,6 +53,5 @@ add_executable(demo demo/main.cpp)
 link_directories(${CMAKE_SOURCE_DIR}/libs)
 # link_directories(/home/wnk/code/software/onnxruntime-linux-x64-1.17.1/lib)
 # target_link_libraries(demo onnxruntime)
-target_link_libraries(demo zj_pipe ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread ${X11_LIBRARIES} ${OpenCV_LIBS})
 
-
+target_link_libraries(demo zj_pipe ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread ${X11_LIBRARIES} ${OpenCV_LIBS} ${TRT_LIBS} ${CUDA_LIBS} ${CUDNN_LIBS})

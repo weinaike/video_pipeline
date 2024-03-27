@@ -24,12 +24,15 @@ namespace ZJVIDEO
         explicit SyncedMemory(size_t size, void *ptr, void *gpu_ptr);
         // 拷贝构造函数
         SyncedMemory(const SyncedMemory &other);
+        // SyncedMemory& operator=(const SyncedMemory &other) = delete;
         ~SyncedMemory();
         const void *cpu_data();
         const void *gpu_data();
         void *mutable_cpu_data();
         void *mutable_gpu_data();
         size_t size() const { return size_; }
+        int set_device_id(int device_id);
+        int get_device_id() const { return device_; }
 
     private:
         void to_cpu();

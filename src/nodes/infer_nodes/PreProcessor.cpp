@@ -107,7 +107,8 @@ static int Cimg_normalize(CImg<float> & img, int dtype, std::vector<float> mean,
 }
 
 
-PreProcessor::PreProcessor(int lib_type = ZJV_PREPROCESS_LIB_CIMG): m_lib_type(lib_type)
+PreProcessor::PreProcessor(int lib_type = ZJV_PREPROCESS_LIB_CIMG, int device_id)
+    : m_lib_type(lib_type), m_device_id(device_id)
 {
     el::Loggers::getLogger(PRELOG);
 }
@@ -375,6 +376,7 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
 
 int PreProcessor::run_cuda(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param)
 {
+    run_cimg(frame_rois, blob, param);
     return ZJV_STATUS_OK;
 }
 
@@ -383,6 +385,10 @@ int PreProcessor::run(const std::vector<std::shared_ptr<FrameROI>> & frame_rois,
     if(m_lib_type == ZJV_PREPROCESS_LIB_CIMG)
     {
         return run_cimg(frame_rois, blob, param);
+    }
+    else if( m_lib_type == ZJV_PREPROCESS_LIB_CUDA)
+    {
+        return run_cuda(frame_rois, blob, param);
     }
     else
     {

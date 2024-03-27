@@ -51,6 +51,12 @@ namespace ZJVIDEO
         }
 
         inline int count() const { return count_; }
+        inline int set_device_id(int device_id)
+        {
+            data_->set_device_id(device_id);
+            return 0;
+        }
+        inline int get_device_id() const { return data_->get_device_id(); }
 
         inline const std::vector<int> &shape() const { return shape_; }
         std::string name_;

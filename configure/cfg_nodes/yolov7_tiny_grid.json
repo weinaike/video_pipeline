@@ -1,7 +1,7 @@
 {
     "comment":
     {
-        "device":["CPU","GPU"],
+        "device":[-1, 0, 1, 2, 3],
         "backend":["ONNX"],
         "resize_type":["Stretch", "LetterBox", "Fill"],
         "interp_mode":["Linear","Nearest","Cubic"],
@@ -16,12 +16,14 @@
         "version": "1.0",
         "model_name": "yolov7_tiny_grid",
         "encrypt": false,
-        "max_batch_size" : 4,
-        "device" : "CPU",
+        "max_batch_size" : 16,
+        "device" : 1,
         "model_file": "../models/yolov7/yolov7-tiny-grid.onnx",
         "weight_file": "../models/yolov7/yolov7-tiny-grid.onnx",        
-        "backend": "ONNX",
-        "dynamic_batch": false
+        "backend": "TRT",
+        "dynamic_batch": false,
+        "enable_int8": false,
+        "enable_fp16": true
     },
     "preprocess": 
     {

@@ -9,7 +9,8 @@
 #include "common/ThreadSaveQueue.h"
 #include "common/StatusCode.h"
 #include <map>
-
+#include "common/StatusCode.h"
+#include "common/Blob.h"
 
 
 namespace ZJVIDEO {
@@ -34,8 +35,10 @@ struct EngineParameter {
     std::string                                 m_model_name;           /*!< 模型名称*/
     int                                         m_max_batch_size = 8;   /*!< 最大batch size*/
     bool                                        m_encrypt   = false;    /*!< 模型是否加密*/
-    Device                                      m_device    = ZJV_DEVICE_CPU;
+    int                                         m_device_id = -1;
     bool                                        m_dynamic   = false;
+    bool                                        m_int8      = false;                  //!< Allow runnning the network in Int8 mode.
+    bool                                        m_fp16      = false;                  //!< Allow running the network in FP16 mode.
     std::string                                 m_model_path;
     std::string                                 m_param_path;
     std::string                                 m_version;
@@ -58,9 +61,8 @@ public:
     virtual ~AbstractEngine() = default;
 
     virtual int init(const EngineParameter&) = 0;
-    virtual int init(const EngineParameter&, const void *buffer_in1, const void* buffer_in2) = 0;
-    virtual int forward(const void *frame, int frame_width, int frame_height, int frame_channel, std::vector<std::vector<float>> &outputs, std::vector<std::vector<int>> &outputs_shape) = 0;
-    virtual int forward(const std::vector<void*> &input, const std::vector<std::vector<int>> &input_shape, std::vector<std::vector<float>> &outputs, std::vector<std::vector<int>> &outputs_shape) = 0;
+    // virtual int forward(const std::vector<void*> &input, const std::vector<std::vector<int>> &input_shape, std::vector<std::vector<float>> &outputs, std::vector<std::vector<int>> &outputs_shape) = 0;
+    virtual int forward(std::vector<FBlob> &inputs, std::vector<FBlob> &outputs) = 0;
     std::vector<std::string> m_output_node_name;
     std::vector<std::string> m_input_node_name;
     std::map<std::string, std::vector<int>> m_input_nodes;  /*!< 输入节点信息*/

@@ -1,7 +1,7 @@
 {
     "comment":
     {
-        "device":["CPU","GPU"],
+        "device":[-1, 0, 1, 2, 3],
         "backend":["ONNX"],
         "resize_type":["Stretch", "LetterBox", "Fill"],
         "interp_mode":["Linear","Nearest","Cubic"],
@@ -17,11 +17,13 @@
         "model_name": "resnet18-v1-7",
         "encrypt": false,
         "max_batch_size" : 4,
-        "device" : "CPU",
+        "device" : -1,
         "model_file": "../models/resnet/resnet18-v1-7.onnx",
         "weight_file": "../models/resnet/resnet18-v1-7.onnx",        
         "backend": "ONNX",
-        "dynamic_batch": false
+        "dynamic_batch": false,
+        "enable_int8": false,
+        "enable_fp16": false
     },
     "preprocess": 
     {
