@@ -60,8 +60,10 @@ int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::sha
         {
             continue;
         }
+        auto t1 = std::chrono::system_clock::now();
 
         const float * output_data = outputs[i].cpu_data();
+        auto t2 = std::chrono::system_clock::now();
         std::vector<int> output_shape = outputs[i].shape();
         assert(output_shape.size() == 3);
         
@@ -76,10 +78,16 @@ int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::sha
         {
             std::shared_ptr<DetectResultData> detect_result_data = std::make_shared<DetectResultData>();
             detect_result_data->detect_boxes.clear();
-
+            // 计时
+            
+          
             for(int k = 0; k < num; k++)
             {
-                float score = output_data[j*num*dim + k*dim + 4];               
+                float score = output_data[j*num*dim + k*dim + 4];       
+                if(score < m_conf_thres) continue; 
+
+
+
                 int max_index = -1;
 
                 float max_obj_conf = 0.0;
@@ -119,7 +127,11 @@ int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::sha
 
                 detect_result_data->detect_boxes.push_back(detect_box);
             }
+            
+            
             NMS(detect_result_data->detect_boxes, m_iou_thres ) ;
+
+            
             // 打印结果
 
             Rect roi = frame_roi_results[j]->roi;
@@ -138,7 +150,18 @@ int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::sha
                 // CLOG(INFO, INFER_LOG) << "detect_boxes: " << detect_result_data->detect_boxes[k].x1 << " " << detect_result_data->detect_boxes[k].y1 << " " << detect_result_data->detect_boxes[k].x2 << " " << detect_result_data->detect_boxes[k].y2 << " " << detect_result_data->detect_boxes[k].score << " " << detect_result_data->detect_boxes[k].label;
             }
             frame_roi_results[j]->result.push_back(detect_result_data);
+
+
+
+
         }
+        auto t3 = std::chrono::system_clock::now();
+
+
+        std::chrono::duration<double> dt1 = t2 - t1; // Calculate elapsed time
+        std::chrono::duration<double> dt2 = t3 - t2; // Calculate elapsed time
+        CLOG(INFO, YoloLOG) << "yolo post time: copy: " << dt1.count() *1000 << "ms post:" 
+            << dt2.count() * 1000 << "ms";
     }
 
     return ZJV_STATUS_OK;
