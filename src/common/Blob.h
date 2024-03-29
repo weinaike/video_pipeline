@@ -36,19 +36,19 @@ namespace ZJVIDEO
         inline Dtype *mutable_cpu_data()
         {
             assert(data_!=nullptr);
-            return (Dtype*)data_->cpu_data();
+            return (Dtype*)data_->mutable_cpu_data();
         }
 
         inline Dtype *mutable_gpu_data()
         {
             assert(data_!=nullptr);
-            return (Dtype*)data_->gpu_data();
+            return (Dtype*)data_->mutable_gpu_data();
         }
        
-        inline const std::shared_ptr<SyncedMemory> &data() const
-        {
-            return data_;
-        }
+        // inline const std::shared_ptr<SyncedMemory> &data() const
+        // {
+        //     return data_;
+        // }
 
         inline int count() const { return count_; }
         inline int set_device_id(int device_id)

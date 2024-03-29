@@ -17,6 +17,17 @@ if (ptr == nullptr)                 \
 
 namespace ZJVIDEO
 {
+    // 获取文件后缀名
+    std::string get_file_extension(const std::string& filename) 
+    {
+        size_t pos = filename.rfind('.');
+        if (pos == std::string::npos) {
+            // No extension found
+            return "";
+        } else {
+            return filename.substr(pos);
+        }
+    }
 
     struct InferDeleter
     {
@@ -91,8 +102,24 @@ namespace ZJVIDEO
 
     int TRTEngine::init(const EngineParameter& param)
     {        
+        std::string ext = get_file_extension(param.m_model_path) ;
+        std::string engine_file;
+        if(ext == ".onnx")
+        {
+            engine_file = param.m_model_path + ".trt";
+        }
+        else if(ext == ".trt")
+        {
+            engine_file = param.m_model_path;
+        }
+        else
+        {
+            CLOG(ERROR, TRT_LOG) << "model file type not support!";
+            return ZJV_STATUS_ERROR;
+        }
 
-        std::string engine_file = param.m_model_path + ".trt";
+
+        
 
         std::fstream existEngine;
         existEngine.open(engine_file, std::ios::in);
@@ -217,7 +244,7 @@ namespace ZJVIDEO
                 dims.d[i] = input.shape()[i];
             }
             input.set_device_id(m_device_id);
-            m_context->setTensorAddress(input.name_.c_str(), input.data()->mutable_gpu_data());
+            m_context->setTensorAddress(input.name_.c_str(), input.mutable_gpu_data());
             m_context->setInputShape(input.name_.c_str(), dims);
             // CLOG(INFO, TRT_LOG) << "input IO Tensor: " << input.name_;
         }
@@ -240,7 +267,7 @@ namespace ZJVIDEO
         for(auto &output : outputs)
         {
             output.set_device_id(m_device_id);
-            m_context->setTensorAddress(output.name_.c_str(), output.data()->mutable_gpu_data());
+            m_context->setTensorAddress(output.name_.c_str(), output.mutable_gpu_data());
             // CLOG(INFO, TRT_LOG) << "output IO Tensor: " << output.name_;
         }
 

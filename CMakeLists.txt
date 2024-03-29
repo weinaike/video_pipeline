@@ -32,8 +32,9 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 if (ENABLE_CUDA)
     # CUDA依赖配置
-    include(${CMAKE_SOURCE_DIR}/cmakes/cuda.cmake)
     add_definitions(-DEnable_CUDA)
+    include(${CMAKE_SOURCE_DIR}/cmakes/cuda.cmake)
+
 endif ()
 if (ENABLE_TENSORRT)
     # TensorRT依赖配置
@@ -54,4 +55,4 @@ link_directories(${CMAKE_SOURCE_DIR}/libs)
 # link_directories(/home/wnk/code/software/onnxruntime-linux-x64-1.17.1/lib)
 # target_link_libraries(demo onnxruntime)
 
-target_link_libraries(demo zj_pipe ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread ${X11_LIBRARIES} ${OpenCV_LIBS} ${TRT_LIBS} ${CUDA_LIBS} ${CUDNN_LIBS})
+target_link_libraries(demo zj_pipe cuda_lib ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread ${X11_LIBRARIES} ${OpenCV_LIBS} ${TRT_LIBS} ${CUDA_LIBS} ${CUDNN_LIBS})

@@ -21,6 +21,7 @@ namespace ZJVIDEO
 		void *p = NULL;
 		if (cudaMalloc((void **)&p, bytesCount) != cudaSuccess)
 		{
+			std::cout<<__FILE__<<" cudaMalloc fail "<<__LINE__<<std::endl;
 			throw std::bad_alloc();
 		}
 		cudaMemset(p, 0, bytesCount);
@@ -33,6 +34,7 @@ namespace ZJVIDEO
 		{
 			if (cudaFree(p) != cudaSuccess)
 			{
+				std::cout<<__FILE__<<" cudaFree fail "<<__LINE__<<std::endl;
 				throw std::bad_alloc();
 			}
 		}
@@ -44,6 +46,7 @@ namespace ZJVIDEO
 		{
 			if (cudaFree(p) != cudaSuccess)
 			{
+				std::cout<<__FILE__<< " cudaFree fail "<<__LINE__<<std::endl;
 				throw std::bad_alloc();
 			}
 		}

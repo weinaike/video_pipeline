@@ -5,6 +5,9 @@
 #include <vector>
 #include <memory>
 #include "InferDefine.h"
+#include "backend/AbstractEngine.h"
+#include "logger/easylogging++.h"
+#define PRELOG "PreProc"
 
 namespace ZJVIDEO
 {
@@ -17,6 +20,7 @@ namespace ZJVIDEO
         int run(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
         int parse_json(const nlohmann::json & j);
         PreProcessParameter get_param() { return m_param; }
+        void set_engine(const std::shared_ptr<AbstractEngine>& eng){m_engine = eng;};
     protected:
         int run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
         int run_cuda(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
@@ -24,6 +28,7 @@ namespace ZJVIDEO
         int m_lib_type;
         PreProcessParameter m_param;
         int m_device_id;
+        std::shared_ptr<AbstractEngine> m_engine;
     };
 
 } // namespace ZJVIDEO

@@ -1,9 +1,9 @@
 #include "PreProcessor.h"
-#include "logger/easylogging++.h"
+
 
 #include "CImg/CImg.h"
 
-#define PRELOG "PreProc"
+
 using namespace cimg_library;
 
 namespace ZJVIDEO
@@ -263,43 +263,7 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
 
     
     for(int i = 0; i < frame_rois.size(); i++)
-    {
-        frame_rois[i]->pre_process = &param;
-        frame_rois[i]->resize_type = param.resize_type;
-        frame_rois[i]->input_width = param.resize_width;
-        frame_rois[i]->input_height = param.resize_height;
-        if(param.resize_type == ZJV_PREPROCESS_RESIZE_STRETCH)
-        {
-            frame_rois[i]->scale_x = (float)param.resize_width/frame_rois[i]->roi.width;
-            frame_rois[i]->scale_y = (float)param.resize_height/ frame_rois[i]->roi.height;
-            frame_rois[i]->padx = 0;
-            frame_rois[i]->pady = 0;
-        }
-        else if(param.resize_type == ZJV_PREPROCESS_RESIZE_LETTERBOX)
-        {
-
-            float scale = std::min( (float)param.resize_width/frame_rois[i]->roi.width, 
-                                    (float)param.resize_height/ frame_rois[i]->roi.height);
-            frame_rois[i]->scale_x = scale;
-            frame_rois[i]->scale_y = scale;
-            frame_rois[i]->padx = (param.resize_width - frame_rois[i]->roi.width * scale) / 2;
-            frame_rois[i]->pady = (param.resize_height - frame_rois[i]->roi.height * scale) / 2;
-        }
-        else if(param.resize_type == ZJV_PREPROCESS_RESIZE_FILL)
-        {
-            float scale = std::max( (float)param.resize_width/frame_rois[i]->roi.width, 
-                                    (float)param.resize_height/ frame_rois[i]->roi.height);
-            frame_rois[i]->scale_x = scale;
-            frame_rois[i]->scale_y = scale;
-            frame_rois[i]->padx = (param.resize_width - frame_rois[i]->roi.width * scale) / 2;
-            frame_rois[i]->pady = (param.resize_height - frame_rois[i]->roi.height * scale) / 2;
-        }
-        else
-        {
-            CLOG(ERROR, PRELOG) << "resize_type not supported now";
-            assert(0);
-        }
-        
+    {        
         // 1. 提取图片
         const std::shared_ptr<FrameROI> frame_roi = frame_rois[i];
         std::shared_ptr<const FrameData> frame_data = frame_roi->frame;
@@ -374,20 +338,55 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
 
 }
 
-int PreProcessor::run_cuda(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param)
-{
-    run_cimg(frame_rois, blob, param);
-    return ZJV_STATUS_OK;
-}
-
 int PreProcessor::run(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param)
 {
+
+    for(int i = 0; i < frame_rois.size(); i++)
+    {
+        frame_rois[i]->pre_process = &param;
+        frame_rois[i]->resize_type = param.resize_type;
+        frame_rois[i]->input_width = param.resize_width;
+        frame_rois[i]->input_height = param.resize_height;
+        if(param.resize_type == ZJV_PREPROCESS_RESIZE_STRETCH)
+        {
+            frame_rois[i]->scale_x = (float)param.resize_width/frame_rois[i]->roi.width;
+            frame_rois[i]->scale_y = (float)param.resize_height/ frame_rois[i]->roi.height;
+            frame_rois[i]->padx = 0;
+            frame_rois[i]->pady = 0;
+        }
+        else if(param.resize_type == ZJV_PREPROCESS_RESIZE_LETTERBOX)
+        {
+
+            float scale = std::min( (float)param.resize_width/frame_rois[i]->roi.width, 
+                                    (float)param.resize_height/ frame_rois[i]->roi.height);
+            frame_rois[i]->scale_x = scale;
+            frame_rois[i]->scale_y = scale;
+            frame_rois[i]->padx = (param.resize_width - frame_rois[i]->roi.width * scale) / 2;
+            frame_rois[i]->pady = (param.resize_height - frame_rois[i]->roi.height * scale) / 2;
+        }
+        else if(param.resize_type == ZJV_PREPROCESS_RESIZE_FILL)
+        {
+            float scale = std::max( (float)param.resize_width/frame_rois[i]->roi.width, 
+                                    (float)param.resize_height/ frame_rois[i]->roi.height);
+            frame_rois[i]->scale_x = scale;
+            frame_rois[i]->scale_y = scale;
+            frame_rois[i]->padx = (param.resize_width - frame_rois[i]->roi.width * scale) / 2;
+            frame_rois[i]->pady = (param.resize_height - frame_rois[i]->roi.height * scale) / 2;
+        }
+        else
+        {
+            CLOG(ERROR, PRELOG) << "resize_type not supported now";
+            assert(0);
+        }
+    }
+
     if(m_lib_type == ZJV_PREPROCESS_LIB_CIMG)
     {
         return run_cimg(frame_rois, blob, param);
     }
     else if( m_lib_type == ZJV_PREPROCESS_LIB_CUDA)
     {
+        // return run_cimg(frame_rois, blob, param);
         return run_cuda(frame_rois, blob, param);
     }
     else
