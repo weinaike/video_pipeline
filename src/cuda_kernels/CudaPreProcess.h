@@ -10,8 +10,8 @@
 
 namespace CUDA
 {
-
-    enum ColorFormat
+    /// @brief 
+    enum  ColorFormat
     {
         RGBP = 0,
         RGB = 1,
@@ -20,14 +20,14 @@ namespace CUDA
 
     enum class NormType : int
     {
-        None = 0,
+        NormNone = 0,
         MeanStd = 1,
         AlphaBeta = 2
     };
 
     enum class ChannelType : int
     {
-        None = 0,
+        Channel_None = 0,
         Invert = 1
     };
 
@@ -36,22 +36,19 @@ namespace CUDA
         float mean[3]{};
         float std[3]{};
         float alpha{}, beta{};
-        NormType type = NormType::None;
-        ChannelType channel_type = ChannelType::None;
+        NormType type = NormType::NormNone;
+        ChannelType channel_type = ChannelType::Channel_None;
 
         // out = (x * alpha - mean) / std
         static Norm mean_std(const float mean[3],
                              const float std[3],
                              float alpha = 1 / 255.0f,
-                             ChannelType channel_type = ChannelType::None);
+                             ChannelType channel_type = ChannelType::Channel_None);
 
         // out = x * alpha + beta
         static Norm alpha_beta(float alpha,
                                float beta = 0,
-                               ChannelType channel_type = ChannelType::None);
-
-        // None
-        static Norm None();
+                               ChannelType channel_type = ChannelType::Channel_None);
     };
 
     /*!
@@ -222,6 +219,7 @@ namespace CUDA
      */
     void bgr2grayInvoker(uint8_t *src, float *dst, int width, int height, cudaStream_t stream = 0);
 
-} // namespace CUDA
+}
+ // namespace CUDA
 
 #endif // VIDEOPIPELINE_PREPROCESS_CUH

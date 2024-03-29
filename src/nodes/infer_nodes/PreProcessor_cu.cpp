@@ -1,8 +1,11 @@
 #include "PreProcessor.h"
 
-#ifdef CIMG_DEBUG
+#define CIMG_DEBUG 0
+
+#if CIMG_DEBUG
 #include "CImg/CImg.h"
 #endif
+
 
 // #define Enable_CUDA
 #ifdef Enable_CUDA
@@ -77,7 +80,7 @@ namespace ZJVIDEO
 
 
 
-            #ifdef CIMG_DEBUG
+            #if CIMG_DEBUG
             
             cil::CImg<unsigned char> roi_img(3,roi.width, roi.height, 1);
             cudaMemcpy(roi_img.data(), roi_img_data, roi_img.size(),cudaMemcpyDeviceToHost);
@@ -98,10 +101,10 @@ namespace ZJVIDEO
             float matrix_2_3[2][3];
             matrix_2_3[0][0] = frame_rois[i]->scale_x;
             matrix_2_3[0][1] = 0;
-            matrix_2_3[0][2] = -frame_rois[i]->scale_x * roi.width * 0.5 + param.resize_width * 0.5;
+            matrix_2_3[0][2] = frame_rois[i]->padx;
             matrix_2_3[1][0] = 0;
             matrix_2_3[1][1] = frame_rois[i]->scale_y;
-            matrix_2_3[1][2] = -frame_rois[i]->scale_y * roi.height * 0.5 + param.resize_height * 0.5;
+            matrix_2_3[1][2] = frame_rois[i]->pady;
             
             float matrix_2_3_inv[2][3] = {0};
             invertAffineTransform(matrix_2_3, matrix_2_3_inv);
@@ -147,7 +150,7 @@ namespace ZJVIDEO
         // CLOG(INFO, PRELOG) << "PreProcessor::run_cuda: done";
         
         
-        #ifdef CIMG_DEBUG
+        #if CIMG_DEBUG
 
         std::vector<int > shape = blob.shape();
         int bs = shape[0];

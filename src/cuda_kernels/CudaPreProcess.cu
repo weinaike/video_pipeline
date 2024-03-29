@@ -71,11 +71,6 @@ namespace CUDA
         return out;
     }
 
-    Norm Norm::None()
-    {
-        return {};
-    }
-
 #define INTER_RESIZE_COEF_BITS 11
 #define INTER_RESIZE_COEF_SCALE (1 << INTER_RESIZE_COEF_BITS)
 #define CAST_BITS (INTER_RESIZE_COEF_BITS << 1)
