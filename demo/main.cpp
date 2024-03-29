@@ -131,7 +131,7 @@ int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )
             //         << " rz.step" << rz.step << " img.isContinuous() " << img.isContinuous()<< std::endl;
             // cv::waitKey(1000);
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(60));
+            std::this_thread::sleep_for(std::chrono::milliseconds(40));
             std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>(
                 rz.cols, rz.rows, rz.channels());
 
@@ -208,6 +208,12 @@ int main()
     
     // 打印源节点数量
     // std::cout<< "src_node_name.size(): " << src_node_name.size()  <<std::endl;
+
+
+    std::shared_ptr<ZJVIDEO::SetLoggerLevelControlData> level = std::make_shared<ZJVIDEO::SetLoggerLevelControlData>();
+    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_INFO);
+    std::shared_ptr<ZJVIDEO::ControlData> base_level = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(level);
+    pipeline.control(base_level);
 
 
     std::vector<std::thread > threads;
@@ -315,7 +321,7 @@ int main()
             }
         }
         // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        pipeline.show_debug_info();
+        
         img.save("../data/result.bmp");
         // cil::CImgDisplay disp(img,"result");
         // disp.wait(40);
@@ -336,6 +342,10 @@ int main()
             cv::imshow("result", cv_img);
             cv::waitKey(1);
         #endif
+        if(frame_id%25 == 0)
+        {
+            pipeline.show_debug_info();
+        }
 
     }
 

@@ -6,7 +6,7 @@ namespace ZJVIDEO {
 
 ImageSrcNode::ImageSrcNode(const NodeParam & param) : BaseNode(param)
 {
-    el::Loggers::getLogger(IMAGESRC_LOG);
+    m_logger = el::Loggers::getLogger(IMAGESRC_LOG);
     CLOG(INFO, IMAGESRC_LOG) << "ImageSrcNode::ImageSrcNode";
 }
 
@@ -43,7 +43,7 @@ int ImageSrcNode::process_single(const std::vector<std::shared_ptr<const BaseDat
         }
         
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(40));
+    // std::this_thread::sleep_for(std::chrono::milliseconds(40));
 
     // CLOG(INFO, IMAGESRC_LOG) << "ImageSrcNode::process_single";
     return 0;

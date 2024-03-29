@@ -9,7 +9,7 @@ namespace ZJVIDEO
 
     TrackNode::TrackNode(const NodeParam &param) : BaseNode(param)
     {
-        el::Loggers::getLogger(TrkLOG);
+        m_logger = el::Loggers::getLogger(TrkLOG);
 
         parse_configure(param.m_cfg_file);
         init();

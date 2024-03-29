@@ -2,6 +2,7 @@
 #ifndef _ZJ_VIDEO_PIPELINE_H
 #define _ZJ_VIDEO_PIPELINE_H
 
+#define ELPP_THREAD_SAFE
 // #define ELPP_EXPERIMENTAL_ASYNC
 #include "logger/easylogging++.h"
 
@@ -40,7 +41,10 @@ public:
     int get_output_data(std::vector<std::shared_ptr<EventData>> & );
     int get_output_data(std::vector<std::shared_ptr<const BaseData>> & data) ;
 
+    // 设置配置参数
+    int control(std::shared_ptr<ControlData>& data );
     int show_debug_info();
+
 
 protected:
     
@@ -81,7 +85,7 @@ protected:
     std::mutex                                                      m_mutex;
     std::shared_ptr<std::condition_variable> m_out_cond = std::make_shared<std::condition_variable>();
     std::atomic<bool>                                               m_initialized{false};
-
+    el::Logger*                                                     m_logger;
 }; // class Pipeline
 
 

@@ -92,8 +92,9 @@ namespace ZJVIDEO
         int m_node_position_type;
 
         std::deque<void *> m_dealed_smaple; // 历史处理样本
-        float m_fps;
+        float m_fps = 0;
         int m_fps_count = 0;
+        el::Logger *m_logger;
     };
 
 }

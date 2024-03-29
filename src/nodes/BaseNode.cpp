@@ -9,7 +9,16 @@ BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
     m_nodeparam(param)
 {
     // 注册日志记录器
-    el::Loggers::getLogger(BASENODE_LOG);
+    m_logger = el::Loggers::getLogger(BASENODE_LOG);
+    el::Configurations conf;
+    conf.setToDefault();
+    // Get the format for Info level
+    std::string infoFormat = conf.get(el::Level::Info, el::ConfigurationType::Format)->value();
+    // Set the format for Debug level to be the same as Info level
+    conf.set(el::Level::Debug, el::ConfigurationType::Format, infoFormat);
+    el::Loggers::reconfigureLogger(m_logger, conf);
+
+
 
     m_batch_process = param.m_channels;
     // 支持的最大批处理数量设置，这个应该直接从节点信息中获取，临时固定赋值。
@@ -641,10 +650,46 @@ bool BaseNode::get_run_status()
 }
 int BaseNode::get_control_info(std::shared_ptr<ControlData>& data ) 
 {
+    std::unique_lock<std::mutex> lk(m_base_mutex);
     if(data->get_control_type() == ZJV_CONTROLTYPE_GET_FPS)
     {
         std::shared_ptr<GetFPSControlData> ptr = std::dynamic_pointer_cast<GetFPSControlData>(data);
         ptr->set_fps(m_fps);
+    }
+    else if(data->get_control_type() == ZJV_CONTROLTYPE_SET_LOGGER_LEVEL)
+    {
+        std::shared_ptr<SetLoggerLevelControlData> ptr = std::dynamic_pointer_cast<SetLoggerLevelControlData>(data);
+        int level = ptr->get_level();
+        m_logger->configurations()->set(el::Level::Global, el::ConfigurationType::Enabled, "true");
+        if(ZJV_LOGGER_LEVEL_INFO == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_WARN == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_ERROR == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_FATAL == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Error, el::ConfigurationType::Enabled, "false");
+        }
+        m_logger->reconfigure();
+    }
+    else
+    {
+        CLOG(ERROR, BASENODE_LOG) << "control type is not supported";
+        return ZJV_STATUS_ERROR;
+    
     }
     return ZJV_STATUS_OK;
 }

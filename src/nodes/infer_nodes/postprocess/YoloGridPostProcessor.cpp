@@ -150,18 +150,14 @@ int YoloGridPostProcessor::run(std::vector<FBlob> &outputs, std::vector<std::sha
                 // CLOG(INFO, INFER_LOG) << "detect_boxes: " << detect_result_data->detect_boxes[k].x1 << " " << detect_result_data->detect_boxes[k].y1 << " " << detect_result_data->detect_boxes[k].x2 << " " << detect_result_data->detect_boxes[k].y2 << " " << detect_result_data->detect_boxes[k].score << " " << detect_result_data->detect_boxes[k].label;
             }
             frame_roi_results[j]->result.push_back(detect_result_data);
-
-
-
-
         }
         auto t3 = std::chrono::system_clock::now();
 
 
         std::chrono::duration<double> dt1 = t2 - t1; // Calculate elapsed time
         std::chrono::duration<double> dt2 = t3 - t2; // Calculate elapsed time
-        CLOG(INFO, YoloLOG) << "yolo post time: copy: " << dt1.count() *1000 << "ms post:" 
-            << dt2.count() * 1000 << "ms";
+        // CLOG(INFO, YoloLOG) << "yolo post time: copy: " << dt1.count() *1000 << "ms post:" 
+        //     << dt2.count() * 1000 << "ms";
     }
 
     return ZJV_STATUS_OK;

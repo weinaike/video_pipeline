@@ -2,7 +2,7 @@
 #include "ONNXEngine.h"
 #include <numeric>
 #include <assert.h>
-#include "../logger/easylogging++.h"
+#include "logger/easylogging++.h"
 
 namespace ZJVIDEO
 {

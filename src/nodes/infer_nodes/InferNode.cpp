@@ -8,7 +8,14 @@ namespace ZJVIDEO {
 
 InferNode::InferNode(const NodeParam & param) : BaseNode(param)
 {
-    el::Loggers::getLogger(INFER_LOG);
+    m_logger = el::Loggers::getLogger(INFER_LOG);
+    el::Configurations conf;
+    conf.setToDefault();
+    // Get the format for Info level
+    std::string infoFormat = conf.get(el::Level::Info, el::ConfigurationType::Format)->value();
+    // Set the format for Debug level to be the same as Info level
+    conf.set(el::Level::Debug, el::ConfigurationType::Format, infoFormat);
+    el::Loggers::reconfigureLogger(m_logger, conf);
     
     parse_configure(param.m_cfg_file);
 
@@ -221,7 +228,8 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
     auto t6 = std::chrono::system_clock::now();
     std::chrono::duration<double> dt4 = t6 - t5; // Calculate elapsed time
 
-    CLOG(INFO, INFER_LOG) <<"cost time: size["<< frame_rois.size()<< "] preprocess: " << pre_time/frame_rois.size() * 1000 << 
+
+    CLOG(DEBUG, INFER_LOG) <<"cost time: size["<< frame_rois.size()<< "] preprocess: " << pre_time/frame_rois.size() * 1000 << 
                             "ms infer: " << infer_time/frame_rois.size() * 1000 << 
                             "ms postprocess: " << post_time/frame_rois.size() * 1000<< 
                             "ms summary: " << dt4.count() * 1000 << "ms";

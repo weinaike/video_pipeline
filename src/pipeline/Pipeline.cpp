@@ -11,7 +11,16 @@ namespace ZJVIDEO {
 
 Pipeline::Pipeline(std::string cfg_file) 
 {
-    el::Loggers::getLogger(PIPE_LOG);
+    m_logger = el::Loggers::getLogger(PIPE_LOG);
+
+    el::Configurations conf;
+    conf.setToDefault();
+    // Get the format for Info level
+    std::string infoFormat = conf.get(el::Level::Info, el::ConfigurationType::Format)->value();
+    // Set the format for Debug level to be the same as Info level
+    conf.set(el::Level::Debug, el::ConfigurationType::Format, infoFormat);
+    el::Loggers::reconfigureLogger(m_logger, conf);
+
     parse_cfg_file(cfg_file);
     m_initialized = false;
     CLOG(INFO, PIPE_LOG) << "Pipeline created" ;
@@ -310,6 +319,16 @@ int Pipeline::init()
         std::shared_ptr<AbstractNode> node = NodeRegister::CreateNode(node_param);
         m_node_map.insert(std::make_pair(node_param.m_node_name, node));
     }
+    // // 配置打印等级
+    // for(auto & node_itme:m_node_map)
+    // {
+    //     auto & node = node_itme.second;
+    //     std::shared_ptr<SetLoggerLevelControlData> data = std::make_shared<SetLoggerLevelControlData>();
+    //     data->set_level(ZJV_LOGGER_LEVEL_WARN);
+    //     std::shared_ptr<ControlData> base = std::dynamic_pointer_cast<ControlData>(data);
+    //     node->get_control_info(base);
+    // }
+
 
     //  2. 配置节点输入输出队列
     for (auto & connection : m_connect_list) 
@@ -533,6 +552,7 @@ int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData>> & data)
         }
     }
     // CLOG(INFO, PIPE_LOG) << "get_output_data " <<data.size();
+    
     return ZJV_STATUS_OK;
 }
 
@@ -552,9 +572,52 @@ int Pipeline::get_output_data(std::vector<std::shared_ptr<const BaseData>> & dat
     return ZJV_STATUS_OK;
 }
 
+int Pipeline::control(std::shared_ptr<ControlData>& data) 
+{
+    std::unique_lock<std::mutex> lk(m_mutex);
+    if(data->get_control_type() == ZJV_CONTROLTYPE_SET_LOGGER_LEVEL)
+    {
+        std::shared_ptr<SetLoggerLevelControlData> set_logger_data = std::dynamic_pointer_cast<SetLoggerLevelControlData>(data);
+        int level = set_logger_data->get_level();
+        m_logger->configurations()->set(el::Level::Global, el::ConfigurationType::Enabled, "true");
+        if(ZJV_LOGGER_LEVEL_INFO == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_WARN == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_ERROR == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_FATAL == level)
+        {
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Error, el::ConfigurationType::Enabled, "false");
+        }
+        m_logger->reconfigure();
+
+        for(auto & node_itme:m_node_map)
+        {
+            auto & node = node_itme.second;
+            node->get_control_info(data);
+        }
+    }
+
+
+    return ZJV_STATUS_OK;
+}
+
 int Pipeline::show_debug_info()
 {
-    
+    std::unique_lock<std::mutex> lk(m_mutex);
     std::string str = "queue_size: ";
     for(const auto & buffer: m_srcQueueList)
     {
@@ -577,7 +640,7 @@ int Pipeline::show_debug_info()
         str +="] ";
     }
     str += "| ";
-    CLOG(INFO, PIPE_LOG) << str ;
+    CLOG(DEBUG, PIPE_LOG) << str ;
     str = "";
     
     for(const auto & buffer: m_connectQueue)
@@ -592,7 +655,7 @@ int Pipeline::show_debug_info()
     str += "| ";
 
 
-    CLOG(INFO, PIPE_LOG) << str ;
+    CLOG(DEBUG, PIPE_LOG) << str ;
 
     str = "fps: ";
     for(const auto & node :m_node_map)
