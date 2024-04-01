@@ -194,7 +194,8 @@ int main()
 
     // std::string cfg_file = "../configure/pipeline_sample_segment.json";
     // std::string cfg_file = "../configure/pipeline_sample_infer.json";
-    std::string cfg_file = "../configure/pipeline_sample.json";
+    // std::string cfg_file = "../configure/pipeline_sample.json";
+    std::string cfg_file = "../configure/pipeline_sample_video.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
     std::cout<< "pipeline.init()\n" ;
@@ -218,11 +219,11 @@ int main()
 
     std::vector<std::thread > threads;
     //
-    for(int i = 0; i < 1; i++)
-    {
-        std::thread t1(input_worker, std::bind(&ZJVIDEO::Pipeline::set_input_data, &pipeline, std::placeholders::_1), i);
-        threads.emplace_back(std::move(t1));
-    }
+    // for(int i = 0; i < 1; i++)
+    // {
+    //     std::thread t1(input_worker, std::bind(&ZJVIDEO::Pipeline::set_input_data, &pipeline, std::placeholders::_1), i);
+    //     threads.emplace_back(std::move(t1));
+    // }
 
     int frame_id = 0;
     

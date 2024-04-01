@@ -1,16 +1,26 @@
 cmake_minimum_required(VERSION 3.10)
 project(VideoPipeline)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmakes)
 #设置宏
 add_definitions(-DEnable_ONNX)
 
 set(CMAKE_CXX_STANDARD 11)
+
 find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(FFmpeg REQUIRED)
+
+
+# 添加头文件路径与库文件
+include_directories(${FFMPEG_INCLUDE_DIRS})
+link_directories(${FFMPEG_LIBRARIES})
+
+
 OPTION(ENABLE_CUDA "使用CUDA,TensorRT" ON)
 OPTION(ENABLE_TENSORRT "使用TensorRT" ON)
 # OPTION(ENABLE_HWCODEC "使用硬件编解码能力" OFF)
-find_package(OpenCV REQUIRED)
 
 if (OpenCV_FOUND)
     # If the package has been found, several variables will
@@ -26,6 +36,9 @@ endif()
 
 
 include_directories(${OpenCV_INCLUDE_DIRS})
+
+
+# find ffmpeg
 
 # 基础代码依赖配置
 # include(${CMAKE_SOURCE_DIR}/cmakes/base.cmake)

@@ -601,9 +601,9 @@ int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
                 {
                     std::cout<<out->data_name<<std::endl;
                 }
-                assert(0);
+                continue; // 输出不正确，直接跳过
             }
-
+            // 输出
             std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > result;
             for (const auto & output_data : m_nodeparam.m_output_datas)
             {

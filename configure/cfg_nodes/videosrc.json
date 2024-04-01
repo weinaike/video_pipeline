@@ -1,0 +1,11 @@
+{
+    "comment":{
+        "comment": "This is a comment",
+        "author": "Author Name",
+        "date": "2015-01-01",
+        "video_type":["rtsp","rtmp","hls","file","http","camera"]
+    },
+    "version": "1.0",
+    "video_type": "rtsp",
+    "path": "../data/video/person_tracker.flv" 
+}

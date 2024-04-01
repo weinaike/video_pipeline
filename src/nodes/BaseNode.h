@@ -54,7 +54,7 @@ namespace ZJVIDEO
 
     protected:
         // 主进程函数，没有必要为虚函数，调用流程基本固定
-        int worker();
+        virtual int worker();
         // parse,解析配置文件
         virtual int parse_configure(std::string cfg_file);
         // 根据配置文件， 初始化对象,输入输出队列

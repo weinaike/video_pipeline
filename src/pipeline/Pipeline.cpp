@@ -537,6 +537,7 @@ int Pipeline::set_input_data(const std::shared_ptr<FrameData> & data)
 
 }
 
+
 // 从末尾节点提取数据
 int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData>> & data) 
 {
