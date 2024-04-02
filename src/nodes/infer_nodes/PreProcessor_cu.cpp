@@ -7,7 +7,7 @@
 #endif
 
 
-// #define Enable_CUDA
+#define Enable_CUDA
 #ifdef Enable_CUDA
 #include "cuda_kernels/CudaPreProcess.h"
 #endif
@@ -50,7 +50,7 @@ namespace ZJVIDEO
             std::vector<int> shape;
             shape.push_back(frame_data->height);
             shape.push_back(frame_data->width);
-            shape.push_back(frame_data->channel);
+            shape.push_back(frame_data->channel());
             U8Blob roi_img_blob(shape); // 转为rgb模式
             roi_img_blob.set_device_id(m_device_id);
             unsigned char *roi_img_data = (unsigned char *)roi_img_blob.mutable_gpu_data();
@@ -60,7 +60,7 @@ namespace ZJVIDEO
             {
                 format = CUDA::ColorFormat::RGB;
             }
-            else if (frame_data->format == ZJV_IMAGEFORMAT_PRGB24)
+            else if (frame_data->format == ZJV_IMAGEFORMAT_RGBP)
             {
                 format = CUDA::ColorFormat::RGBP;
             }
@@ -74,7 +74,7 @@ namespace ZJVIDEO
                 assert(0);
             }
             // crop and cvtcolor to rgb format
-            CUDA::crop_cvtcolor_Invoker(data, frame_data->width * frame_data->channel,
+            CUDA::crop_cvtcolor_Invoker(data, frame_data->width * frame_data->channel(),
                                   frame_data->width, frame_data->height, roi_img_data,
                                   roi.x, roi.y, roi.width, roi.height, format, NULL);
 

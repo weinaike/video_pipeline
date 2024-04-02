@@ -229,7 +229,7 @@ int InferNode::process_batch( const std::vector<std::vector<std::shared_ptr<cons
     std::chrono::duration<double> dt4 = t6 - t5; // Calculate elapsed time
 
 
-    CLOG(DEBUG, INFER_LOG) <<"cost time: size["<< frame_rois.size()<< "] preprocess: " << pre_time/frame_rois.size() * 1000 << 
+    CLOG(TRACE, INFER_LOG) <<"cost time: size["<< frame_rois.size()<< "] preprocess: " << pre_time/frame_rois.size() * 1000 << 
                             "ms infer: " << infer_time/frame_rois.size() * 1000 << 
                             "ms postprocess: " << post_time/frame_rois.size() * 1000<< 
                             "ms summary: " << dt4.count() * 1000 << "ms";

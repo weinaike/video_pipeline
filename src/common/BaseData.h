@@ -16,6 +16,7 @@ namespace ZJVIDEO {
 
 enum BaseDataType {
     ZJV_DATATYPE_UNKNOWN = 0,
+    ZJV_DATATYPE_VIDEO,    // 视频数据
     ZJV_DATATYPE_FRAME,    // 帧数据
     ZJV_DATATYPE_CONTROL,  // 控制数据
     ZJV_DATATYPE_CONFIG,   // 配置数据
@@ -146,6 +147,7 @@ public:
 
 #define REGISTER_DATA_CREATOR(type, creator)                                    \
     static DataRegisterer g_creator_data_f_##type(#type, creator);              \
+
 
 #define REGISTER_DATA_CLASS(type)                                               \
     std::shared_ptr<BaseData> Creator_##type##Data()                            \

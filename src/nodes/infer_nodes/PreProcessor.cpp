@@ -190,16 +190,16 @@ int PreProcessor::parse_json(const nlohmann::json & j)
                 assert(0);
             }
 
-            std::string dtype = j["param"]["output_dtype"];
-            if(dtype == "float32") m_param.dtype = ZJV_PIXEL_DTYPE_FLOAT32;
-            else if(dtype == "uint8") m_param.dtype = ZJV_PIXEL_DTYPE_UINT8;
-            else m_param.dtype = ZJV_PIXEL_DTYPE_UNKNOWN;
+            // std::string dtype = j["param"]["output_dtype"];
+            // if(dtype == "float32") m_param.dtype = ZJV_PIXEL_DTYPE_FLOAT32;
+            // else if(dtype == "uint8") m_param.dtype = ZJV_PIXEL_DTYPE_UINT8;
+            // else m_param.dtype = ZJV_PIXEL_DTYPE_UNKNOWN;
 
-            if(m_param.dtype == 0 ) 
-            {
-                CLOG(ERROR, PRELOG)<<"dtype not supported now in " ;
-                assert(0);
-            }
+            // if(m_param.dtype == 0 ) 
+            // {
+            //     CLOG(ERROR, PRELOG)<<"dtype not supported now in " ;
+            //     assert(0);
+            // }
 
             // 打印预处理配置参数
             CLOG(INFO, PRELOG) << "------- preprocess config ------------";
@@ -230,7 +230,7 @@ int PreProcessor::parse_json(const nlohmann::json & j)
             CLOG(INFO, PRELOG) << "resize_type:   [" << m_param.resize_type<<"]";
             CLOG(INFO, PRELOG) << "interp_type:   [" << m_param.interp_type<<"]";
             CLOG(INFO, PRELOG) << "channel_format:[" << m_param.channel_format<<"]";
-            CLOG(INFO, PRELOG) << "dtype:         [" << m_param.dtype<<"]";
+            // CLOG(INFO, PRELOG) << "dtype:         [" << m_param.dtype<<"]";
             CLOG(INFO, PRELOG) << "output_format: [" << m_param.output_format<<"]";     
             CLOG(INFO, PRELOG) << "------- preprocess config ------------";
 
@@ -273,15 +273,17 @@ int PreProcessor::run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_
 
         CImg<unsigned char> img ;
         if(frame_data->format == ZJV_IMAGEFORMAT_RGB24)
-        {
-            img = CImg<unsigned char>(frame_data->channel, frame_data->width, frame_data->height, 1);
+        {   
+            int c = frame_data->channel();
+            img = CImg<unsigned char>(c, frame_data->width, frame_data->height, 1);
             assert(frame_data->data->size() == img.size());
             memcpy(img.data(), data, img.size());
             img.permute_axes("yzcx");
         }
-        else if(frame_data->format == ZJV_IMAGEFORMAT_PRGB24)
+        else if(frame_data->format == ZJV_IMAGEFORMAT_RGBP)
         {
-            img = CImg<unsigned char>(frame_data->width, frame_data->height, 1, frame_data->channel);
+            int c =  frame_data->channel();
+            img = CImg<unsigned char>(frame_data->width, frame_data->height, 1, c);
             assert(frame_data->data->size() == img.size());
             memcpy(img.data(), data, img.size());
         }

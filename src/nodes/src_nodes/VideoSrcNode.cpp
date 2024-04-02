@@ -12,6 +12,7 @@ namespace ZJVIDEO
     {
         m_logger = el::Loggers::getLogger(VIDEOSRC_LOG);
         m_batch_process = false;
+        m_max_batch_size = 1;
         m_frame_cnt = 0;
 
         m_pFrame = NULL;
@@ -22,16 +23,21 @@ namespace ZJVIDEO
 
         m_video_index = -1;
         m_initialed  = false;
+        m_video_path = "";
+        
 
         CLOG(INFO, VIDEOSRC_LOG) << "VideoSrcNode::VideoSrcNode";
         parse_configure(param.m_cfg_file);
-        init();
     }
 
     VideoSrcNode::~VideoSrcNode()
     {
         CLOG(INFO, VIDEOSRC_LOG) << "VideoSrcNode::~VideoSrcNode";
+        deinit();
+    }
 
+    int VideoSrcNode::deinit()
+    {        
         av_frame_free(&m_pFrame);
         av_frame_free(&m_rgbFrame);
         sws_freeContext(m_swsCtx);
@@ -40,57 +46,18 @@ namespace ZJVIDEO
         if (m_rgbFrame) {
             av_freep(&m_rgbFrame->data[0]);
         }
+        m_initialed = false;
+        return 0;
+    }
+    int VideoSrcNode::reinit()
+    {
+        deinit();
+        init();
+        return 0;
     }
 
     int VideoSrcNode::parse_configure(std::string cfg_file)
     {
-        std::ifstream i(cfg_file);
-        if (i.is_open() == false)
-        {
-            CLOG(ERROR, VIDEOSRC_LOG) << "open cfg_file failed";
-            m_video_type = ZJV_VIDEO_TYPE_UNKNOWN;
-            m_video_path = "";
-            return ZJV_STATUS_ERROR;
-        }
-        nlohmann::json j;
-        i >> j;
-        std::string type = j["video_type"];
-        if (type == "file")
-        {
-            m_video_type = ZJV_VIDEO_TYPE_FILE;
-        }
-        else if (type == "camera")
-        {
-            m_video_type = ZJV_VIDEO_TYPE_CAMERA;
-        }
-        else if (type == "rtsp")
-        {
-            m_video_type = ZJV_VIDEO_TYPE_RTSP;
-        }
-        else if (type == "rtmp")
-        {
-            m_video_type = ZJV_VIDEO_TYPE_RTMP;
-        }
-        else if (type == "http")
-        {
-            m_video_type = ZJV_VIDEO_TYPE_HTTP;
-        }
-        else if (type == "hls")
-        {
-            m_video_type = ZJV_VIDEO_TYPE_HLS;
-        }
-        else
-        {
-            m_video_type = ZJV_VIDEO_TYPE_UNKNOWN;
-        }
-        m_video_path = j["path"];
-
-        // 打印配置参数
-        CLOG(INFO, VIDEOSRC_LOG) << "----------------video src node config-----------------";
-        CLOG(INFO, VIDEOSRC_LOG) << "video_type:    [" << m_video_type << "]";
-        CLOG(INFO, VIDEOSRC_LOG) << "video_path:     [" << m_video_path << "]";
-        CLOG(INFO, VIDEOSRC_LOG) << "------------------------------------------------------";
-
         return 0;
     }
 
@@ -99,6 +66,7 @@ namespace ZJVIDEO
         AVCodec *pCodec;
         AVDictionary *options = NULL;
         uint8_t *out_buffer;
+
 
         avformat_network_init();
         m_pFormatCtx = avformat_alloc_context();
@@ -176,50 +144,47 @@ namespace ZJVIDEO
     {
         while (m_run)
         {
-            if(m_initialed == false)
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
-            }
+
             std::vector<std::shared_ptr<FlowData>> datas;
             datas.clear();
-            std::shared_ptr<FrameData> frame_data = std::make_shared<FrameData>();
-            std::shared_ptr<FlowData> flow = std::make_shared<FlowData>(frame_data);
-            flow->set_channel_id(m_nodeparam.m_channel_id);
-            datas.push_back(flow);
 
-            // 主处理
-            process(datas);
+            get_input_data(datas);
 
-            bool has_output = false;
-            for(const auto & data : datas)
+            if (datas.size() == 0) 
             {
-                std::vector<std::string> tags;
-                for (const auto & output_data : m_nodeparam.m_output_datas)
+                // std::cout<<m_nodeparam.m_node_name <<" worker is wait "<<std::endl;
+                std::unique_lock<std::mutex> lk(m_base_mutex);
+                m_base_cond->wait(lk);
+                // std::cout<<m_nodeparam.m_node_name <<" worker wait is notified"<<std::endl;
+                continue;
+            }
+            else
+            {
+                for(auto & data : datas)
                 {
-                    std::string name = m_nodeparam.m_node_name + "."+ output_data;
-                    tags.push_back(name);
-                }
-            
-                has_output = data->has_extras(tags);
-            }
+                    std::shared_ptr<const VideoData>  video =  data->get_video();
 
-            if(has_output)
-            {
-                send_output_data(datas);
-            }
+                    m_video_path = video->video_path;
+                    
+                    reinit(); // 初始化
+
+                    // 主处理
+                    process(datas);
+                    // 处理完当前视频， 再处理下一个
+                }
+            }   
         }
         return ZJV_STATUS_OK;
     }
 
-    int VideoSrcNode::process_single(const std::vector<std::shared_ptr<const BaseData>> &in_metas,
-                                     std::vector<std::shared_ptr<BaseData>> &out_metas)
+    int VideoSrcNode::process(const std::vector<std::shared_ptr<FlowData>> &datas)
     {
 
         AVPacket packet;
         // Read frames from the file
-        if (av_read_frame(m_pFormatCtx, &packet) >= 0) 
+        while (av_read_frame(m_pFormatCtx, &packet) >= 0 && m_run) 
         {
+            auto start = std::chrono::system_clock::now();
             // Is this a packet from the video stream?
             if (packet.stream_index == m_video_index) 
             {
@@ -229,7 +194,7 @@ namespace ZJVIDEO
                 }
 
                 // Receive the frames from the decoder
-                while (avcodec_receive_frame(m_pCodecCtx, m_pFrame) >= 0)
+                while (avcodec_receive_frame(m_pCodecCtx, m_pFrame) >= 0 && m_run)
                 {
                     assert(m_rgbFrame->data != NULL);
                     // Convert the image from its native format to RGB
@@ -239,23 +204,68 @@ namespace ZJVIDEO
                             
                     int width = m_pCodecCtx->width;
                     int height = m_pCodecCtx->height;
-                    int channels = 3;
 
-                    std::shared_ptr<FrameData> frame_data = std::make_shared<FrameData>(width, height, channels);
+                    std::shared_ptr<FrameData> frame_data = std::make_shared<FrameData>(width, height, ZJV_IMAGEFORMAT_RGB24);
+
                     frame_data->camera_id = m_nodeparam.m_channel_id;
                     frame_data->frame_id = m_frame_cnt;
-                    frame_data->format = ZJV_IMAGEFORMAT_RGB24;
+                    // std::cout<<frame_data->stride<<std::endl;
 
                     unsigned char *data = (unsigned char *)frame_data->data->mutable_cpu_data();
-
-                    memcpy(data, m_rgbFrame->data[0], width * height * channels);
-
-                    out_metas.push_back(frame_data);
+                    memcpy(data, m_rgbFrame->data[0], width * height * 3);
                     m_frame_cnt++;
+
+                    // 重新构造数据流
+                    std::shared_ptr<FlowData> flow = std::make_shared<FlowData>(frame_data);
+                    flow->set_channel_id(m_nodeparam.m_channel_id);
+              
+
+                    // 添加额外数据
+                    std::vector<std::pair<std::string, std::shared_ptr<const BaseData> > > result;
+                    bool not_found = true;
+                    for (const auto & output_data : m_nodeparam.m_output_datas)
+                    {                        
+                        if(frame_data->data_name == output_data)
+                        {
+                            std::string name = m_nodeparam.m_node_name + "."+ output_data;
+                            result.push_back({name, frame_data});
+                            // std::cout<<name<<std::endl;
+                            not_found = false;
+                        }
+                    }
+                    if(not_found)
+                    {
+                        CLOG(ERROR, VIDEOSRC_LOG) << "output data ["<< frame_data->data_name <<"] is not found in " << m_nodeparam.m_node_name ;
+                        break;
+                    }
+                    flow->push_back(result);
+
+                    // 发送数据
+                    std::vector<std::shared_ptr<FlowData>> flows ;
+                    flows.push_back(flow);
+                    send_output_data(flows);
+                    // std::cout<<frame_data->frame_id<<std::endl;
                 }
-            }            
+            }
+            av_packet_unref(&packet);
+            // 延时
+            std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+
+
+            auto end = std::chrono::system_clock::now();
+            std::chrono::duration<double> elapsed_seconds = end - start; // Calculate elapsed time
+
+            double fps = datas.size() / elapsed_seconds.count() ; 
+            m_fps = m_fps*m_fps_count/(m_fps_count+1) + fps/(m_fps_count+1);
+            m_fps_count++;
+            if(m_fps_count > 100)
+            {
+                m_fps_count = 0;
+            }
+
         }
-        av_packet_unref(&packet);
+        
         return 0;
     }
 

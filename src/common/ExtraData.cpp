@@ -4,6 +4,8 @@
 
 namespace ZJVIDEO
 {
+
+
     int DetectResultData::append(std::shared_ptr<BaseData>& data_ptr)
     {
         const std::shared_ptr<DetectResultData> data = std::dynamic_pointer_cast<DetectResultData>(data_ptr);

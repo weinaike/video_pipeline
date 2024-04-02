@@ -42,9 +42,11 @@ namespace ZJVIDEO
         virtual int parse_configure(std::string cfg_file);
         // 根据配置文件， 初始化对象,输入输出队列
         virtual int init();
+        virtual int process(const std::vector<std::shared_ptr<FlowData>> &datas);
 
-        virtual int process_single(const std::vector<std::shared_ptr<const BaseData>> &in_metas,
-                                   std::vector<std::shared_ptr<BaseData>> &out_metas);
+    private:
+        int reinit();
+        int deinit();
 
     private:
         int m_video_type; // 视频类型

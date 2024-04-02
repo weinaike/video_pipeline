@@ -11,7 +11,7 @@ find_package(Threads REQUIRED)
 find_package(X11 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(FFmpeg REQUIRED)
-
+find_package(FFmpeg COMPONENTS swscale)
 
 # 添加头文件路径与库文件
 include_directories(${FFMPEG_INCLUDE_DIRS})
@@ -61,11 +61,12 @@ add_subdirectory(src)
 include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
-add_executable(demo demo/main.cpp)
+add_executable(demo demo/test.cpp)
 
 # 添加链接库目录
 link_directories(${CMAKE_SOURCE_DIR}/libs)
 # link_directories(/home/wnk/code/software/onnxruntime-linux-x64-1.17.1/lib)
 # target_link_libraries(demo onnxruntime)
 
-target_link_libraries(demo zj_pipe cuda_lib ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread ${X11_LIBRARIES} ${OpenCV_LIBS} ${TRT_LIBS} ${CUDA_LIBS} ${CUDNN_LIBS})
+target_link_libraries(demo zj_pipe cuda_lib ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so pthread 
+    ${X11_LIBRARIES} ${OpenCV_LIBS} ${TRT_LIBS} ${CUDA_LIBS} ${CUDNN_LIBS} ${FFMPEG_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})

@@ -157,7 +157,7 @@ int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )
             frame->height = img.height();
             frame->channel = img.spectrum();
             frame->depth = 1;
-            frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_PRGB24;
+            frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_RGBP;
             frame->fps = 25;      
             frame->camera_id = camera_id;
             frame->frame_id = cnt;       
@@ -212,7 +212,7 @@ int main()
 
 
     std::shared_ptr<ZJVIDEO::SetLoggerLevelControlData> level = std::make_shared<ZJVIDEO::SetLoggerLevelControlData>();
-    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_INFO);
+    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_DEBUG);
     std::shared_ptr<ZJVIDEO::ControlData> base_level = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(level);
     pipeline.control(base_level);
 
@@ -224,6 +224,8 @@ int main()
     //     std::thread t1(input_worker, std::bind(&ZJVIDEO::Pipeline::set_input_data, &pipeline, std::placeholders::_1), i);
     //     threads.emplace_back(std::move(t1));
     // }
+
+    pipeline.set_input_data(std::make_shared<ZJVIDEO::VideoData>(video_path, 0));
 
     int frame_id = 0;
     
@@ -249,24 +251,24 @@ int main()
                 std::shared_ptr<const ZJVIDEO::FrameData> frame = std::dynamic_pointer_cast<const ZJVIDEO::FrameData>(data);
                 if(frame->format == ZJVIDEO::ZJV_IMAGEFORMAT_RGB24)
                 {
-                    img = cil::CImg<unsigned char>(frame->channel, frame->width, frame->height, 1);
+                    img = cil::CImg<unsigned char>(frame->channel(), frame->width, frame->height, 1);
                     std::memcpy(img.data(), frame->data->cpu_data(), img.size());
                     img.permute_axes("yzcx");
                 }
-                else if(frame->format == ZJVIDEO::ZJV_IMAGEFORMAT_PRGB24)
+                else if(frame->format == ZJVIDEO::ZJV_IMAGEFORMAT_RGBP)
                 {
-                    img = cil::CImg<unsigned char>(frame->width, frame->height, 1, frame->channel);
+                    img = cil::CImg<unsigned char>(frame->width, frame->height, 1, frame->channel());
                     memcpy(img.data(), frame->data->cpu_data(), img.size());
                 }
                 else
                 {
-                    img = cil::CImg<unsigned char>(frame->width, frame->height, 1, frame->channel);
+                    img = cil::CImg<unsigned char>(frame->width, frame->height, 1, frame->channel());
                     memcpy(img.data(), frame->data->cpu_data(), img.size());
                 }
         
                 frame_id = frame->frame_id;
                 img.draw_text(50, 50, std::to_string(frame_id).c_str(), white, 0, 1);
-                // std::cout<< frame->width << " " << frame->height << " " << frame->channel << std::endl;
+                // std::cout<< frame_id << " " << frame->width << " " << frame->height << " " << frame->channel << std::endl;
             }
         }
 
@@ -323,7 +325,7 @@ int main()
         }
         // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         
-        img.save("../data/result.bmp");
+        // img.save("../data/result.bmp");
         // cil::CImgDisplay disp(img,"result");
         // disp.wait(40);
         // while (!disp.is_closed()) {

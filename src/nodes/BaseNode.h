@@ -67,10 +67,10 @@ namespace ZJVIDEO
                                    std::vector<std::shared_ptr<BaseData>> &out_metas);
 
         // 实际主处理, 不能更改指针指向的对象， 但可以修改添加对象属性
-        int process(const std::vector<std::shared_ptr<FlowData>> &datas);
+        virtual int process(const std::vector<std::shared_ptr<FlowData>> &datas);
 
-        int get_input_data(std::vector<std::shared_ptr<FlowData>> &data);
-        int send_output_data(const std::vector<std::shared_ptr<FlowData>> &data);
+        virtual int get_input_data(std::vector<std::shared_ptr<FlowData>> &data);
+        virtual int send_output_data(const std::vector<std::shared_ptr<FlowData>> &data);
 
     protected:
         NodeParam m_nodeparam;                                            // 节点参数

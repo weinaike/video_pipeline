@@ -661,23 +661,32 @@ int BaseNode::get_control_info(std::shared_ptr<ControlData>& data )
         std::shared_ptr<SetLoggerLevelControlData> ptr = std::dynamic_pointer_cast<SetLoggerLevelControlData>(data);
         int level = ptr->get_level();
         m_logger->configurations()->set(el::Level::Global, el::ConfigurationType::Enabled, "true");
-        if(ZJV_LOGGER_LEVEL_INFO == level)
+        if(ZJV_LOGGER_LEVEL_DEBUG == level)
         {
-            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Trace, el::ConfigurationType::Enabled, "false");
+        }
+        else if(ZJV_LOGGER_LEVEL_INFO == level)
+        {
+            m_logger->configurations()->set(el::Level::Trace, el::ConfigurationType::Enabled, "false");
+            m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");           
         }
         else if(ZJV_LOGGER_LEVEL_WARN == level)
         {
+            m_logger->configurations()->set(el::Level::Trace, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
         }
         else if(ZJV_LOGGER_LEVEL_ERROR == level)
         {
+            m_logger->configurations()->set(el::Level::Trace, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
+
         }
         else if(ZJV_LOGGER_LEVEL_FATAL == level)
         {
+            m_logger->configurations()->set(el::Level::Trace, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Info, el::ConfigurationType::Enabled, "false");
             m_logger->configurations()->set(el::Level::Warning, el::ConfigurationType::Enabled, "false");

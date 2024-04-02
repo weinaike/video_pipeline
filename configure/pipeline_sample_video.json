@@ -7,7 +7,7 @@
             "node_type": "VideoSrc",
             "node_name": "Node1",
             "channels": false,
-            "cfg_file": "../configure/cfg_nodes/videosrc.json",
+            "cfg_file": "",
             "input_datas":
             [
 

@@ -473,6 +473,71 @@ std::vector<std::string> Pipeline::get_dst_node_name()
     return dst_node_name;
 }
 
+int Pipeline::set_input_data(const std::shared_ptr<VideoData> & data) 
+{
+    std::unique_lock<std::mutex> lk(m_mutex);
+    if(m_srcQueueList.size() == 1)
+    {
+        // 仅有单通道
+        std::shared_ptr<FlowData> flowdata = std::make_shared<FlowData>(data);
+
+        int channel_id = parse_id(m_src_node_name[0]);
+        flowdata->set_channel_id(channel_id);        
+        m_srcQueueList[m_src_node_name[0]]->Push(flowdata);
+    }
+    else
+    {
+        if(m_src_map.find(data->camera_id) != m_src_map.end())
+        {
+            const auto & node_tag = m_src_map[data->camera_id];
+            std::shared_ptr<FlowData> flowdata = std::make_shared<FlowData>(data);
+
+            int channel_id = parse_id(node_tag);
+            flowdata->set_channel_id(channel_id);
+            m_srcQueueList[node_tag]->Push(flowdata);
+        }
+        else
+        {
+            if(m_src_map.size() < m_src_node_name.size())
+            {
+                std::vector<std::string> used;
+                for(const auto & item : m_src_map)
+                {
+                    used.push_back(item.second);
+                }
+
+                for(const auto & item : m_src_node_name)
+                {
+                    if(std::find(used.begin(), used.end(), item) == used.end())
+                    {
+                        m_src_map.insert({data->camera_id, item});
+                        std::shared_ptr<FlowData> flowdata = std::make_shared<FlowData>(data);
+
+                        int channel_id = parse_id(item);
+                        flowdata->set_channel_id(channel_id);
+                        m_srcQueueList[item]->Push(flowdata);
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                CLOG(INFO, PIPE_LOG) <<" this frame camera_id is " << data->camera_id << 
+                    ",  input camera_ids is more the channels " << m_src_node_name.size() << " , please check the config file";
+                for(const auto & item : m_src_map)
+                {
+                    CLOG(INFO, PIPE_LOG) << "       camera_id ["<<item.first<<"] ---> " <<item.second;
+                }
+            }
+        }
+    }
+
+    return ZJV_STATUS_OK;
+
+
+}
+
+
 // 给源节点添加数据
 int Pipeline::set_input_data(const std::shared_ptr<FrameData> & data) 
 {

@@ -37,6 +37,7 @@ public:
 
     // 给源节点添加数据
     int set_input_data(const std::shared_ptr<FrameData> & data);
+    int set_input_data(const std::shared_ptr<VideoData> & data);
     // 从末尾节点提取数据
     int get_output_data(std::vector<std::shared_ptr<EventData>> & );
     int get_output_data(std::vector<std::shared_ptr<const BaseData>> & data) ;

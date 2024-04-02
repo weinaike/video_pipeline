@@ -21,6 +21,14 @@ namespace ZJVIDEO
         explicit FlowData(const std::shared_ptr<FrameData> &data) : BaseData(ZJV_DATATYPE_FLOW)
         {
             frame = data;
+            video = nullptr;
+            data_name = "Flow";
+        }
+
+        explicit FlowData(const std::shared_ptr<VideoData> &data) : BaseData(ZJV_DATATYPE_FLOW)
+        {
+            video = data;
+            frame = nullptr;
             data_name = "Flow";
         }
         ~FlowData() override = default;
@@ -97,7 +105,10 @@ namespace ZJVIDEO
         {
             return frame;
         }
-
+        inline std::shared_ptr<const VideoData> get_video()
+        {
+            return video;
+        }
         inline void debug()
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -111,6 +122,7 @@ namespace ZJVIDEO
     private:
         // 流转过程中，create_time和指针地址是标识
         std::shared_ptr<const FrameData> frame; // 帧数据
+        std::shared_ptr<const VideoData> video; // 帧数据
         // 可以添加修改随帧数据
         std::map<std::string, std::shared_ptr<const BaseData>> m_extras; // 额外数据
         // 锁
