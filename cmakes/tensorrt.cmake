@@ -1,6 +1,4 @@
-message("配置tensorrt环境")
 
-#
 # 1. 配置tensorrt环境
 #
 # set(TENSORRT_ROOT_DIR /usr/local/TensorRT-8.6.1.6_cuda11.8/)

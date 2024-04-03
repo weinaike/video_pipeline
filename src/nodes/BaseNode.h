@@ -49,7 +49,7 @@ namespace ZJVIDEO
         virtual int stop() override;
 
         virtual bool get_run_status() override;
-        virtual int get_control_info(std::shared_ptr<ControlData> &data) override;
+        virtual int control(std::shared_ptr<ControlData> &data) override;
         virtual std::string get_name() override;
 
     protected:

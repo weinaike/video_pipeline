@@ -31,7 +31,7 @@ public:
     virtual int stop() = 0;  
     // 查询状态
     virtual bool get_run_status() = 0;  
-    virtual int get_control_info(std::shared_ptr<ControlData> & data ) = 0;  
+    virtual int control(std::shared_ptr<ControlData> & data ) = 0;  
     virtual std::string get_name() = 0;  
     // 5. 删除节点
     virtual ~AbstractNode() = default;

@@ -13,7 +13,9 @@ enum ControlType {
     ZJV_CONTROLTYPE_VIDEO_RECORD,       // 视频录制
     ZJV_CONTROLTYPE_IMAGE_RECORD,       // 图片录制
     ZJV_CONTROLTYPE_GET_FPS,            // 获取帧率
+    ZJV_CONTROLTYPE_SET_FPS,            // 设置帧率
     ZJV_CONTROLTYPE_SET_LOGGER_LEVEL,   // 设置日志级别
+    ZJV_CONTROLTYPE_SET_RUN_MODE,       // 设置运行模式
     ZJV_CONTROLTYPE_MAX
 };
 
@@ -81,6 +83,34 @@ public:
         return 0;
     }
 };
+
+
+enum PipelineRunMode {
+    ZJV_PIPELINE_RUN_MODE_LIVING,  // 实时在线
+    ZJV_PIPELINE_RUN_MODE_RECORDED,  // 预先录制
+};
+
+class SetRunModeControlData : public ControlData {
+
+public:
+    explicit SetRunModeControlData(ControlType control_type = ZJV_CONTROLTYPE_SET_RUN_MODE)
+        : ControlData(control_type){}
+
+    ~SetRunModeControlData() override = default;
+
+private:
+    int m_mode;
+public:
+    int get_mode() const {
+        return m_mode;
+    }
+
+    int set_mode(int mode)  {
+        m_mode = mode;
+        return 0;
+    }
+};
+
 
 }  // namespace Data
 #endif  // VIDEOPIPELINE_CONTROLDATA_H

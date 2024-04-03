@@ -319,16 +319,6 @@ int Pipeline::init()
         std::shared_ptr<AbstractNode> node = NodeRegister::CreateNode(node_param);
         m_node_map.insert(std::make_pair(node_param.m_node_name, node));
     }
-    // // 配置打印等级
-    // for(auto & node_itme:m_node_map)
-    // {
-    //     auto & node = node_itme.second;
-    //     std::shared_ptr<SetLoggerLevelControlData> data = std::make_shared<SetLoggerLevelControlData>();
-    //     data->set_level(ZJV_LOGGER_LEVEL_WARN);
-    //     std::shared_ptr<ControlData> base = std::dynamic_pointer_cast<ControlData>(data);
-    //     node->get_control_info(base);
-    // }
-
 
     //  2. 配置节点输入输出队列
     for (auto & connection : m_connect_list) 
@@ -350,7 +340,7 @@ int Pipeline::init()
         std::shared_ptr<FlowQueue> queue = std::make_shared<FlowQueue>();
         m_srcQueueList.insert(std::make_pair(m_node_map[node_id]->get_name(), queue));
         queue->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_DROP_LATE);
-        m_node_map[node_id]->connect_add_input(m_node_map[node_id]->get_name(), queue);
+        m_node_map[node_id]->connect_add_input(m_node_map[node_id]->get_name(), queue);        
     }
     // 从m_connect_list 有向图连接中 提取末尾节点，即只有入度，没有出度
     std::vector<std::string> zeroOutDegreeNodes = getZeroOutDegreeNodes(m_connect_list);
@@ -673,7 +663,31 @@ int Pipeline::control(std::shared_ptr<ControlData>& data)
         for(auto & node_itme:m_node_map)
         {
             auto & node = node_itme.second;
-            node->get_control_info(data);
+            node->control(data);
+        }
+    }
+    else if(data->get_control_type() == ZJV_CONTROLTYPE_SET_RUN_MODE)
+    {
+        std::shared_ptr<SetRunModeControlData> set_run_mode_data = std::dynamic_pointer_cast<SetRunModeControlData>(data);
+        int mode = set_run_mode_data->get_mode();
+
+        // 遍历输入队列
+        for(const auto & item : m_srcQueueList)
+        {
+            if(mode == ZJV_PIPELINE_RUN_MODE_LIVING)
+            {
+                item.second->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_DROP_EARLY);
+            }
+            else
+            {
+                item.second->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_BLOCK);
+            }            
+        }
+
+        for(auto & node_itme:m_node_map)
+        {
+            auto & node = node_itme.second;
+            node->control(data);
         }
     }
 
@@ -728,14 +742,14 @@ int Pipeline::show_debug_info()
     {
         std::shared_ptr<GetFPSControlData> data = std::make_shared<GetFPSControlData>();
         std::shared_ptr<ControlData> base = std::dynamic_pointer_cast<ControlData>(data);
-        node.second->get_control_info(base);
+        node.second->control(base);
         str += node.first;
         str +="[";
         str +=std::to_string((int)data->get_fps());
         str +="] ";
     }
     str += "| ";
-    CLOG(INFO, PIPE_LOG) << str ;
+    CLOG(DEBUG, PIPE_LOG) << str ;
     return ZJV_STATUS_OK;
 }
 

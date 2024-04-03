@@ -202,9 +202,18 @@ int BaseNode::start()
 
     CLOG(INFO, BASENODE_LOG) <<  m_nodeparam.m_node_name << " type :" << m_node_position_type ;
 
+    if(m_node_position_type == ZJV_NODE_POSITION_SRC)
+    {
+        for (auto &output : m_output_buffers)
+        {
+            output.second->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_BLOCK);
+        }
+    }
 
     m_run = true;
     m_worker = std::thread(&BaseNode::worker, this);
+
+
     
     CLOG(INFO, BASENODE_LOG)<< m_nodeparam.m_node_name <<" thread start";
     return ZJV_STATUS_OK;
@@ -648,7 +657,7 @@ bool BaseNode::get_run_status()
 {
     return m_run;
 }
-int BaseNode::get_control_info(std::shared_ptr<ControlData>& data ) 
+int BaseNode::control(std::shared_ptr<ControlData>& data ) 
 {
     std::unique_lock<std::mutex> lk(m_base_mutex);
     if(data->get_control_type() == ZJV_CONTROLTYPE_GET_FPS)
@@ -694,12 +703,7 @@ int BaseNode::get_control_info(std::shared_ptr<ControlData>& data )
         }
         m_logger->reconfigure();
     }
-    else
-    {
-        CLOG(ERROR, BASENODE_LOG) << "control type is not supported";
-        return ZJV_STATUS_ERROR;
-    
-    }
+
     return ZJV_STATUS_OK;
 }
 

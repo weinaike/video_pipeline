@@ -92,6 +92,9 @@ int main()
     std::cout<< "pipeline.start()\n" ;
     pipeline.start();
     
+
+
+
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // std::vector<std::string> src_node_name = pipeline.get_src_node_name();
     // std::vector<std::string> dst_node_name = pipeline.get_dst_node_name();
@@ -99,13 +102,26 @@ int main()
     // 打印源节点数量
     // std::cout<< "src_node_name.size(): " << src_node_name.size()  <<std::endl;
 
+    pipeline.set_input_data(std::make_shared<ZJVIDEO::VideoData>(video_path, 0));
 
     std::shared_ptr<ZJVIDEO::SetLoggerLevelControlData> level = std::make_shared<ZJVIDEO::SetLoggerLevelControlData>();
     level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_DEBUG);
     std::shared_ptr<ZJVIDEO::ControlData> base_level = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(level);
     pipeline.control(base_level);
 
-    pipeline.set_input_data(std::make_shared<ZJVIDEO::VideoData>(video_path, 0));
+
+
+
+
+
+
+
+
+    // std::shared_ptr<ZJVIDEO::SetRunModeControlData> mode_control = std::make_shared<ZJVIDEO::SetRunModeControlData>();
+    // mode_control->set_mode(ZJVIDEO::ZJV_PIPELINE_RUN_MODE_LIVING);
+    // std::shared_ptr<ZJVIDEO::ControlData> base_mode = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(mode_control);
+    // pipeline.control(base_mode);
+
 
     int frame_id = 0;
     

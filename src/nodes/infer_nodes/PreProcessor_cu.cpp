@@ -7,7 +7,7 @@
 #endif
 
 
-#define Enable_CUDA
+// #define Enable_CUDA
 #ifdef Enable_CUDA
 #include "cuda_kernels/CudaPreProcess.h"
 #endif

@@ -43,6 +43,7 @@ namespace ZJVIDEO
         // 根据配置文件， 初始化对象,输入输出队列
         virtual int init();
         virtual int process(const std::vector<std::shared_ptr<FlowData>> &datas);
+        virtual int control(std::shared_ptr<ControlData> &data) ;
 
     private:
         int reinit();
@@ -56,10 +57,10 @@ namespace ZJVIDEO
         int m_video_index; // 视频流索引
         int m_frame_cnt; // 帧计数
         struct SwsContext* m_swsCtx; // 转换上下文
-        AVFrame *m_pFrame; // 存储解码后的原始帧
+        AVFrame *m_Frame; // 存储解码后的原始帧
         AVFrame* m_rgbFrame; // 存储转换后的RGB帧
-        AVCodecContext *m_pCodecCtx; // 编解码器上下文
-        AVFormatContext *m_pFormatCtx; // 格式上下文
+        AVCodecContext *m_CodecCtx; // 编解码器上下文
+        AVFormatContext *m_FormatCtx; // 格式上下文
 
     }; // class VideoSrcNode
 
