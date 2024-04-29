@@ -81,6 +81,6 @@ namespace ZJVIDEO
     }
     REGISTER_DATA_CLASS(SegmentResult)
 
-
+    REGISTER_DATA_CLASS(ImageCahce)
 
 }   // namespace ZJVIDEO

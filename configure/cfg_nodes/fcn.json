@@ -2,7 +2,7 @@
     "comment":
     {
         "device":[-1, 0, 1, 2, 3],
-        "backend":["ONNX"],
+        "backend":["ONNX","TRT"],
         "resize_type":["Stretch", "LetterBox", "Fill"],
         "interp_mode":["Linear","Nearest","Cubic"],
         "channel_format":["RGB","BGR"],

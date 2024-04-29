@@ -21,6 +21,7 @@ std::string pic_path = "../data/cat.bmp";
 std::string video_path = "../data/video/person_tracker.flv";
 
 
+
 std::string imagenet_file = "../data/synset.txt";
 
 std::vector<std::pair<std::string, std::string>> load_synset(const std::string& filename) 

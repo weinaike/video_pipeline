@@ -248,7 +248,7 @@ namespace ZJVIDEO
             }
             av_packet_unref(&packet);
             // 延时
-            // std::this_thread::sleep_for(std::chrono::milliseconds(30));
+            std::this_thread::sleep_for(std::chrono::milliseconds(3));
 
             auto end = std::chrono::system_clock::now();
             std::chrono::duration<double> elapsed_seconds = end - start; // Calculate elapsed time

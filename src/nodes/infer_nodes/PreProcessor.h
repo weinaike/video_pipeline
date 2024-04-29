@@ -24,6 +24,7 @@ namespace ZJVIDEO
     protected:
         int run_cimg(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
         int run_cuda(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
+        int run_3d_cuda(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);
     private:
         int m_lib_type;
         PreProcessParameter m_param;

@@ -14,13 +14,13 @@
     "model": 
     {
         "version": "1.0",
-        "model_name": "resnet18-v1-7",
+        "model_name": "I3D-ResNet-50",
         "encrypt": false,
-        "max_batch_size" : 4,
-        "device" : -1,
-        "model_file": "../models/resnet/resnet18-v1-7.onnx",
-        "weight_file": "../models/resnet/resnet18-v1-7.onnx",        
-        "backend": "ONNX",
+        "max_batch_size" : 2,
+        "device" : 0,
+        "model_file": "../models/i3d/K400-I3D-ResNet-50-f32.onnx",
+        "weight_file": "../models/i3d/K400-I3D-ResNet-50-f32.onnx",     
+        "backend": "TRT",
         "dynamic_batch": false,
         "enable_int8": false,
         "enable_fp16": false
@@ -28,50 +28,49 @@
     "preprocess": 
     {
         "ImageType":
+        [],
+        "VideoType":
         [
             {
-                "output_name": "data",
+                "output_name": "input",
                 "param":
                 {
                     "resize_type": "Stretch",
-                    "output_diims": [1,3,224,224],
-                    "output_format":"NCHW",
+                    "output_diims": [1, 3, 32, 224, 224],
+                    "output_format":"NCTHW",
                     "output_dtype": "float32",
 
                     "interp_mode": "Linear",
-                    "letterbox_color": [114, 114, 114],
+                    "letterbox_color": [127, 127, 127],
                     "channel_format": "RGB",
             
                     "normalize": true,
-                    "mean": [123.675, 116.28, 103.53],
-                    "std": [58.395, 57.12, 57.375]                    
+                    "mean": [123.7, 116.3 , 103.5],
+                    "std" : [58.4, 57.1 , 57.4]                    
                 }
             }
         ],
-        "VideoType":
-        [],
         "FeatureType":
         []
     },
 
     "infer": 
     {
-        "input_names": ["data"],
-        "input_dims": [[1,3,224,224]],
-        "output_names": ["resnetv15_dense0_fwd"]
+        "input_names": ["input"],
+        "input_dims": [[1, 3, 32, 224, 224]],
+        "output_names": ["output"]
     },
 
     "postprocess": 
     {
         "Classify" :
         {
-            "input_names":["resnetv15_dense0_fwd"],
+            "input_names":["output"],
             "output_data_type": "ClassifyResult",
             "main_category":[],
             "sub_category":[],
-            "num_classes": 1000
-
-        }        
+            "num_classes": 400
+        }         
     }
     
 }

@@ -87,7 +87,18 @@ namespace ZJVIDEO
 
         virtual int append(std::shared_ptr<BaseData>& data_ptr) override;    
     };
-
+    // 图像缓存结果
+    class ImageCahceData : public BaseData
+    {
+    public:
+        explicit ImageCahceData() : BaseData(ZJV_DATATYPE_IMAGECACHE)
+        {
+            data_name = "ImageCache";
+            images.clear();
+        }
+        ~ImageCahceData() override = default;
+        std::vector<std::shared_ptr<FrameData>> images;
+    };
 
     // 检测结果，分类结果等
     class ExtraData : public BaseData

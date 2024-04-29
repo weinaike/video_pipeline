@@ -619,7 +619,35 @@ namespace CUDA
             dst_bgr[position * 3 + 2] = 1.164f * (yvalue - 16.0f) + 1.596f * (v - 128.0f);
         }
 
+        static __global__ void permute_NTCHW_to_NCTHW(float* output, const float* input, int N, int T, int C, int H, int W)
+        {
+            int index = blockIdx.x * blockDim.x + threadIdx.x;
+            int total_size = N * T * C * H * W;
 
+            if (index < total_size)
+            {
+                int n = index / (T * C * H * W);
+                index %= (T * C * H * W);
+                int c = index / (T * H * W);
+                index %= (T * H * W);
+                int t = index / (H * W);
+                index %= (H * W);
+                int h = index / W;
+                int w = index % W;
+
+                int output_index = ((n * C + c) * T + t) * H * W + h * W + w;
+                output[output_index] = input[index];
+            }
+        }
+
+        void permute_CT(float* output, const float* input, int N, int C, int T, int H, int W)
+        {
+            int total_size = N * C * T * H * W;
+            int threads_per_block = 256;
+            int num_blocks = (total_size + threads_per_block - 1) / threads_per_block;
+
+            permute_NTCHW_to_NCTHW<<<num_blocks, threads_per_block>>>(output, input, N, C, T, H, W);
+        }
         /////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////

@@ -15,7 +15,8 @@ void signalHandler(int signum) {
 }
 
 std::string pic_path = "../data/cat.bmp";
-std::string video_path = "../data/video/person_tracker.flv";
+// std::string video_path = "../data/video/person_tracker.flv";
+std::string video_path = "../data/video/0H5mnFcm2Kg.mp4.mkv";
 
 
 std::string imagenet_file = "../data/synset.txt";
@@ -84,7 +85,8 @@ int main()
     // std::string cfg_file = "../configure/pipeline_sample_segment.json";
     // std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
-    std::string cfg_file = "../configure/pipeline_sample_video.json";
+    // std::string cfg_file = "../configure/pipeline_sample_video.json";
+    std::string cfg_file = "../configure/pipeline_sample_3D_classification.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
     std::cout<< "pipeline.init()\n" ;
@@ -110,17 +112,10 @@ int main()
     pipeline.control(base_level);
 
 
-
-
-
-
-
-
-
-    // std::shared_ptr<ZJVIDEO::SetRunModeControlData> mode_control = std::make_shared<ZJVIDEO::SetRunModeControlData>();
-    // mode_control->set_mode(ZJVIDEO::ZJV_PIPELINE_RUN_MODE_LIVING);
-    // std::shared_ptr<ZJVIDEO::ControlData> base_mode = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(mode_control);
-    // pipeline.control(base_mode);
+    std::shared_ptr<ZJVIDEO::SetRunModeControlData> mode_control = std::make_shared<ZJVIDEO::SetRunModeControlData>();
+    mode_control->set_mode(ZJVIDEO::ZJV_PIPELINE_RUN_MODE_RECORDED);
+    std::shared_ptr<ZJVIDEO::ControlData> base_mode = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(mode_control);
+    pipeline.control(base_mode);
 
 
     int frame_id = 0;
@@ -133,7 +128,7 @@ int main()
         std::vector< std::shared_ptr<const ZJVIDEO::BaseData> >datas;
         datas.clear();
         pipeline.get_output_data(datas);
-
+        // std::cout<<"datas.size(): " << datas.size() << std::endl;
         if(datas.size() == 0)
         {
             continue;
@@ -161,7 +156,7 @@ int main()
         
                 frame_id = frame->frame_id;
                 // opencv 画 帧号信息
-                cv::putText(cv_img, std::to_string(frame_id), cv::Point(100, 100), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
+                cv::putText(cv_img, std::to_string(frame_id), cv::Point(10, 100), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 2);
 
             }
         }
@@ -192,19 +187,19 @@ int main()
                             int centery = detect_result->detect_boxes[i].track_boxes[j].y + detect_result->detect_boxes[i].track_boxes[j].height/2;
                             cv::circle(cv_img, cv::Point(centerx, centery), 2, cv::Scalar(255, 0, 0), 2);
                         }
-
-
                     }
                 }
             }
             else if(data->data_name == "ClassifyResult")
             {
                 std::shared_ptr<const ZJVIDEO::ClassifyResultData> result = std::dynamic_pointer_cast<const ZJVIDEO::ClassifyResultData>(data);
-                int label = result->detect_box_categories[0].label;
-                float score = result->detect_box_categories[0].score;              
 
-                std::cout << "cat: " << synset[label].second << "  " << score << std::endl;
-
+                for(int i = 0; i < result->detect_box_categories.size(); i++)
+                {
+                    int label = result->detect_box_categories[i].label;
+                    float score = result->detect_box_categories[i].score;
+                    std::cout << "cls: " << label << "  " << score << std::endl;
+                }                
                 // img.draw_text(50, 50, synset[label].second, red, 0, 1);
             }
             else if(data->data_name == "SegmentResult")
@@ -217,13 +212,13 @@ int main()
 
             }
         }
-        
-        cv::resize(cv_img, cv_img, cv::Size(640, 480));
+
+        // cv::resize(cv_img, cv_img, cv::Size(640, 480));
 
         cv::cvtColor(cv_img, cv_img, cv::COLOR_RGB2BGR);
         cv::imshow("result", cv_img);
         cv::waitKey(1);
-
+        // std::cout<<frame_id<<std::endl;
         if(frame_id%25 == 0)
         {
             pipeline.show_debug_info();

@@ -27,9 +27,11 @@ namespace ZJVIDEO
 
     enum PreProcessOutputFormat
     {
-        ZJV_PREPROCESS_OUTPUT_FORMAT_UNKNOWN = 0, // "Unknown"
-        ZJV_PREPROCESS_OUTPUT_FORMAT_NCHW = 1,    // "NCHW"
-        ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC = 2,    // "NHWC"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_UNKNOWN    = 0,    // "Unknown"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NCHW       = 1,    // "NCHW"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC       = 2,    // "NHWC"
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NCTHW      = 3,    // "NCTHW" for 3D model
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NTCHW      = 4,    // "NTCHW" for 3D model
     };
 
     enum PreProcessChannelFormat
@@ -73,6 +75,7 @@ namespace ZJVIDEO
     {
         int input_vector_id;
         std::shared_ptr<const FrameData> frame;
+        std::vector<std::shared_ptr<const FrameData>> frames;
         const DetectBox * original;                     // roi的原始目标
         // 原图坐标系下的roi
         Rect roi;

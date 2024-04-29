@@ -71,7 +71,7 @@ namespace ZJVIDEO
 
         std::shared_ptr<SyncedMemory> data; // 图像数据
         // 视频相关参数
-        int fps;          // 帧率
+        float fps;          // 帧率
         int camera_id;    // 相机ID
         int64_t frame_id; // 帧号
         int64_t pts;      // 时间戳

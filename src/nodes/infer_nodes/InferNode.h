@@ -9,7 +9,7 @@
 
 namespace ZJVIDEO {
 
-
+#define INFER_LOG "InferNode"
 class InferNode : public BaseNode {
 
 public:

@@ -4,7 +4,7 @@
 
 namespace ZJVIDEO {
 
-#define INFER_LOG "InferNode"
+
 
 InferNode::InferNode(const NodeParam & param) : BaseNode(param)
 {
@@ -123,9 +123,13 @@ int InferNode::parse_configure(std::string cfg_file)
         if(j["preprocess"].contains("VideoType"))
         {
             nlohmann::json video_types = j["preprocess"]["VideoType"];
-            if(video_types.size() > 0)
+            for(auto & video_type: video_types)
             {
-                CLOG(ERROR, INFER_LOG) << "video_type not supported now";
+                std::shared_ptr<PreProcessor> video_preproc = std::make_shared<PreProcessor>(lib_type, m_device_id);
+                video_preproc->parse_json(video_type);
+                PreProcessParameter param = video_preproc->get_param();
+                m_img_preprocs.push_back(video_preproc);
+                m_img_preproc_params.push_back(param);
             }
         }
         if(j["preprocess"].contains("FeatureType"))
@@ -242,69 +246,160 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
 {
     if(in_metas_batch.size() == 0) return ZJV_STATUS_ERROR;
 
-    for(int i = 0; i < in_metas_batch.size(); i++)
+    // 遍历 m_nodeparam.m_input_node_datas
+    bool is_frame = false;
+    bool is_image_cache = false;
+    for (size_t i = 0; i < m_nodeparam.m_input_node_datas.size(); i++)
     {
-        
-        if(in_metas_batch[i].size() == 1)
+        //    std::vector<std::pair<std::string, std::string>>    m_input_node_datas;   // 前置节点数据
+        std::string key = m_nodeparam.m_input_node_datas[i].first;
+        std::string value = m_nodeparam.m_input_node_datas[i].second;
+        if(value == "Frame")
         {
-            if(in_metas_batch[i][0]->data_name == "Frame")
-            {
-                std::shared_ptr<const FrameData> frame_data = std::dynamic_pointer_cast<const FrameData>(in_metas_batch[i][0]);
-                std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
-                frame_roi->frame = frame_data;
-                frame_roi->input_vector_id = i;
-                frame_roi->roi.x = 0;
-                frame_roi->roi.y = 0;
-                frame_roi->roi.width = frame_data->width/2*2 ;
-                frame_roi->roi.height = frame_data->height/2* 2 ;
-                frame_roi->original = nullptr;
-                frame_rois.push_back(frame_roi);
-            }
-            else
-            {
-                CLOG(ERROR, INFER_LOG) << "in_metas_batch without Frame";
-                assert(0);
-            }
+            is_frame = true;
         }
-        else
-        {   
-            std::shared_ptr<const FrameData> frame_data;
-            std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
-            std::vector<Rect>rois;
-            for(int j = 0; j < in_metas_batch[i].size(); j++)
+        if(value == "ImageCache")
+        {
+            is_image_cache = true;
+        }
+    }
+  
+    if(is_frame)
+    {
+        for(int i = 0; i < in_metas_batch.size(); i++)
+        {        
+            if(in_metas_batch[i].size() == 1)
             {
-                
-                if(in_metas_batch[i][j]->data_name == "Frame")
+                if(in_metas_batch[i][0]->data_name == "Frame")
                 {
-                    frame_data = std::dynamic_pointer_cast<const FrameData>(in_metas_batch[i][j]);                  
-                }
-                else if(in_metas_batch[i][j]->data_name == "DetectResult")
-                {
-                    std::shared_ptr<const DetectResultData> roi_data = std::dynamic_pointer_cast<const DetectResultData>(in_metas_batch[i][j]);
-                    for(int k = 0; k < roi_data->detect_boxes.size(); k++)
-                    {
-                        Rect roi;
-                        roi.x = roi_data->detect_boxes[k].x1;
-                        roi.y = roi_data->detect_boxes[k].y1;
-                        roi.width = (roi_data->detect_boxes[k].x2 - roi_data->detect_boxes[k].x1)/2*2;
-                        roi.height = (roi_data->detect_boxes[k].y2 - roi_data->detect_boxes[k].y1)/2*2;
-
-                        frame_roi->frame = frame_data;
-                        frame_roi->roi = roi;
-                        frame_roi->input_vector_id = i;
-                        frame_roi->original = &(roi_data->detect_boxes[k]);
-                        frame_rois.push_back(frame_roi);                        
-                    }
+                    std::shared_ptr<const FrameData> frame_data = std::dynamic_pointer_cast<const FrameData>(in_metas_batch[i][0]);
+                    std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
+                    frame_roi->frame = frame_data;
+                    frame_roi->input_vector_id = i;
+                    frame_roi->roi.x = 0;
+                    frame_roi->roi.y = 0;
+                    frame_roi->roi.width = frame_data->width/2*2 ;
+                    frame_roi->roi.height = frame_data->height/2* 2 ;
+                    frame_roi->original = nullptr;
+                    frame_rois.push_back(frame_roi);
                 }
                 else
                 {
-                    CLOG(ERROR, INFER_LOG) << "in_metas_batch without Frame or ROI";
+                    CLOG(ERROR, INFER_LOG) << "in_metas_batch without Frame";
                     assert(0);
                 }
             }
-            
+            else
+            {   
+                std::shared_ptr<const FrameData> frame_data;
+                for(int j = 0; j < in_metas_batch[i].size(); j++)
+                {                
+                    if(in_metas_batch[i][j]->data_name == "Frame")
+                    {
+                        frame_data = std::dynamic_pointer_cast<const FrameData>(in_metas_batch[i][j]);                  
+                    }
+                }
+
+                for(int j = 0; j < in_metas_batch[i].size(); j++)
+                {                
+                    if(in_metas_batch[i][j]->data_name == "DetectResult")
+                    {
+                        std::shared_ptr<const DetectResultData> roi_data = std::dynamic_pointer_cast<const DetectResultData>(in_metas_batch[i][j]);
+                        for(int k = 0; k < roi_data->detect_boxes.size(); k++)
+                        {
+                            std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
+                            Rect roi;
+                            roi.x = roi_data->detect_boxes[k].x1;
+                            roi.y = roi_data->detect_boxes[k].y1;
+                            roi.width = (roi_data->detect_boxes[k].x2 - roi_data->detect_boxes[k].x1)/2*2;
+                            roi.height = (roi_data->detect_boxes[k].y2 - roi_data->detect_boxes[k].y1)/2*2;
+
+                            frame_roi->frame = frame_data;
+                            frame_roi->roi = roi;
+                            frame_roi->input_vector_id = i;
+                            frame_roi->original = &(roi_data->detect_boxes[k]);
+                            frame_rois.push_back(frame_roi);                        
+                        }
+                    }
+                }
+                
+            }
         }
     }
+
+    if(is_image_cache)
+    {
+        for(int i = 0; i < in_metas_batch.size(); i++)
+        {
+            std::shared_ptr<const ImageCahceData> cache = nullptr;
+            bool has_cache = false;
+            bool has_roi = false;
+            for(int j = 0; j < in_metas_batch[i].size(); j++)
+            {            
+                if(in_metas_batch[i][j]->data_name == "ImageCache")
+                {
+                    cache = std::dynamic_pointer_cast<const ImageCahceData>(in_metas_batch[i][j]);
+                    if(cache->images.size() > 0)
+                    {
+                        has_cache = true;
+                    }                
+                }
+            }
+
+            if (has_cache)
+            {
+                for(int j = 0; j < in_metas_batch[i].size(); j++)
+                {            
+                    if(in_metas_batch[i][j]->data_name == "DetectResult")
+                    {                    
+                        std::shared_ptr<const DetectResultData> roi_data = std::dynamic_pointer_cast<const DetectResultData>(in_metas_batch[i][j]);
+                        for(int k = 0; k < roi_data->detect_boxes.size(); k++)
+                        {                        
+                            Rect roi;
+                            roi.x = roi_data->detect_boxes[k].x1;
+                            roi.y = roi_data->detect_boxes[k].y1;
+                            roi.width = (roi_data->detect_boxes[k].x2 - roi_data->detect_boxes[k].x1)/2*2;
+                            roi.height = (roi_data->detect_boxes[k].y2 - roi_data->detect_boxes[k].y1)/2*2;
+
+                            std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
+                            
+                            frame_roi->roi = roi;
+                            frame_roi->input_vector_id = i;
+                            frame_roi->original = &(roi_data->detect_boxes[k]);
+                            for(int m = 0; m < cache->images.size(); m++)
+                            {
+                                frame_roi->frames.push_back(cache->images[m]);
+                            }
+                            frame_rois.push_back(frame_roi);   
+                        }
+                        has_roi = true;
+                    }
+                }
+                if(!has_roi)
+                {
+                    if(cache == nullptr)
+                    {
+                        CLOG(ERROR, INFER_LOG) << "cache is nullptr";
+                    }
+                    std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
+                    frame_roi->input_vector_id = i;
+                    frame_roi->roi.x = 0;
+                    frame_roi->roi.y = 0;
+                    frame_roi->roi.width = cache->images[0]->width/2*2 ;
+                    frame_roi->roi.height = cache->images[0]->height/2*2 ;
+                    frame_roi->original = nullptr;
+                    
+                    for(int j = 0; j < cache->images.size(); j++)
+                    {
+                        frame_roi->frames.push_back(cache->images[j]);
+                    }
+
+                    frame_rois.push_back(frame_roi);
+                }                    
+            }
+        }
+    }
+
     return ZJV_STATUS_OK;
 }
 

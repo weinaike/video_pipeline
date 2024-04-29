@@ -1,0 +1,10 @@
+{
+    "comment":"type:[trigger, continue], width:[int], height:[int], num:[int], step:[int], version:[string]",
+    "version": "1.0",
+    "type": "continue",
+    "width": 256,
+    "height": 256,
+    "num": 32,
+    "step": 7,
+    "fps": 3
+}

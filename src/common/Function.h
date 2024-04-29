@@ -11,7 +11,6 @@
 
 namespace ZJVIDEO
 {
-
     // 通道重命名
     static std::string join_string(std::string str, int i)
     {

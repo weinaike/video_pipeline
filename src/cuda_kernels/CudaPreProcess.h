@@ -219,6 +219,19 @@ namespace CUDA
      */
     void bgr2grayInvoker(uint8_t *src, float *dst, int width, int height, cudaStream_t stream = 0);
 
+    /**
+     * @brief permute_CT，切换CT通道数据
+     * @param output 输出数据
+     * @param input 输入数据
+     * @param N batch size
+     * @param C 通道数
+     * @param T 时间序列
+     * @param H 高度
+     * @param W 宽度
+    */
+    void permute_CT(float* output, const float* input, int N, int C, int T, int H, int W);
+    
+
 }
  // namespace CUDA
 

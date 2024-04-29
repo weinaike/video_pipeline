@@ -139,6 +139,20 @@ int PreProcessor::parse_json(const nlohmann::json & j)
                 m_param.resize_width = m_param.output_dims[2];
                 m_param.resize_channel = m_param.output_dims[3];
             }
+            else if(output_format == "NCTHW")
+            {
+                m_param.output_format = ZJV_PREPROCESS_OUTPUT_FORMAT_NCTHW;
+                m_param.resize_channel = m_param.output_dims[1];
+                m_param.resize_height = m_param.output_dims[3];
+                m_param.resize_width = m_param.output_dims[4];
+            }
+            else if (output_format == "NTCHW")
+            {
+                m_param.output_format = ZJV_PREPROCESS_OUTPUT_FORMAT_NTCHW;
+                m_param.resize_channel = m_param.output_dims[2];
+                m_param.resize_height = m_param.output_dims[3];
+                m_param.resize_width = m_param.output_dims[4];
+            }            
             else 
             {
                 m_param.output_format = ZJV_PREPROCESS_OUTPUT_FORMAT_UNKNOWN;
@@ -384,18 +398,44 @@ int PreProcessor::run(const std::vector<std::shared_ptr<FrameROI>> & frame_rois,
 
     if(m_lib_type == ZJV_PREPROCESS_LIB_CIMG)
     {
-        return run_cimg(frame_rois, blob, param);
+        if(param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NCHW || param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC)
+        {
+            return run_cimg(frame_rois, blob, param);
+        }
+        else if(param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NCTHW || param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NTCHW)
+        {
+            // todo for 3D model
+        }
+        else
+        {
+            CLOG(ERROR, PRELOG) << "output_format not supported now";
+            assert(0);
+        }
     }
     else if( m_lib_type == ZJV_PREPROCESS_LIB_CUDA)
     {
         // return run_cimg(frame_rois, blob, param);
-        return run_cuda(frame_rois, blob, param);
+        if (param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NCHW || param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC)
+        {
+            return run_cuda(frame_rois, blob, param);
+        }
+        else if (param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NCTHW || param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NTCHW)
+        {
+            // todo for 3D model
+            return run_3d_cuda(frame_rois, blob, param);
+        }
+        else
+        {
+            CLOG(ERROR, PRELOG) << "output_format not supported now";
+            assert(0);
+        }
     }
     else
     {
         CLOG(ERROR, PRELOG) << "lib_type not supported now";
         assert(0);
     }
+    return ZJV_STATUS_OK;
 }
 
 
