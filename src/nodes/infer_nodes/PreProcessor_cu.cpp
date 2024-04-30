@@ -7,7 +7,7 @@
 #endif
 
 
-#define Enable_CUDA
+// #define Enable_CUDA
 #ifdef Enable_CUDA
 #include "cuda_kernels/CudaPreProcess.h"
 #endif
@@ -180,72 +180,72 @@ namespace ZJVIDEO
         
         #if 0 //CIMG_DEBUG
 
-        std::vector<int > shape = blob.shape();
-        int bs = shape[0];
-        int c = shape[1];
-        int h = shape[2];
-        int w = shape[3];
-        int area = c * h * w;
-        const float * cpu = blob.cpu_data();
-        
-        for(int i = 0; i < bs; i++)
-        {
-            for(int j = 0; j < c; j++)
+            std::vector<int > shape = blob.shape();
+            int bs = shape[0];
+            int c = shape[1];
+            int h = shape[2];
+            int w = shape[3];
+            int area = c * h * w;
+            const float * cpu = blob.cpu_data();
+            
+            for(int i = 0; i < bs; i++)
             {
-                for(int k = 0; k < h; k++)
+                for(int j = 0; j < c; j++)
                 {
-                    for(int l = 0; l < w; l++)
+                    for(int k = 0; k < h; k++)
                     {
-                        int index = i * area + j * h * w + k * w + l;
-                        // std::cout<<cpu[index]<<" ";
+                        for(int l = 0; l < w; l++)
+                        {
+                            int index = i * area + j * h * w + k * w + l;
+                            // std::cout<<cpu[index]<<" ";
+                        }
                     }
                 }
-            }
-            cil::CImg<float> img(w, h, 1, c);
-            memcpy(img.data(), cpu + area * i, area * sizeof(float));
-            // img.save("float.jpg");
+                cil::CImg<float> img(w, h, 1, c);
+                memcpy(img.data(), cpu + area * i, area * sizeof(float));
+                // img.save("float.jpg");
 
-            cil::CImgDisplay disp(img,"After Resize II");
-            while (!disp.is_closed()) 
-            {
-                disp.wait();
-                if (disp.is_key()) {
-                    std::cout << "Key pressed: " << disp.key() << std::endl;
+                cil::CImgDisplay disp(img,"After Resize II");
+                while (!disp.is_closed()) 
+                {
+                    disp.wait();
+                    if (disp.is_key()) {
+                        std::cout << "Key pressed: " << disp.key() << std::endl;
+                    }
                 }
-            }
-        }   
+            }   
         #endif
 
 
         
-        #if 0//CIMG_DEBUG
+        #if 0 //CIMG_DEBUG
 
-        std::vector<int > shape = blob.shape();
+            std::vector<int > shape = blob.shape();
 
-        int bs = shape[0];
-        int t = shape[1];
-        int c = shape[2];
-        int h = shape[3];
-        int w = shape[4];
-        int area = c * h * w;
-        const float * cpu = blob.cpu_data();
+            int bs = shape[0];
+            int t = shape[1];
+            int c = shape[2];
+            int h = shape[3];
+            int w = shape[4];
+            int area = c * h * w;
+            const float * cpu = blob.cpu_data();
 
-        // for(int i = 0; i < bs * t; i++)
-        for(int i = 0; i < 1; i++)
-        {
-            cil::CImg<float> img(w, h, 1, c);
-            memcpy(img.data(), cpu + area * i, area * sizeof(float));
-            // img.save("float.jpg");
-
-            cil::CImgDisplay disp(img,"After Resize II");
-            while (!disp.is_closed()) 
+            std::cout<<"\noutput data:"<<std::endl;
+            // for(int i = 0; i < bs * t; i++)
+            for(int i = 0; i < 1; i++)
             {
-                disp.wait();
-                if (disp.is_key()) {
-                    std::cout << "Key pressed: " << disp.key() << std::endl;
+                for(int j = 0; j < 1; j++)
+                {
+                    for(int k = 0; k < 1; k++)
+                    {
+                        for(int l = 0; l < w; l++)
+                        {
+                            int index = i * area + j * h * w + k * w + l;
+                            std::cout<<cpu[index]<<" ";
+                        }
+                    }
                 }
-            }
-        }   
+            }   
         #endif
 
         return ZJV_STATUS_OK;
@@ -298,7 +298,30 @@ namespace ZJVIDEO
             const float * input_data_3d = blob_3d.gpu_data();
 
             CUDA::permute_CT(input_data, input_data_3d, shape[0], shape[1], shape[2], shape[3], shape[4]);
-            
+
+            #if 0
+                int N = shape[0];
+                int T = shape[1];
+                int C = shape[2];
+                int H = shape[3];
+                int W = shape[4];
+                
+                int n = 0;
+                int t = 1;
+                int c = 2;
+                int h = 1;
+                int w = 1;
+
+                int idx1 = n*(T*C*H*W) + t*(C*H*W) + c*(H*W) + h*W + w;
+                int idx2 = n*(C*T*W*C) + c*(T*H*W) + t*(H*W) + h*W + w;
+
+                float f1;
+                float f2;
+                cudaMemcpy(&f1, &input_data_3d[idx1], sizeof(float), cudaMemcpyDeviceToHost);
+                cudaMemcpy(&f2, & input_data[idx2], sizeof(float), cudaMemcpyDeviceToHost);
+                
+                std::cout<<"f1: "<<f1<<" f2: "<<f2<<std::endl;
+            #endif
         }
         else if(param.output_format == ZJV_PREPROCESS_OUTPUT_FORMAT_NTCHW)
         {

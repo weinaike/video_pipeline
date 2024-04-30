@@ -69,7 +69,7 @@ namespace ZJVIDEO
         int format; // 图像格式 ImageFormat
 
 
-        std::shared_ptr<SyncedMemory> data; // 图像数据
+        std::shared_ptr<SyncedMemory> data = nullptr; // 图像数据
         // 视频相关参数
         float fps;          // 帧率
         int camera_id;    // 相机ID

@@ -15,10 +15,12 @@ public:
 	void *allocate(size_t bytesCount) {
 		void* p = NULL;
 		p = malloc(bytesCount);
-		memset(p,0,bytesCount);
+		
 		if (p == NULL) {
 			throw std::bad_alloc();
 		}
+
+		memset(p,0,bytesCount);
 		return p;
 	}
 
@@ -26,7 +28,6 @@ public:
 		if(p != NULL)
 		{
 			free(p);
-			p = NULL;
 		}
 		
 	}
@@ -35,7 +36,6 @@ public:
 		if(p != NULL)
 		{
 			free(p);
-			p = NULL;
 		}
 	}
 

@@ -105,8 +105,8 @@ int ImageCacheNode::process_single(const std::vector<std::shared_ptr<const BaseD
     // CLOG(DEBUG, CACHE_LOG) << "output_interval_num: " << output_interval_num << "  frame_id : " << in_frame_data->frame_id
     //                         << " m_step: " << m_step << " m_count: " << m_count << " m_append_count: " << m_append_count 
     //                         << " m_frame_datas.size(): " << m_frame_datas.size();
-    m_append_count++;
-    if(m_append_count > m_step)
+    
+    if(m_append_count % (m_step + 1) == 0)
     {    
         m_count++;
         // add to list
@@ -119,6 +119,7 @@ int ImageCacheNode::process_single(const std::vector<std::shared_ptr<const BaseD
             m_frame_datas.pop_front();
         }
     }
+    m_append_count++;
 
     // output
     if(m_os_type == ZJV_OUTPUT_STREAM_TYPE_CONTINUE)
@@ -129,11 +130,11 @@ int ImageCacheNode::process_single(const std::vector<std::shared_ptr<const BaseD
             auto it = m_frame_datas.begin();
             for(int i  = 0 ; i < m_frame_num; i++)
             {
-                std::cout << " " << (*it)->frame_id;
+                //std::cout << " " << (*it)->frame_id;
                 out->images.push_back(*it);
                 it++;
             }
-            std::cout << std::endl;
+            //std::cout << std::endl;
             m_count = 0;
             // CLOG(DEBUG, CACHE_LOG) << "output cache: " << out->images.size();
         }

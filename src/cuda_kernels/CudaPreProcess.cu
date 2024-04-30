@@ -627,15 +627,16 @@ namespace CUDA
             if (index < total_size)
             {
                 int n = index / (T * C * H * W);
-                index %= (T * C * H * W);
-                int c = index / (T * H * W);
-                index %= (T * H * W);
-                int t = index / (H * W);
-                index %= (H * W);
-                int h = index / W;
-                int w = index % W;
+                int idx2 = index % (T * C * H * W);
+                int t = idx2 / (C * H * W);
+                idx2 %= (C * H * W);
+                int c = idx2 / (H * W);
+                idx2 %= (H * W);
+                int h = idx2 / W;
+                int w = idx2 % W;
 
-                int output_index = ((n * C + c) * T + t) * H * W + h * W + w;
+                int output_index = n * (C * T * H * W) + c * (T * H * W) + t * (H * W) + h * W + w;              
+                
                 output[output_index] = input[index];
             }
         }

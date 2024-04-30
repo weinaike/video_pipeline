@@ -84,7 +84,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
 # 添加可执行文件
-add_executable(demo demo/test.cpp)
+add_executable(demo demo/main.cpp)
 
 # 添加链接库目录
 link_directories(${CMAKE_SOURCE_DIR}/libs)

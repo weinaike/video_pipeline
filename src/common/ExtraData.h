@@ -50,7 +50,7 @@ namespace ZJVIDEO
     class DetectResultData : public BaseData
     {
     public:
-        explicit DetectResultData() : BaseData(ZJV_DATATYPE_DETECTRESULT)
+        explicit DetectResultData(BaseDataType type = ZJV_DATATYPE_DETECTRESULT) : BaseData(type)
         {
             data_name = "DetectResult";
         }
@@ -64,7 +64,7 @@ namespace ZJVIDEO
     class ClassifyResultData : public BaseData
     {
     public:
-        explicit ClassifyResultData() : BaseData(ZJV_DATATYPE_CLASSIFYRESULT)
+        explicit ClassifyResultData(BaseDataType type = ZJV_DATATYPE_CLASSIFYRESULT) : BaseData(type)
         {
             data_name = "ClassifyResult";
         }
@@ -77,7 +77,7 @@ namespace ZJVIDEO
     class SegmentResultData : public BaseData
     {
     public:
-        explicit SegmentResultData() : BaseData(ZJV_DATATYPE_SEGMENTRESULT)
+        explicit SegmentResultData(BaseDataType type = ZJV_DATATYPE_SEGMENTRESULT) : BaseData(type)
         {
             data_name = "SegmentResult";
         }
@@ -91,7 +91,7 @@ namespace ZJVIDEO
     class ImageCahceData : public BaseData
     {
     public:
-        explicit ImageCahceData() : BaseData(ZJV_DATATYPE_IMAGECACHE)
+        explicit ImageCahceData(BaseDataType type = ZJV_DATATYPE_IMAGECACHE ) : BaseData(type)
         {
             data_name = "ImageCache";
             images.clear();
@@ -104,7 +104,7 @@ namespace ZJVIDEO
     class ExtraData : public BaseData
     {
     public:
-        explicit ExtraData() : BaseData(ZJV_DATATYPE_EXTRA)
+        explicit ExtraData(BaseDataType type = ZJV_DATATYPE_EXTRA) : BaseData(type)
         {
             data_name = "Extra";
         }
@@ -114,7 +114,7 @@ namespace ZJVIDEO
     class EventData : public BaseData
     {
     public:
-        explicit EventData() : BaseData(ZJV_DATATYPE_EVENT)
+        explicit EventData(BaseDataType type = ZJV_DATATYPE_EVENT) : BaseData(type)
         {
             data_name = "Event";
         }

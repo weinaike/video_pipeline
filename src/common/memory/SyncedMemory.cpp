@@ -63,11 +63,13 @@ namespace ZJVIDEO
         if (cpu_ptr_ && own_cpu_data_)
         {
             malloc_allocator_.deallocate(cpu_ptr_);
+            cpu_ptr_ = NULL;
         }
 
         if (gpu_ptr_ && own_gpu_data_)
         {
             dev_allocator_.deallocate(gpu_ptr_);
+            gpu_ptr_ = NULL;
         }
     }
 

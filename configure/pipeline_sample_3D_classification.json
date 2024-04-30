@@ -4,7 +4,7 @@
     "channel_num": 1,
     "nodes": [
         {
-            "node_type": "VideoSrc",
+            "node_type": "ImageSrc",
             "node_name": "Node1",
             "channels": false,
             "cfg_file": "",

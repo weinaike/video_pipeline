@@ -9,8 +9,8 @@
 #include "opencv2/videoio.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
-#define use_opencv 
+#include <iomanip> // for std::setw and std::setfill
+// #define use_opencv 
 
 volatile std::sig_atomic_t flag = 0;
 void signalHandler(int signum) {
@@ -147,25 +147,36 @@ int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )
         }
     #else
         int cnt = 0;
-        cil::CImg<unsigned char> img(pic_path.c_str());
+        std::string path = "../data/images/0H5mnFcm2Kg/";
+        // cil::CImg<unsigned char> img(pic_path.c_str());
         while (!flag)
         {
+            cnt++;           
+            if(cnt > 300) {cnt = 0; continue;};
+            std::ostringstream ss;
+            ss << std::setw(5) << std::setfill('0') << cnt;
+            std::string pic = path + ss.str() + ".bmp";
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(40));
-            std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>();
-            frame->width = img.width();
-            frame->stride = img.width();
-            frame->height = img.height();
-            frame->channel = img.spectrum();
-            frame->depth = 1;
-            frame->format = ZJVIDEO::ZJV_IMAGEFORMAT_RGBP;
+            cil::CImg<unsigned char> img(pic.c_str());
+            int w = img.width();
+            int h = img.height();
+
+
+            img.permute_axes("cxyz");
+            // std::cout<<img.width() << " " << img.height() << " " << img.spectrum() << std::endl;    
+            
+            std::shared_ptr<ZJVIDEO::FrameData> frame= std::make_shared<ZJVIDEO::FrameData>(w, h, ZJVIDEO::ZJV_IMAGEFORMAT_RGB24, true);
+            
             frame->fps = 25;      
             frame->camera_id = camera_id;
-            frame->frame_id = cnt;       
-            frame->data = std::make_shared<ZJVIDEO::SyncedMemory>(img.size()); 
+            frame->frame_id = cnt;     
+            frame->pts = 0;
+            assert(frame->data->size() == img.size());
+            // std::cout<< "img.size: " << img.size()<< " data size " << frame->data->size()<< std::endl;
             std::memcpy(frame->data->mutable_cpu_data(), img.data(), img.size());
-            cnt++;
+        
             func(frame);
+            std::this_thread::sleep_for(std::chrono::milliseconds(4));
             
         }
     #endif
@@ -196,7 +207,9 @@ int main()
     // std::string cfg_file = "../configure/pipeline_sample_segment.json";
     // std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
-    std::string cfg_file = "../configure/pipeline_sample_video.json";
+    // std::string cfg_file = "../configure/pipeline_sample_video.json";
+    std::string cfg_file = "../configure/pipeline_sample_3D_classification.json";
+    
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
     std::cout<< "pipeline.init()\n" ;
@@ -219,14 +232,21 @@ int main()
 
 
     std::vector<std::thread > threads;
-    //
-    // for(int i = 0; i < 1; i++)
-    // {
-    //     std::thread t1(input_worker, std::bind(&ZJVIDEO::Pipeline::set_input_data, &pipeline, std::placeholders::_1), i);
-    //     threads.emplace_back(std::move(t1));
-    // }
+    
+    for(int i = 0; i < 1; i++)
+    {
 
-    pipeline.set_input_data(std::make_shared<ZJVIDEO::VideoData>(video_path, 0));
+        std::thread t1(input_worker, 
+               [&pipeline](const std::shared_ptr<ZJVIDEO::FrameData>& data) {
+                   return pipeline.set_input_data(data);
+               }, 
+               i);
+
+        // std::thread t1(input_worker, std::bind(&ZJVIDEO::Pipeline::set_input_data, &pipeline, std::placeholders::_1), i);
+        threads.emplace_back(std::move(t1));
+    }
+
+    // pipeline.set_input_data(std::make_shared<ZJVIDEO::VideoData>(video_path, 0));
 
     int frame_id = 0;
     
@@ -307,11 +327,13 @@ int main()
             else if(data->data_name == "ClassifyResult")
             {
                 std::shared_ptr<const ZJVIDEO::ClassifyResultData> result = std::dynamic_pointer_cast<const ZJVIDEO::ClassifyResultData>(data);
-                int label = result->detect_box_categories[0].label;
-                float score = result->detect_box_categories[0].score;              
 
-                std::cout << "cat: " << synset[label].second << "  " << score << std::endl;
-
+                for(int i = 0; i < result->detect_box_categories.size(); i++)
+                {
+                    int label = result->detect_box_categories[i].label;
+                    float score = result->detect_box_categories[i].score;
+                    std::cout << "cls: " << label << "  " << score << std::endl;
+                }                
                 // img.draw_text(50, 50, synset[label].second, red, 0, 1);
             }
             else if(data->data_name == "SegmentResult")

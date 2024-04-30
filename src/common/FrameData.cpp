@@ -91,7 +91,7 @@ namespace ZJVIDEO
         return channel;
     }
 
-    static int  malloc_data(std::shared_ptr<SyncedMemory> & data, int fmt, int w, int h, bool align = false)
+    static int  mem_size(int fmt, int w, int h, bool align = false)
     {
         int stride = get_stride(fmt, w, align);
         int size = 0;
@@ -102,8 +102,8 @@ namespace ZJVIDEO
         else if(fmt == ZJV_IMAGEFORMAT_GRAY16LE)  size  =  stride * h ;
         else if(fmt == ZJV_IMAGEFORMAT_RGB24) size  =  stride * h ;
         else if(fmt == ZJV_IMAGEFORMAT_BGR24) size  =  stride * h ;
-        else if(fmt == ZJV_IMAGEFORMAT_RGBP) size  =  stride * h ;
-        else if(fmt == ZJV_IMAGEFORMAT_FLOAT32) size  =  stride * h ;
+        else if(fmt == ZJV_IMAGEFORMAT_RGBP) size  =  stride * h * 3;
+        else if(fmt == ZJV_IMAGEFORMAT_FLOAT32) size  =  stride * h  * 4;
         else if(fmt == ZJV_IMAGEFORMAT_YUV420P) size = stride * h * 3 / 2;
         else if(fmt == ZJV_IMAGEFORMAT_YUV422P) size = stride * h * 2;
         else if(fmt == ZJV_IMAGEFORMAT_YUV444P) size = stride * h * 3;
@@ -115,13 +115,12 @@ namespace ZJVIDEO
             return -1;
         }
 
-        data = std::make_shared<SyncedMemory>(size);
+
         return size;
     }
 
 
-    FrameData::FrameData(int w, int h, int fmt, bool align):
-        BaseData(ZJV_DATATYPE_FRAME) 
+    FrameData::FrameData(int w, int h, int fmt, bool align): BaseData(ZJV_DATATYPE_FRAME) 
     {
         data_name = "Frame"; 
         alignment = align;
@@ -131,13 +130,11 @@ namespace ZJVIDEO
         format = fmt;
         depth = get_depth(fmt);
         stride = get_stride(fmt, w, align);
-        int ret = malloc_data(data, fmt, w, h, align);
-        if(ret < 0)
-        {
-            data.reset();
-        }
 
-        
+        int size = mem_size(fmt, w, h, align);
+ 
+        data = std::make_shared<SyncedMemory>(size);
+   
         fps = 0;
         pts = 0;
         camera_id = 0;
