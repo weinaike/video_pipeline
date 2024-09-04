@@ -1,7 +1,7 @@
 #ifndef __ZJV_SEGMENGPOSTPROCESS_H__
 #define __ZJV_SEGMENGPOSTPROCESS_H__
 
-#include "../PostProcessor.h"
+#include "nodes/infer_nodes/PostProcessor.h"
 
 namespace ZJVIDEO
 {
