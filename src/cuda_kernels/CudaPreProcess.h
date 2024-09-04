@@ -8,6 +8,44 @@
 #include <iostream>
 #include <cuda_runtime.h>
 
+
+#define KernelPositionBlock                                 \
+    int position = (blockDim.x * blockIdx.x + threadIdx.x); \
+    if (position >= (edge))                                 \
+        return;
+
+#define checkCudaKernel(...)                                            \
+    __VA_ARGS__;                                                        \
+    do                                                                  \
+    {                                                                   \
+        cudaError_t cudaStatus = cudaPeekAtLastError();                 \
+        if (cudaStatus != cudaSuccess)                                  \
+        {                                                               \
+            INFOE("launch failed: %s", cudaGetErrorString(cudaStatus)); \
+        }                                                               \
+    } while (0);
+
+#define Assert(op)                        \
+    do                                    \
+    {                                     \
+        bool cond = !(!(op));             \
+        if (!cond)                        \
+        {                                 \
+            INFOF("Assert failed, " #op); \
+        }                                 \
+    } while (false)
+
+
+#define CUDA_CHECK_RETURN(value) {                                          \
+    cudaError_t _m_cudaStat = value;                                        \
+    if (_m_cudaStat != cudaSuccess) {                                       \
+        std::cerr << "Error " << cudaGetErrorString(_m_cudaStat)            \
+                  << " at line " << __LINE__                                \
+                  << " in file " << __FILE__ << std::endl;                  \
+        exit(1);                                                            \
+    }                                                                       \
+}
+
 namespace CUDA
 {
     /// @brief 
@@ -15,7 +53,8 @@ namespace CUDA
     {
         RGBP = 0,
         RGB = 1,
-        BGR = 2
+        BGR = 2,
+        GRAY = 3
     };
 
     enum class NormType : int
@@ -66,7 +105,7 @@ namespace CUDA
      * @param format 输入格式
      * @param stream cuda流
      */
-    void crop_cvtcolor_Invoker(uint8_t *src,
+    int crop_cvtcolor_Invoker(uint8_t *src,
                      int src_line_size,
                      int src_width,
                      int src_height,
@@ -90,7 +129,7 @@ namespace CUDA
      * @param norm: 归一化参数
      * @param stream: cuda流
      */
-    void resizeBilinearAndNormalizeInvoker(uint8_t *src,
+    int resizeBilinearAndNormalizeInvoker(uint8_t *src,
                                            int src_line_size,
                                            int src_width,
                                            int src_height,
@@ -114,7 +153,7 @@ namespace CUDA
      * @param norm 归一化参数
      * @param stream cuda流
      */
-    void warpAffineBilinearAndNormalizePlaneInvoker(uint8_t *src,
+    int warpAffineBilinearAndNormalizePlaneInvoker(uint8_t *src,
                                                     int src_line_size,
                                                     int src_width,
                                                     int src_height,
@@ -140,7 +179,7 @@ namespace CUDA
      * @param norm 归一化参数
      * @param stream cuda流
      */
-    void warpAffineBilinearAndNormalizeFocusInvoker(uint8_t *src,
+    int warpAffineBilinearAndNormalizeFocusInvoker(uint8_t *src,
                                                     int src_line_size,
                                                     int src_width,
                                                     int src_height,
@@ -167,7 +206,7 @@ namespace CUDA
      * @param norm 归一化参数
      * @param stream cuda流
      */
-    void warpPerspectiveInvoker(uint8_t *src,
+    int warpPerspectiveInvoker(uint8_t *src,
                                 int src_line_size,
                                 int src_width,
                                 int src_height,
@@ -187,7 +226,7 @@ namespace CUDA
      * @param feature_length 特征长度
      * @param stream cuda流
      */
-    void normFeatureInvoker(float *feature_array,
+    int normFeatureInvoker(float *feature_array,
                             int num_feature,
                             int feature_length,
                             cudaStream_t stream);
@@ -202,7 +241,7 @@ namespace CUDA
      * @param dst 输出图像
      * @param stream cuda流
      */
-    void convertNV12ToBgrInvoker(const uint8_t *y,
+    int convertNV12ToBgrInvoker(const uint8_t *y,
                                  const uint8_t *uv,
                                  int width,
                                  int height,
@@ -217,7 +256,7 @@ namespace CUDA
      * @param width
      * @param height
      */
-    void bgr2grayInvoker(uint8_t *src, float *dst, int width, int height, cudaStream_t stream = 0);
+    int bgr2grayInvoker(uint8_t *src, float *dst, int width, int height, cudaStream_t stream = 0);
 
     /**
      * @brief permute_CT，切换CT通道数据
@@ -229,7 +268,7 @@ namespace CUDA
      * @param H 高度
      * @param W 宽度
     */
-    void permute_CT(float* output, const float* input, int N, int C, int T, int H, int W);
+    int permute_CT(float* output, const float* input, int N, int C, int T, int H, int W);
     
 
 }

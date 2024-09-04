@@ -1,10 +1,24 @@
 {
     "comment":"type:[trigger, continue], width:[int], height:[int], num:[int], step:[int], version:[string]",
     "version": "1.0",
+    "output_type": "FeatureCache",
     "type": "continue",
-    "width": 256,
-    "height": 256,
-    "num": 32,
-    "step": 7,
-    "fps": 3
+    "device" : -1,
+    "step": 3,
+    "fps": 100,
+    "num": 8,
+    "param":
+    {
+        "resize_type": "Stretch",
+        "roi": [0, 0, 1.0, 1.0],
+        "output_diims": [1,1,224,224],
+        "output_format":"NCHW",
+
+        "interp_mode": "Linear",
+        "letterbox_color": [0],
+
+        "normalize": true,
+        "mean": [0.0],
+        "std": [255.0]
+    }
 }

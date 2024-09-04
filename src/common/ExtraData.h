@@ -5,6 +5,7 @@
 #include "BaseData.h"
 #include "FrameData.h"
 #include "Shape.h"
+#include "Blob.h"
 namespace ZJVIDEO
 {
 
@@ -98,6 +99,19 @@ namespace ZJVIDEO
         }
         ~ImageCahceData() override = default;
         std::vector<std::shared_ptr<FrameData>> images;
+    };
+
+
+    class FeatureCacheData : public BaseData
+    {
+    public:
+        explicit FeatureCacheData(BaseDataType type = ZJV_DATATYPE_FEATURECACHE ) : BaseData(type)
+        {
+            data_name = "FeatureCache";
+            feature = nullptr;
+        }
+        ~FeatureCacheData() override = default;
+        std::shared_ptr<FBlob> feature;
     };
 
     // 检测结果，分类结果等

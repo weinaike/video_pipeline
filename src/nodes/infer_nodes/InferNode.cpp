@@ -16,7 +16,6 @@ InferNode::InferNode(const NodeParam & param) : BaseNode(param)
     // Set the format for Debug level to be the same as Info level
     conf.set(el::Level::Debug, el::ConfigurationType::Format, infoFormat);
     el::Loggers::reconfigureLogger(m_logger, conf);
-    
     parse_configure(param.m_cfg_file);
 
     init();
@@ -25,7 +24,7 @@ InferNode::InferNode(const NodeParam & param) : BaseNode(param)
         m_max_batch_size = m_engine_param.m_max_batch_size; // 根据模型配置设置
     }
     
-
+    m_blob_input_flag = false;
     CLOG(INFO, INFER_LOG) << "InferNode::InferNode";
 }
 
@@ -249,6 +248,7 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
     // 遍历 m_nodeparam.m_input_node_datas
     bool is_frame = false;
     bool is_image_cache = false;
+    bool is_blob = false;
     for (size_t i = 0; i < m_nodeparam.m_input_node_datas.size(); i++)
     {
         //    std::vector<std::pair<std::string, std::string>>    m_input_node_datas;   // 前置节点数据
@@ -261,6 +261,11 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
         if(value == "ImageCache")
         {
             is_image_cache = true;
+        }
+        if(value == "FeatureCache")
+        {
+            is_blob = true;
+            m_blob_input_flag = true;
         }
     }
   
@@ -400,6 +405,47 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
         }
     }
 
+    if(is_blob)
+    {
+        for(int i = 0; i < in_metas_batch.size(); i++)
+        {
+            std::shared_ptr<const FeatureCacheData> blob = nullptr;
+            bool has_blob = false;
+            for(int j = 0; j < in_metas_batch[i].size(); j++)
+            {            
+                if(in_metas_batch[i][j]->data_name == "FeatureCache")
+                {
+                    blob = std::dynamic_pointer_cast<const FeatureCacheData>(in_metas_batch[i][j]);
+                    if(blob->feature)
+                    {
+                        has_blob = true;
+                    }                
+                }
+            }
+
+            if (has_blob)
+            {               
+                if(blob == nullptr)
+                {
+                    CLOG(ERROR, INFER_LOG) << "blob is nullptr";
+                }
+                std::shared_ptr<FrameROI> frame_roi = std::make_shared<FrameROI>();
+                frame_roi->input_vector_id = i;
+
+                frame_roi->roi.x = 0;
+                frame_roi->roi.y = 0;
+                frame_roi->roi.width = blob->feature->shape()[3]/2*2 ;
+                frame_roi->roi.height = blob->feature->shape()[2]/2*2 ;
+                frame_roi->original = nullptr;
+
+                frame_roi->fblob = blob->feature;
+                frame_rois.push_back(frame_roi);
+                                  
+            }
+        }
+    }
+
+
     return ZJV_STATUS_OK;
 }
 
@@ -411,7 +457,19 @@ int InferNode::preprocess(std::vector<std::shared_ptr<FrameROI>>  &frame_rois, s
         resize_dims[0] = frame_rois.size();
         FBlob input_blob(resize_dims);
         input_blob.name_ = m_img_preproc_params[i].output_name;
-        m_img_preprocs[i]->run(frame_rois, input_blob, m_img_preproc_params[i]);
+        if(m_blob_input_flag)
+        {
+            float * data = input_blob.mutable_cpu_data();
+            for(int j = 0; j < frame_rois.size(); j++)
+            {
+                int size = frame_rois[j]->fblob->count();
+                memcpy(data + j * size, frame_rois[j]->fblob->cpu_data(), size * sizeof(float));
+            }
+        }
+        else
+        {
+            m_img_preprocs[i]->run(frame_rois, input_blob, m_img_preproc_params[i]);
+        }        
         inputs.push_back(input_blob);
     }
 

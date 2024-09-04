@@ -85,8 +85,8 @@ int main()
     // std::string cfg_file = "../configure/pipeline_sample_segment.json";
     // std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
-    // std::string cfg_file = "../configure/pipeline_sample_video.json";
-    std::string cfg_file = "../configure/pipeline_sample_3D_classification.json";
+    std::string cfg_file = "../configure/pipeline_sample_video.json";
+    // std::string cfg_file = "../configure/pipeline_sample_3D_classification.json";
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
     std::cout<< "pipeline.init()\n" ;

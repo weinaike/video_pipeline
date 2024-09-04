@@ -173,7 +173,7 @@ namespace ZJVIDEO
                 std::shared_ptr<FrameData> frame_mask = std::make_shared<FrameData>(frame_roi->frame->width, frame_roi->frame->height, ZJV_IMAGEFORMAT_GRAY8);
                 memcpy(frame_mask->data->mutable_cpu_data(), original_mask.data(), original_mask.size() * sizeof(unsigned char));
 
-                std::shared_ptr<FrameData> frame_conf = std::make_shared<FrameData>(frame_roi->frame->width, frame_roi->frame->height,ZJV_IMAGEFORMAT_FLOAT32);
+                std::shared_ptr<FrameData> frame_conf = std::make_shared<FrameData>(frame_roi->frame->width, frame_roi->frame->height,ZJV_IMAGEFORMAT_GRAY_FLOAT);
                 memcpy(frame_conf->data->mutable_cpu_data(), original_map.data(), original_mask.size() * sizeof(float));
 
                 std::shared_ptr<SegmentResultData> seg_result = std::make_shared<SegmentResultData>();

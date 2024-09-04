@@ -1,0 +1,74 @@
+{
+    "comment":
+    {
+        "device":[-1, 0, 1, 2, 3],
+        "backend":["ONNX","TRT"],
+        "resize_type":["Stretch", "LetterBox", "Fill"],
+        "interp_mode":["Linear","Nearest","Cubic"],
+        "dtype":["float32","uint8"],
+        "input_format":["NCHW","NHWC"],
+        "preprocess":["ImageType","VideoType","FeatureType"],
+        "postprocess":["YoloGrid","...comsumer-defined..."]
+    },
+    "model": 
+    {
+        "version": "1.0",
+        "model_name": "laser_welding",
+        "encrypt": false,
+        "max_batch_size" : 4,
+        "device" : -1,
+        "model_file": "../models/welding/laser_welding.onnx",
+        "weight_file": "../models/resnet/laser_welding.onnx",        
+        "backend": "ONNX",
+        "dynamic_batch": false,
+        "enable_int8": false,
+        "enable_fp16": false
+    },
+    "preprocess": 
+    {
+        "ImageType":
+        [],
+        "VideoType":
+        [
+            {
+                "output_name": "input",
+                "param":
+                {
+                    "resize_type": "Stretch",
+                    "output_diims": [1, 8, 224, 224],
+                    "output_format":"NTHW",
+
+                    "interp_mode": "Linear",
+                    "letterbox_color": [0],
+                    "channel_format": "GRAY",
+            
+                    "normalize": true,
+                    "mean": [0],
+                    "std" : [255.0] 
+                }
+            }
+        ],
+        "FeatureType":
+        []
+    },
+    "infer": 
+    {
+        "input_names": ["input"],
+        "input_dims": [[1,8,224,224]],
+        "output_names": ["output"]
+    },
+
+    "postprocess": 
+    {
+        "Classify" :
+        {
+            "input_names":["output"],
+            "output_data_type": "ClassifyResult",
+            "main_category":[],
+            "sub_category":[],
+            "num_classes": 4
+
+        }        
+    }
+    
+}

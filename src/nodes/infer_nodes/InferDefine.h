@@ -32,6 +32,7 @@ namespace ZJVIDEO
         ZJV_PREPROCESS_OUTPUT_FORMAT_NHWC       = 2,    // "NHWC"
         ZJV_PREPROCESS_OUTPUT_FORMAT_NCTHW      = 3,    // "NCTHW" for 3D model
         ZJV_PREPROCESS_OUTPUT_FORMAT_NTCHW      = 4,    // "NTCHW" for 3D model
+        ZJV_PREPROCESS_OUTPUT_FORMAT_NTHW       = 5,    // "NTHW" for 3D model
     };
 
     enum PreProcessChannelFormat
@@ -51,7 +52,7 @@ namespace ZJVIDEO
         int interp_type; // PreProcessInterpType
 
         int channel_format; // PreProcessChannelFormat
-        int dtype;          // PixelDtype
+
         int output_format;   // PreProcessOutputFormat
         std::vector<float> mean_value;
         std::vector<float> std_value;
@@ -68,14 +69,15 @@ namespace ZJVIDEO
         ZJV_PREPROCESS_LIB_UNKNOWN = 0, // "Unknown"
         ZJV_PREPROCESS_LIB_OPENCV = 1,  // "OpenCV"
         ZJV_PREPROCESS_LIB_CIMG = 2,    // "CImg"
-        ZJV_PREPROCESS_LIB_CUDA = 3,    // "CImg"
+        ZJV_PREPROCESS_LIB_CUDA = 3,    // "CUDA"
     };
 
     struct FrameROI
     {
         int input_vector_id;
-        std::shared_ptr<const FrameData> frame;
-        std::vector<std::shared_ptr<const FrameData>> frames;
+        std::shared_ptr<const FrameData> frame; 
+        std::vector<std::shared_ptr<const FrameData>> frames;   // 3D模型的多帧数据, 来源与ImageCache
+        std::shared_ptr<const FBlob> fblob;                        // 3D模型的输入blob, 来源与ImageCache
         const DetectBox * original;                     // roi的原始目标
         // 原图坐标系下的roi
         Rect roi;

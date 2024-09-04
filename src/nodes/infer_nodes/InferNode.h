@@ -1,10 +1,10 @@
 #ifndef ZJVIDEO_INFERNODE_H
 #define ZJVIDEO_INFERNODE_H
 
-#include "../BaseNode.h"
+#include "nodes/BaseNode.h"
 #include "backend/EngineFactory.h"
 #include "InferDefine.h"
-#include "PreProcessor.h"
+#include "nodes/cache_nodes/PreProcessor.h"
 #include "PostProcessor.h"
 
 namespace ZJVIDEO {
@@ -56,6 +56,7 @@ protected:
     std::vector<PreProcessParameter>                m_img_preproc_params; 
     std::vector<std::shared_ptr<PostProcessor>>     m_postprocess;
     int                                             m_device_id;
+    bool                                            m_blob_input_flag;
 
 
 }; // class InferNode

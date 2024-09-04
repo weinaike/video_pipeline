@@ -1,7 +1,9 @@
 #ifndef ZJVIDEO_IMAGECACHENODE_H
 #define ZJVIDEO_IMAGECACHENODE_H
 
-#include "../BaseNode.h"
+#include "nodes/BaseNode.h"
+#include "nodes/infer_nodes/InferDefine.h"
+#include "common/Shape.h"
 
 namespace ZJVIDEO {
 
@@ -16,13 +18,13 @@ enum output_stream_type {
     ZJV_OUTPUT_STREAM_TYPE_TRIGGER = 1,    
 };
 
-class ImageCacheNode : public BaseNode {
+class CacheNode : public BaseNode {
 
 public:
 
-    ImageCacheNode(const NodeParam & param);
-    virtual ~ImageCacheNode();
-    ImageCacheNode() = delete;
+    CacheNode(const NodeParam & param);
+    virtual ~CacheNode();
+    CacheNode() = delete;
 
 protected:
     //parse,解析配置文件
@@ -34,19 +36,31 @@ protected:
                                 std::vector<std::shared_ptr<BaseData> > & out_metas);
 
 protected:
-    int m_count;
-    int m_append_count;
+    int transfer_data(std::shared_ptr<const FrameData> in_frame_data, std::shared_ptr<FrameData> & out_frame_data);
+    
+
+protected:
+    int m_count;                // 满足条件帧累计，满足帧频率条件，输出数据并清零
+    int m_append_count;         // 未满足条件的帧累计，达到记录条件清零
 
 private:
-    int m_os_type;     // output_stream_type  0: continue, 1: trigger
-    int m_width;
-    int m_height;
-    int m_frame_num;
-    int m_step;
-    float m_fps;
     std::list<std::shared_ptr<FrameData> > m_frame_datas;
+    int m_os_type;     // output_stream_type  0: continue, 1: trigger
+    int m_frame_num;    // 单次输出帧数量
+    int m_step;         // 帧采样间隔
+    float m_fps;        // 单次输出的最小频率
 
-}; // class ImageCacheNode
+    bool m_transform;   // 是否需要转换
+    int m_device_id;      // 设备id
+
+    BaseDataType m_output_type;
+
+    // 预处理参数
+    PreProcessParameter m_param;
+    Rect2f m_roi;
+    
+
+}; // class CacheNode
 
 } // namespace ZJVIDEO
 

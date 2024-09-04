@@ -34,20 +34,20 @@
             "output_datas":
             [
                 {
-                    "meta_data_type": "ImageCache"
+                    "meta_data_type": "FeatureCache"
                 }
-            ]            
+            ]
         },
         {
             "node_type": "Infer",
             "node_name": "Node3",
             "channels": true,
-            "cfg_file": "../configure/cfg_nodes/i3d.json",
+            "cfg_file": "../configure/cfg_nodes/laser_welding.json",
             "input_datas":
             [
                 {
                     "pre_node": "Node2",
-                    "meta_data_type": "ImageCache"
+                    "meta_data_type": "FeatureCache"
                 }                
             ],
             "output_datas":

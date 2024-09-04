@@ -34,7 +34,8 @@ namespace ZJVIDEO
         else if(fmt == ZJV_IMAGEFORMAT_YUV444P) depth = 8;
         else if(fmt == ZJV_IMAGEFORMAT_NV21) depth = 8;
         else if(fmt == ZJV_IMAGEFORMAT_NV12) depth = 8;
-        else if(fmt == ZJV_IMAGEFORMAT_FLOAT32) depth = 32;
+        else if(fmt == ZJV_IMAGEFORMAT_GRAY_FLOAT) depth = 32;
+        else if(fmt == ZJV_IMAGEFORMAT_RGBP_FLOAT) depth = 32;
         else depth = 0;
         return depth;
     }
@@ -85,7 +86,8 @@ namespace ZJVIDEO
         else if(fmt == ZJV_IMAGEFORMAT_YUV444P) channel = 3;
         else if(fmt == ZJV_IMAGEFORMAT_NV21) channel = 3;
         else if(fmt == ZJV_IMAGEFORMAT_NV12) channel = 3;
-        else if(fmt == ZJV_IMAGEFORMAT_FLOAT32) channel = 1;
+        else if(fmt == ZJV_IMAGEFORMAT_GRAY_FLOAT) channel = 1;
+        else if(fmt == ZJV_IMAGEFORMAT_RGBP_FLOAT) channel = 3;
         else channel = 0;
         if(channel == 0) std::cout <<__FILE__ << __LINE__ << " Unknown format: " << fmt;
         return channel;
@@ -103,7 +105,8 @@ namespace ZJVIDEO
         else if(fmt == ZJV_IMAGEFORMAT_RGB24) size  =  stride * h ;
         else if(fmt == ZJV_IMAGEFORMAT_BGR24) size  =  stride * h ;
         else if(fmt == ZJV_IMAGEFORMAT_RGBP) size  =  stride * h * 3;
-        else if(fmt == ZJV_IMAGEFORMAT_FLOAT32) size  =  stride * h  * 4;
+        else if(fmt == ZJV_IMAGEFORMAT_GRAY_FLOAT) size  =  stride * h;
+        else if(fmt == ZJV_IMAGEFORMAT_RGBP_FLOAT) size  =  stride * h * 3;
         else if(fmt == ZJV_IMAGEFORMAT_YUV420P) size = stride * h * 3 / 2;
         else if(fmt == ZJV_IMAGEFORMAT_YUV422P) size = stride * h * 2;
         else if(fmt == ZJV_IMAGEFORMAT_YUV444P) size = stride * h * 3;
@@ -114,7 +117,6 @@ namespace ZJVIDEO
             std::cout << __FILE__ << __LINE__ << " yuv data is not support yet: " << fmt;
             return -1;
         }
-
 
         return size;
     }

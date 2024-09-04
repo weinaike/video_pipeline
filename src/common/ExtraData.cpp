@@ -83,4 +83,6 @@ namespace ZJVIDEO
 
     REGISTER_DATA_CLASS(ImageCahce)
 
+    REGISTER_DATA_CLASS(FeatureCache)
+
 }   // namespace ZJVIDEO

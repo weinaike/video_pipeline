@@ -1,7 +1,7 @@
 #ifndef ZJVIDEO_VIDEOSRCNODE_H
 #define ZJVIDEO_VIDEOSRCNODE_H
 
-#include "../BaseNode.h"
+#include "nodes/BaseNode.h"
 
 extern "C"
 {

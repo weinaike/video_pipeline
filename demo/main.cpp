@@ -205,10 +205,10 @@ int main()
     std::cout<< "Hello, World!\n" ;
 
     // std::string cfg_file = "../configure/pipeline_sample_segment.json";
-    // std::string cfg_file = "../configure/pipeline_sample_infer.json";
+    std::string cfg_file = "../configure/pipeline_sample_infer.json";
     // std::string cfg_file = "../configure/pipeline_sample.json";
     // std::string cfg_file = "../configure/pipeline_sample_video.json";
-    std::string cfg_file = "../configure/pipeline_sample_3D_classification.json";
+    // std::string cfg_file = "../configure/pipeline_sample_3D_classification.json";
     
     ZJVIDEO::Pipeline pipeline(cfg_file);
 
@@ -301,8 +301,8 @@ int main()
                 std::shared_ptr<const ZJVIDEO::DetectResultData> detect_result = std::dynamic_pointer_cast<const ZJVIDEO::DetectResultData>(data);
                 for(int i = 0; i < detect_result->detect_boxes.size(); i++)
                 {
-                    // std::cout << " detect_boxes: " << detect_result->detect_boxes[i].x1 << " " << detect_result->detect_boxes[i].y1
-                    //     << " " << detect_result->detect_boxes[i].x2 << " " << detect_result->detect_boxes[i].y2 << std::endl;
+                    std::cout << " detect_boxes: " << detect_result->detect_boxes[i].x1 << " " << detect_result->detect_boxes[i].y1
+                        << " " << detect_result->detect_boxes[i].x2 << " " << detect_result->detect_boxes[i].y2 << std::endl;
                     img.draw_rectangle(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y1,
                         detect_result->detect_boxes[i].x2, detect_result->detect_boxes[i].y2, red,1.0f, ~0U);
                     img.draw_text(detect_result->detect_boxes[i].x1, detect_result->detect_boxes[i].y1, 

@@ -39,7 +39,7 @@
 
 
 
-#include "../BaseNode.h"
+#include "nodes/BaseNode.h"
 #include "sort/tracker.h"
 #include <deque>
 #include "common/Shape.h"

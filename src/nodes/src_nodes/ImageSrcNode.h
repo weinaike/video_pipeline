@@ -1,7 +1,7 @@
 #ifndef ZJVIDEO_IMAGESRCNODE_H
 #define ZJVIDEO_IMAGESRCNODE_H
 
-#include "../BaseNode.h"
+#include "nodes/BaseNode.h"
 
 namespace ZJVIDEO {
 

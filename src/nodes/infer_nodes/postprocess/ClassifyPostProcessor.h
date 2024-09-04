@@ -1,7 +1,7 @@
 #ifndef __ZJV_CLASSIFYPOSTPROCESS_H__
 #define __ZJV_CLASSIFYPOSTPROCESS_H__
 
-#include "../PostProcessor.h"
+#include "nodes/infer_nodes/PostProcessor.h"
 
 namespace ZJVIDEO
 {
@@ -15,7 +15,7 @@ namespace ZJVIDEO
         virtual int parse_json(const nlohmann::json & j) override;
         virtual int run(std::vector<FBlob> &outputs, std::vector<std::shared_ptr<FrameROI>> &frame_rois) override;
     private:
-        int                         m_num_classes;
+        int  m_num_classes;
     };
 
 

@@ -47,6 +47,10 @@ int ImageSrcNode::process_single(const std::vector<std::shared_ptr<const BaseDat
             {
                 cvt = std::make_shared<FrameData>(*frame_data);
             }
+            else if(frame_data->format == ZJV_IMAGEFORMAT_GRAY8)
+            {
+                cvt = std::make_shared<FrameData>(*frame_data);
+            }
             else if(frame_data->format == ZJV_IMAGEFORMAT_YUV420P )
             {
                 int w = frame_data->width;

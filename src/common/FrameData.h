@@ -34,7 +34,8 @@ namespace ZJVIDEO
         ZJV_IMAGEFORMAT_NV12,     // NV12
         // 以上是常用的图像格式，以下是不常用的图像格式
 
-        ZJV_IMAGEFORMAT_FLOAT32, // FLOAT32
+        ZJV_IMAGEFORMAT_GRAY_FLOAT,  // GRAY_FLOAT
+        ZJV_IMAGEFORMAT_RGBP_FLOAT,  // RGBP_FLOAT
 
         ZJV_IMAGEFORMAT_MAX
     };

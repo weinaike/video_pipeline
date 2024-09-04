@@ -6,32 +6,6 @@
 
 #define GPU_BLOCK_THREADS 512
 
-#define KernelPositionBlock                                 \
-    int position = (blockDim.x * blockIdx.x + threadIdx.x); \
-    if (position >= (edge))                                 \
-        return;
-
-#define checkCudaKernel(...)                                            \
-    __VA_ARGS__;                                                        \
-    do                                                                  \
-    {                                                                   \
-        cudaError_t cudaStatus = cudaPeekAtLastError();                 \
-        if (cudaStatus != cudaSuccess)                                  \
-        {                                                               \
-            INFOE("launch failed: %s", cudaGetErrorString(cudaStatus)); \
-        }                                                               \
-    } while (0);
-
-#define Assert(op)                        \
-    do                                    \
-    {                                     \
-        bool cond = !(!(op));             \
-        if (!cond)                        \
-        {                                 \
-            INFOF("Assert failed, " #op); \
-        }                                 \
-    } while (false)
-
 namespace CUDA
 {
 
@@ -134,6 +108,36 @@ namespace CUDA
                 }
             }
         }
+
+        __global__ void crop_gray_kernel(uint8_t *output,
+                                         const uint8_t *input,
+                                         int x,
+                                         int y,
+                                         int width, int height,
+                                         int input_width,
+                                         int input_height,
+                                         int format)
+        {
+            int x_new = blockIdx.x * blockDim.x + threadIdx.x;
+            int y_new = blockIdx.y * blockDim.y + threadIdx.y;
+
+            if (x_new < width && y_new < height)
+            {
+                int index_new = (y_new * width + x_new) ;
+                int x_old = x + x_new;
+                int y_old = y + y_new;
+                if (x_old >= 0 && x_old < input_width && y_old >= 0 && y_old < input_height)
+                {
+                    int index_old = (y_old * input_width + x_old);
+                    output[index_new] = input[index_old];
+                }
+                else
+                {
+                    output[index_new] = 0; // or other padding value
+                }
+            }
+        }
+
 
         __global__ void resize_bilinear_and_normalize_kernel(uint8_t * src,
                                                              int src_line_size,
@@ -427,6 +431,92 @@ namespace CUDA
             *pdst_c2 = c2;
         }
 
+        // 灰度图仿射变换
+        __global__ void warp_affine_bilinear_and_normalize_gray_kernel(uint8_t * src,
+                                                                        int src_line_size,
+                                                                        int src_width,
+                                                                        int src_height,
+                                                                        float *dst,
+                                                                        int dst_width,
+                                                                        int dst_height,
+                                                                        uint8_t const_value_st,
+                                                                        float *warp_affine_matrix_2_3,
+                                                                        Norm norm,
+                                                                        int edge)
+        {
+            int position = blockDim.x * blockIdx.x + threadIdx.x;
+            if (position >= edge)
+                return;
+
+            float m_x1 = warp_affine_matrix_2_3[0];
+            float m_y1 = warp_affine_matrix_2_3[1];
+            float m_z1 = warp_affine_matrix_2_3[2];
+            float m_x2 = warp_affine_matrix_2_3[3];
+            float m_y2 = warp_affine_matrix_2_3[4];
+            float m_z2 = warp_affine_matrix_2_3[5];
+
+            int dx = position % dst_width;
+            int dy = position / dst_width;
+            float src_x = m_x1 * dx + m_y1 * dy + m_z1;
+            float src_y = m_x2 * dx + m_y2 * dy + m_z2;
+            float c0;
+
+            if (src_x <= -1 || src_x >= src_width || src_y <= -1 || src_y >= src_height)
+            {
+                // out of range
+                c0 = const_value_st;
+            }
+            else
+            {
+                int y_low = floorf(src_y);
+                int x_low = floorf(src_x);
+                int y_high = y_low + 1;
+                int x_high = x_low + 1;
+
+                uint8_t const_value = const_value_st;
+                float ly = src_y - y_low;
+                float lx = src_x - x_low;
+                float hy = 1 - ly;
+                float hx = 1 - lx;
+                float w1 = hy * hx, w2 = hy * lx, w3 = ly * hx, w4 = ly * lx;
+                uint8_t v1 = const_value;
+                uint8_t v2 = const_value;
+                uint8_t v3 = const_value;
+                uint8_t v4 = const_value;
+                if (y_low >= 0)
+                {
+                    if (x_low >= 0)
+                        v1 = src[y_low * src_line_size + x_low];
+
+                    if (x_high < src_width)
+                        v2 = src[y_low * src_line_size + x_high];
+                }
+
+                if (y_high < src_height)
+                {
+                    if (x_low >= 0)
+                        v3 = src[y_high * src_line_size + x_low];
+
+                    if (x_high < src_width)
+                        v4 = src[y_high * src_line_size + x_high];
+                }
+
+                // same to opencv
+                c0 = floorf(w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4 + 0.5f);
+            }
+
+            if (norm.type == NormType::MeanStd)
+            {
+                c0 = (c0 - norm.mean[0]) / norm.std[0] * norm.alpha;
+            }
+            else if (norm.type == NormType::AlphaBeta)
+            {
+                c0 = c0 * norm.alpha + norm.beta;
+            }
+
+            dst[dy * dst_width + dx] = c0;
+        }        
+
         __global__ void warp_affine_bilinear_and_normalize_focus_kernel(uint8_t * src,
                                                                         int src_line_size,
                                                                         int src_width,
@@ -641,20 +731,22 @@ namespace CUDA
             }
         }
 
-        void permute_CT(float* output, const float* input, int N, int C, int T, int H, int W)
+        int permute_CT(float* output, const float* input, int N, int C, int T, int H, int W)
         {
             int total_size = N * C * T * H * W;
             int threads_per_block = 256;
             int num_blocks = (total_size + threads_per_block - 1) / threads_per_block;
 
             permute_NTCHW_to_NCTHW<<<num_blocks, threads_per_block>>>(output, input, N, C, T, H, W);
+            CUDA_CHECK_RETURN(cudaGetLastError()); 
+            return 0;
         }
         /////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////
 
-        void crop_cvtcolor_Invoker(uint8_t * src,
+        int crop_cvtcolor_Invoker(uint8_t * src,
                                    int src_line_size,
                                    int src_width,
                                    int src_height,
@@ -668,10 +760,21 @@ namespace CUDA
         {
             dim3 block_size(16, 16);
             dim3 grid_size((width + block_size.x - 1) / block_size.x, (height + block_size.y - 1) / block_size.y);
-            crop_cvtcolor_kernel<<<grid_size, block_size, 0, stream>>>(dst, src, x, y, width, height, src_width, src_height, format);
+
+            if(format == ColorFormat::GRAY)
+            {
+                crop_gray_kernel<<<grid_size, block_size, 0, stream>>>(dst, src, x, y, width, height, src_width, src_height, format);
+            }
+            else
+            {
+                crop_cvtcolor_kernel<<<grid_size, block_size, 0, stream>>>(dst, src, x, y, width, height, src_width, src_height, format);
+            }
+            
+            CUDA_CHECK_RETURN(cudaGetLastError()); 
+            return 0;
         }
 
-        void convertNV12ToBgrInvoker(const uint8_t *y,
+        int convertNV12ToBgrInvoker(const uint8_t *y,
                                      const uint8_t *uv,
                                      int width,
                                      int height,
@@ -683,11 +786,12 @@ namespace CUDA
             dim3 grid = grid_dims(total);
             dim3 block = block_dims(total);
 
-            convert_nv12_to_bgr_kernel<<<grid, block, 0, stream>>>(y, uv, width, height, linesize, dst,
-                                                                   total);
+            convert_nv12_to_bgr_kernel<<<grid, block, 0, stream>>>(y, uv, width, height, linesize, dst, total);
+            CUDA_CHECK_RETURN(cudaGetLastError()); 
+            return 0;
         }
 
-        void warpAffineBilinearAndNormalizePlaneInvoker(uint8_t * src,
+        int warpAffineBilinearAndNormalizePlaneInvoker(uint8_t * src,
                                                         int src_line_size,
                                                         int src_width,
                                                         int src_height,
@@ -703,12 +807,30 @@ namespace CUDA
             auto grid = grid_dims(jobs);
             auto block = block_dims(jobs);
 
-            warp_affine_bilinear_and_normalize_plane_kernel<<<grid, block, 0, stream>>>(
-                src, src_line_size, src_width, src_height, dst, dst_width, dst_height, const_value,
-                matrix_2_3, norm, jobs);
+            int channel = src_line_size / src_width;
+            if (channel == 3)
+            {
+                warp_affine_bilinear_and_normalize_plane_kernel<<<grid, block, 0, stream>>>(
+                    src, src_line_size, src_width, src_height, dst, dst_width, dst_height, const_value,
+                    matrix_2_3, norm, jobs);
+            }
+            else if(channel == 1)
+            {
+                warp_affine_bilinear_and_normalize_gray_kernel<<<grid, block, 0, stream>>>(
+                    src, src_line_size, src_width, src_height, dst, dst_width, dst_height, const_value,
+                    matrix_2_3, norm, jobs);
+            }
+            else
+            {
+                std::cout << "channel != 1 or 3" << std::endl;
+                return -1;
+            }
+
+            CUDA_CHECK_RETURN(cudaGetLastError()); 
+            return 0;
         }
 
-        void warpAffineBilinearAndNormalizeFocusInvoker(uint8_t * src,
+        int warpAffineBilinearAndNormalizeFocusInvoker(uint8_t * src,
                                                         int src_line_size,
                                                         int src_width,
                                                         int src_height,
@@ -727,9 +849,11 @@ namespace CUDA
             warp_affine_bilinear_and_normalize_focus_kernel<<<grid, block, 0, stream>>>(
                 src, src_line_size, src_width, src_height, dst, dst_width, dst_height, const_value,
                 matrix_1_3, norm, jobs);
+            CUDA_CHECK_RETURN(cudaGetLastError());
+            return 0;
         }
 
-        void warpPerspectiveInvoker(uint8_t * src,
+        int warpPerspectiveInvoker(uint8_t * src,
                                     int src_line_size,
                                     int src_width,
                                     int src_height,
@@ -748,9 +872,11 @@ namespace CUDA
             warp_perspective_kernel<<<grid, block, 0, stream>>>(src, src_line_size, src_width, src_height,
                                                                 dst, dst_width, dst_height, const_value,
                                                                 matrix_3_3, norm, jobs);
+            CUDA_CHECK_RETURN(cudaGetLastError());
+            return 0;
         }
 
-        void resizeBilinearAndNormalizeInvoker(uint8_t * src,
+        int resizeBilinearAndNormalizeInvoker(uint8_t * src,
                                                int src_line_size,
                                                int src_width,
                                                int src_height,
@@ -767,9 +893,11 @@ namespace CUDA
             resize_bilinear_and_normalize_kernel<<<grid, block, 0, stream>>>(
                 src, src_line_size, src_width, src_height, dst, dst_width, dst_height,
                 src_width / (float)dst_width, src_height / (float)dst_height, norm, jobs);
+            CUDA_CHECK_RETURN(cudaGetLastError());
+            return 0;                
         }
 
-        void normFeatureInvoker(float *feature_array,
+        int normFeatureInvoker(float *feature_array,
                                 int num_feature,
                                 int feature_length,
                                 cudaStream_t stream)
@@ -777,7 +905,7 @@ namespace CUDA
             if (feature_length % 32 != 0)
             {
                 std::cout << "feature_length % 32 != 0" << std::endl;
-                return;
+                return -1;
             }
 
             int jobs = num_feature * feature_length;
@@ -785,15 +913,20 @@ namespace CUDA
             auto block = dim3(feature_length / 32, 32);
             normalize_feature_kernel<<<grid, block, num_feature * sizeof(float), stream>>>(
                 feature_array, num_feature, feature_length, jobs);
+            CUDA_CHECK_RETURN(cudaGetLastError());
+            return 0;
+
         }
 
-        void bgr2grayInvoker(uint8_t * src, float *dst, int width, int height, cudaStream_t stream)
+        int bgr2grayInvoker(uint8_t * src, float *dst, int width, int height, cudaStream_t stream)
         {
             int jobs = width * height;
             auto grid = grid_dims(jobs);
             auto block = block_dims(jobs);
 
             bgr_to_gray_kernel<<<grid, block, 0, stream>>>(src, width * 3, dst, jobs);
+            CUDA_CHECK_RETURN(cudaGetLastError());
+            return 0;
         }
 
     } // namespace CUDA
