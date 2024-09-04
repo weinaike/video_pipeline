@@ -13,12 +13,12 @@
     "model": 
     {
         "version": "1.0",
-        "model_name": "laser_welding",
+        "model_name": "laser_welding_stable",
         "encrypt": false,
         "max_batch_size" : 1,
         "device" : 0,
-        "model_file": "../models/welding/laser_welding.onnx",
-        "weight_file": "../models/resnet/laser_welding.onnx",        
+        "model_file": "../models/welding/laser_welding_stable.onnx",
+        "weight_file": "../models/resnet/laser_welding_stable.onnx",        
         "backend": "TRT",
         "dynamic_batch": false,
         "enable_int8": false,
@@ -60,14 +60,14 @@
 
     "postprocess": 
     {
-        "Classify" :
-        {
+        "Classify": {
             "input_names":["output"],
             "output_data_type": "ClassifyResult",
-            "algorithm":"softmax",
-            "main_attribute":[1000, 1000, 1000, 1000],
-            "sub_attribute":[1001, 1002, 1003, 1004],
-            "num_classes": 4
+            "algorithm":"mse",
+            "main_attribute":[2,3],
+            "sub_attribute":[],
+            "num_classes": 2,
+            "attr_value_norm_param": 100
         }
     }
     

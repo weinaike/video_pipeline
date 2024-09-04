@@ -22,13 +22,18 @@ enum BaseDataType {
     ZJV_DATATYPE_CONFIG,   // 配置数据
     ZJV_DATATYPE_EXTRA,    // 额外数据，检测结果，识别结果等
     ZJV_DATATYPE_FLOW,     // 流数据
-    ZJV_DATATYPE_EVENT,    // 事件数据
     ZJV_DATATYPE_DETECTRESULT,    //检测结果，实例分割结果
     ZJV_DATATYPE_DETECTRESULT_TRACK,    //跟踪结果
     ZJV_DATATYPE_CLASSIFYRESULT,  //分类结果
     ZJV_DATATYPE_SEGMENTRESULT,   //语义分割结果
     ZJV_DATATYPE_IMAGECACHE,   //图像缓存
     ZJV_DATATYPE_FEATURECACHE, //特征缓存
+
+
+
+    ZJV_DATATYPE_EVENT = 1000,    // 事件数据
+    ZJV_DATATYPE_EVENT_WELDING,    // 焊接事件数据
+
     ZJV_DATATYPE_MAX
 };
 

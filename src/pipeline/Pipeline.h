@@ -77,6 +77,7 @@ protected:
 
     bool                                                            m_expand_pipe = false;
     int                                                             m_channel_num = 1;
+    int                                                             m_queue_size = 32;
 
     // 扩展后通道
     std::vector<NodeParam>                                          m_multi_channel_nodes;

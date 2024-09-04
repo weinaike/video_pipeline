@@ -67,8 +67,9 @@
         {
             "input_names":["resnetv15_dense0_fwd"],
             "output_data_type": "ClassifyResult",
-            "main_category":[],
-            "sub_category":[],
+            "algorithm":"softmax",
+            "main_attribute":[],
+            "sub_attribute":[],
             "num_classes": 1000
 
         }        

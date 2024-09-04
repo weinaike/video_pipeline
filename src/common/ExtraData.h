@@ -38,12 +38,13 @@ namespace ZJVIDEO
         std::vector<Rect> track_boxes; // 跟踪框
     };
 
-    struct DetectBoxCategory
+    struct ObjectAttribute
     {
         DetectBox * original_b;
-        int label;               // 网络输出标签
-        int main_category;       // 标签系统的主类别
-        int sub_category;        // 标签系统的子类别
+        int label;              // 网络输出标签
+        int attribute;          // 属性 标签
+        int attr_sub_category;  // 属性类别 标签
+        float attr_value;       // 属性 值
         float score;
     };
     
@@ -70,7 +71,7 @@ namespace ZJVIDEO
             data_name = "ClassifyResult";
         }
         ~ClassifyResultData() override = default;
-        std::vector<DetectBoxCategory> detect_box_categories;
+        std::vector<ObjectAttribute> obj_attr_info;
 
         virtual int append(std::shared_ptr<BaseData>& data_ptr) override;    
     };
@@ -134,10 +135,34 @@ namespace ZJVIDEO
         }
         ~EventData() override = default;
         std::shared_ptr<const FrameData> frame; // 帧数据
-
-    
     };
 
+    class WeldResultData : public BaseData
+    {
+    public:
+        explicit WeldResultData(BaseDataType type = ZJV_DATATYPE_EVENT_WELDING) : BaseData(type)
+        {
+            data_name = "WeldResult";   
+            is_enable = false;
+            camera_id = 0;
+            frame_id = 0;
+            weld_status = 0;
+            status_score = 0.0f;
+            weld_depth = 0.0f;
+            front_quality = 0.0f;
+            back_quality = 0.0f;
+
+        }
+        ~WeldResultData() override = default;
+        bool    is_enable;
+        int     camera_id;
+        int     frame_id;
+        int     weld_status;
+        float   status_score;
+        float   weld_depth;
+        float   front_quality;
+        float   back_quality; 
+    };
 
 
 } // namespace ZJVIDEO

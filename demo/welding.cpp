@@ -45,7 +45,7 @@ int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )
             break;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         std::shared_ptr<ZJVIDEO::FrameData> frame = std::make_shared<ZJVIDEO::FrameData>(
             FRAME_WIDTH, FRAME_HEIGHT, ZJVIDEO::ZJV_IMAGEFORMAT_GRAY8);
 
@@ -63,11 +63,12 @@ int input_worker(std::function<int(const std::shared_ptr<ZJVIDEO::FrameData> & )
 
 int main()
 {  
+
     signal(SIGINT, signalHandler);  
     std::cout<< "laser welding!\n" ;
 
 
-    std::string cfg_file = "../configure/pipeline_welding_classification.json";
+    std::string cfg_file = "../configure/pipeline_welding_part.json";
 
     
     ZJVIDEO::Pipeline pipeline(cfg_file);
@@ -86,10 +87,14 @@ int main()
 
 
     std::shared_ptr<ZJVIDEO::SetLoggerLevelControlData> level = std::make_shared<ZJVIDEO::SetLoggerLevelControlData>();
-    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_INFO);
+    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_DEBUG);
     std::shared_ptr<ZJVIDEO::ControlData> base_level = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(level);
     pipeline.control(base_level);
 
+    std::shared_ptr<ZJVIDEO::SetRunModeControlData> mode_control = std::make_shared<ZJVIDEO::SetRunModeControlData>();
+    mode_control->set_mode(ZJVIDEO::ZJV_PIPELINE_RUN_MODE_RECORDED);
+    std::shared_ptr<ZJVIDEO::ControlData> base_mode = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(mode_control);
+    pipeline.control(base_mode);
 
     std::vector<std::thread > threads;
     
@@ -112,6 +117,7 @@ int main()
     
     while(!flag)
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         std::vector< std::shared_ptr<const ZJVIDEO::BaseData> >datas;
         datas.clear();
         pipeline.get_output_data(datas);
@@ -143,12 +149,25 @@ int main()
             {
                 std::shared_ptr<const ZJVIDEO::ClassifyResultData> result = std::dynamic_pointer_cast<const ZJVIDEO::ClassifyResultData>(data);
 
-                for(int i = 0; i < result->detect_box_categories.size(); i++)
+                for(int i = 0; i < result->obj_attr_info.size(); i++)
                 {
-                    int label = result->detect_box_categories[i].label;
-                    float score = result->detect_box_categories[i].score;
-                    printf("frame_id: %d, cls: %d, score: %f\n", frame_id, label, score);
+                    int label = result->obj_attr_info[i].label;
+                    float score = result->obj_attr_info[i].score;
+                    int attr = result->obj_attr_info[i].attribute;
+                    int attr_sub = result->obj_attr_info[i].attr_sub_category;
+                    float attr_value = result->obj_attr_info[i].attr_value;
+                    printf("ClassifyResult: frame_id: %d, label: %d, score: %f, attr: %d, attr_sub: %d, attr_value: %f\n", frame_id, label, score, attr, attr_sub, attr_value);
                 }
+            }
+            else if(data->data_name == "WeldResult")
+            {
+                std::shared_ptr<const ZJVIDEO::WeldResultData> weld = std::dynamic_pointer_cast<const ZJVIDEO::WeldResultData>(data);
+                if(weld->is_enable)
+                {
+                    printf("WeldResult:     frame_id: %d, camera_id: %d, weld_status: %d, status_score: %f, weld_depth: %f, front_quality: %f, back_quality: %f\n", 
+                        frame_id, weld->camera_id, weld->weld_status, weld->status_score, weld->weld_depth, weld->front_quality, weld->back_quality);
+                }
+                
             }
         }
 

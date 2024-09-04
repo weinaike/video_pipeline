@@ -3,9 +3,9 @@
     "version": "1.0",
     "output_type": "FeatureCache",
     "type": "continue",
-    "device" : -1,
+    "device" : 0,
     "step": 3,
-    "fps": 100,
+    "fps": 25,
     "num": 8,
     "param":
     {

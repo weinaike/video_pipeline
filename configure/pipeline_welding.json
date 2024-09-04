@@ -1,0 +1,131 @@
+{
+    "task_name": "InferExampleTask",
+    "expand_pipe": true,
+    "channel_num": 1,
+    "queue_size": 64,
+    "nodes": [
+        {
+            "node_type": "ImageSrc",
+            "node_name": "Node1",
+            "channels": false,
+            "cfg_file": "",
+            "input_datas":
+            [
+
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "Frame"
+                }
+            ]            
+        },
+        {
+            "node_type": "Cache",
+            "node_name": "Node2",
+            "channels": false,
+            "cfg_file": "../configure/cfg_nodes/cache.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                }  
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "FeatureCache"
+                }
+            ]
+        },
+        {
+            "node_type": "Infer",
+            "node_name": "Stable",
+            "channels": true,
+            "cfg_file": "../configure/cfg_nodes/laser_welding_stable.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node2",
+                    "meta_data_type": "FeatureCache"
+                }                
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "ClassifyResult"
+                }
+            ]     
+        },
+        {
+            "node_type": "Infer",
+            "node_name": "Depth",
+            "channels": true,
+            "cfg_file": "../configure/cfg_nodes/laser_welding_depth.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node2",
+                    "meta_data_type": "FeatureCache"
+                }                
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "ClassifyResult"
+                }
+            ]     
+        },
+        {
+            "node_type": "Infer",
+            "node_name": "Status",
+            "channels": true,
+            "cfg_file": "../configure/cfg_nodes/laser_welding.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node2",
+                    "meta_data_type": "FeatureCache"
+                }                
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "ClassifyResult"
+                }
+            ]     
+        },
+        {
+            "node_type": "WeldEvent",
+            "node_name": "Weld",
+            "channels": false,
+            "cfg_file": "../configure/cfg_nodes/weld_event.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                },
+                {
+                    "pre_node": "Depth",
+                    "meta_data_type": "ClassifyResult"
+                },
+                {
+                    "pre_node": "Status",
+                    "meta_data_type": "ClassifyResult"
+                },
+                {
+                    "pre_node": "Stable",
+                    "meta_data_type": "ClassifyResult"
+                }
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "WeldResult"
+                }
+            ]     
+        }
+    ]
+}

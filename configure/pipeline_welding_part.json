@@ -1,7 +1,8 @@
 {
     "task_name": "InferExampleTask",
-    "expand_pipe": true,
+    "expand_pipe": false,
     "channel_num": 1,
+    "queue_size": 64,
     "nodes": [
         {
             "node_type": "ImageSrc",
@@ -40,9 +41,9 @@
         },
         {
             "node_type": "Infer",
-            "node_name": "Node3",
+            "node_name": "Depth",
             "channels": true,
-            "cfg_file": "../configure/cfg_nodes/laser_welding.json",
+            "cfg_file": "../configure/cfg_nodes/laser_welding_depth.json",
             "input_datas":
             [
                 {
@@ -54,6 +55,25 @@
             [
                 {
                     "meta_data_type": "ClassifyResult"
+                }
+            ]     
+        },
+        {
+            "node_type": "WeldEvent",
+            "node_name": "Weld",
+            "channels": false,
+            "cfg_file": "../configure/cfg_nodes/weld_event.json",
+            "input_datas":
+            [
+                {
+                    "pre_node": "Depth",
+                    "meta_data_type": "ClassifyResult"
+                }
+            ],
+            "output_datas":
+            [
+                {
+                    "meta_data_type": "WeldResult"
                 }
             ]     
         }

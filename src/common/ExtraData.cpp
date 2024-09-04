@@ -24,7 +24,7 @@ namespace ZJVIDEO
         const std::shared_ptr<ClassifyResultData> data = std::dynamic_pointer_cast<ClassifyResultData>(data_ptr);
         if(data!= nullptr)
         {
-            detect_box_categories.insert(detect_box_categories.end(), data->detect_box_categories.begin(), data->detect_box_categories.end());
+            obj_attr_info.insert(obj_attr_info.end(), data->obj_attr_info.begin(), data->obj_attr_info.end());
         }
 
         return ZJV_STATUS_OK;
@@ -84,5 +84,7 @@ namespace ZJVIDEO
     REGISTER_DATA_CLASS(ImageCahce)
 
     REGISTER_DATA_CLASS(FeatureCache)
+
+    REGISTER_DATA_CLASS(WeldResult)    
 
 }   // namespace ZJVIDEO

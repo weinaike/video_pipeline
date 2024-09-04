@@ -194,10 +194,10 @@ int main()
             {
                 std::shared_ptr<const ZJVIDEO::ClassifyResultData> result = std::dynamic_pointer_cast<const ZJVIDEO::ClassifyResultData>(data);
 
-                for(int i = 0; i < result->detect_box_categories.size(); i++)
+                for(int i = 0; i < result->obj_attr_info.size(); i++)
                 {
-                    int label = result->detect_box_categories[i].label;
-                    float score = result->detect_box_categories[i].score;
+                    int label = result->obj_attr_info[i].label;
+                    float score = result->obj_attr_info[i].score;
                     std::cout << "cls: " << label << "  " << score << std::endl;
                 }                
                 // img.draw_text(50, 50, synset[label].second, red, 0, 1);

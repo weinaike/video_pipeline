@@ -268,6 +268,8 @@ int Pipeline::parse_cfg_file(std::string cfg_file)
     m_expand_pipe = j["expand_pipe"].get<bool>();
     m_channel_num = j["channel_num"].get<int>();
     m_nodeparams = j["nodes"].get<std::vector<NodeParam>>();
+    if(j.contains("queue_size"))
+        m_queue_size = j["queue_size"].get<int>();
 
     // 遍历所有节点，提取节点间的连接关系
     for(const auto & param : m_nodeparams)
@@ -327,6 +329,7 @@ int Pipeline::init()
         std::string next = connection.second;
         // 创建安全队列
         std::shared_ptr<FlowQueue> queue = std::make_shared<FlowQueue>();
+        queue->set_max_size(m_queue_size);
         m_connectQueue.insert({prior+"-"+next, queue});
 
         m_node_map[prior]->connect_add_output(m_node_map[next]->get_name(), queue);
@@ -340,6 +343,7 @@ int Pipeline::init()
         std::shared_ptr<FlowQueue> queue = std::make_shared<FlowQueue>();
         m_srcQueueList.insert(std::make_pair(m_node_map[node_id]->get_name(), queue));
         queue->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_DROP_LATE);
+        queue->set_max_size(m_queue_size);
         m_node_map[node_id]->connect_add_input(m_node_map[node_id]->get_name(), queue);        
     }
     // 从m_connect_list 有向图连接中 提取末尾节点，即只有入度，没有出度
@@ -350,6 +354,7 @@ int Pipeline::init()
         std::shared_ptr<FlowQueue> queue = std::make_shared<FlowQueue>();
         queue->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_DROP_EARLY);
         queue->setCond(m_out_cond);
+        queue->set_max_size(m_queue_size);
         m_dstQueueList.insert(std::make_pair(m_node_map[node_id]->get_name(), queue));
         m_node_map[node_id]->connect_add_output(m_node_map[node_id]->get_name(), queue);
     }
@@ -621,6 +626,7 @@ int Pipeline::get_output_data(std::vector<std::shared_ptr<const BaseData>> & dat
         if(flowdata)
         {
             flowdata->get_all_extras(data);
+            // flowdata->debug();
             break;        
         }
     }
@@ -698,7 +704,7 @@ int Pipeline::control(std::shared_ptr<ControlData>& data)
 int Pipeline::show_debug_info()
 {
     std::unique_lock<std::mutex> lk(m_mutex);
-    std::string str = "queue_size: ";
+    std::string str = "(src & dst) Queue [stay, drop] : ";
     for(const auto & buffer: m_srcQueueList)
     {
         str += buffer.first;
@@ -721,7 +727,7 @@ int Pipeline::show_debug_info()
     }
     str += "| ";
     CLOG(DEBUG, PIPE_LOG) << str ;
-    str = "";
+    str = "(Connect) Queue [stay, drop] : ";
     
     for(const auto & buffer: m_connectQueue)
     {
