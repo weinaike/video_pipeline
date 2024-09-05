@@ -1,8 +1,8 @@
 {
     "task_name": "InferExampleTask",
-    "expand_pipe": false,
+    "expand_pipe": true,
     "channel_num": 1,
-    "queue_size": 64,
+    "queue_size": 32,
     "nodes": [
         {
             "node_type": "ImageSrc",
@@ -65,6 +65,11 @@
             "cfg_file": "../configure/cfg_nodes/weld_event.json",
             "input_datas":
             [
+
+                {
+                    "pre_node": "Node1",
+                    "meta_data_type": "Frame"
+                },
                 {
                     "pre_node": "Depth",
                     "meta_data_type": "ClassifyResult"

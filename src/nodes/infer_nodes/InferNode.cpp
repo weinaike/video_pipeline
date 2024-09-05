@@ -336,14 +336,14 @@ int InferNode::prepare( const std::vector<std::vector<std::shared_ptr<const Base
     {
         for(int i = 0; i < in_metas_batch.size(); i++)
         {
-            std::shared_ptr<const ImageCahceData> cache = nullptr;
+            std::shared_ptr<const ImageCacheData> cache = nullptr;
             bool has_cache = false;
             bool has_roi = false;
             for(int j = 0; j < in_metas_batch[i].size(); j++)
             {            
                 if(in_metas_batch[i][j]->data_name == "ImageCache")
                 {
-                    cache = std::dynamic_pointer_cast<const ImageCahceData>(in_metas_batch[i][j]);
+                    cache = std::dynamic_pointer_cast<const ImageCacheData>(in_metas_batch[i][j]);
                     if(cache->images.size() > 0)
                     {
                         has_cache = true;

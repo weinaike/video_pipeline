@@ -599,17 +599,19 @@ int Pipeline::set_input_data(const std::shared_ptr<FrameData> & data)
 
 
 // 从末尾节点提取数据
-int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData>> & data) 
+int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData> > & data) 
 {
+
     for(const auto & item : m_dstQueueList)
-    {
+    {        
         std::shared_ptr<FlowData> flowdata = nullptr;
         item.second->Pop(flowdata);
         if(flowdata)
         {
-            std::shared_ptr<EventData> eventdata = std::make_shared<EventData>();
-            eventdata->frame = flowdata->get_frame();
-            data.push_back(eventdata);
+            std::shared_ptr<EventData> event = std::make_shared<EventData>();
+            event->frame = flowdata->get_frame();
+            flowdata->get_node_extras(item.first, event->extras);
+            data.push_back(event);
         }
     }
     // CLOG(INFO, PIPE_LOG) << "get_output_data " <<data.size();
@@ -704,7 +706,7 @@ int Pipeline::control(std::shared_ptr<ControlData>& data)
 int Pipeline::show_debug_info()
 {
     std::unique_lock<std::mutex> lk(m_mutex);
-    std::string str = "(src & dst) Queue [stay, drop] : ";
+    std::string str = "(src & dst) Queue [stay, drop, push, pop] : ";
     for(const auto & buffer: m_srcQueueList)
     {
         str += buffer.first;
@@ -712,6 +714,8 @@ int Pipeline::show_debug_info()
         str += std::to_string(buffer.second->size());
         str += ",";
         str += std::to_string(buffer.second->get_drop_count());
+        str += ",";
+        str += std::to_string(buffer.second->get_push_count());
         str +="] ";
     }
     str += "| ";
@@ -723,6 +727,8 @@ int Pipeline::show_debug_info()
         str += std::to_string(buffer.second->size());
         str += ",";
         str += std::to_string(buffer.second->get_drop_count());
+        str += ",";
+        str += std::to_string(buffer.second->get_push_count());
         str +="] ";
     }
     str += "| ";
@@ -736,6 +742,8 @@ int Pipeline::show_debug_info()
         str += std::to_string(buffer.second->size());
         str += ",";
         str += std::to_string(buffer.second->get_drop_count());
+        str += ",";
+        str += std::to_string(buffer.second->get_push_count());
         str +="] ";
     }
     str += "| ";

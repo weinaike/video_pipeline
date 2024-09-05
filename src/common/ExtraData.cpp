@@ -81,7 +81,7 @@ namespace ZJVIDEO
     }
     REGISTER_DATA_CLASS(SegmentResult)
 
-    REGISTER_DATA_CLASS(ImageCahce)
+    REGISTER_DATA_CLASS(ImageCache)
 
     REGISTER_DATA_CLASS(FeatureCache)
 

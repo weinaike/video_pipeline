@@ -90,15 +90,15 @@ namespace ZJVIDEO
         virtual int append(std::shared_ptr<BaseData>& data_ptr) override;    
     };
     // 图像缓存结果
-    class ImageCahceData : public BaseData
+    class ImageCacheData : public BaseData
     {
     public:
-        explicit ImageCahceData(BaseDataType type = ZJV_DATATYPE_IMAGECACHE ) : BaseData(type)
+        explicit ImageCacheData(BaseDataType type = ZJV_DATATYPE_IMAGECACHE ) : BaseData(type)
         {
             data_name = "ImageCache";
             images.clear();
         }
-        ~ImageCahceData() override = default;
+        ~ImageCacheData() override = default;
         std::vector<std::shared_ptr<FrameData>> images;
     };
 
@@ -135,6 +135,7 @@ namespace ZJVIDEO
         }
         ~EventData() override = default;
         std::shared_ptr<const FrameData> frame; // 帧数据
+        std::vector<std::shared_ptr<const BaseData> >  extras; // 额外数据
     };
 
     class WeldResultData : public BaseData

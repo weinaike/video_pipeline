@@ -290,9 +290,9 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
             assert(m_max_batch_size == 1);
         }
         // 单通道节点，意味着输入队列只有本通道的数据，其他通道的数据不会送入
-        // 若出现其他通道数据输入，则是异常情况。单节点通道，每次仅处理一个数据
+        // 若出现其他通道数据输入，则是异常情况。单通道节点，每次仅处理一个数据
         // 每个队列中，的flowdata，都可以包含所有数据，存在冗余
-        // 1. 从多个输入队列中，遭到最早的帧
+        // 1. 从多个输入队列中，找到最早的帧
         //      1.1 如果帧满足输入条件，则压入容器， 从其他输入队列中，去掉同一帧数据，避免重复计算
         //      1.2 如果帧不满足条件， 直接丢弃
         // 重复以上步骤，直到找到一个满足条件的最早的帧，
@@ -319,7 +319,7 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                 }
             }
             
-            // 判断
+            // 判断 
             if (m_input_buffers.find(earliest_queue) == m_input_buffers.end()) 
             {
                 return ZJV_STATUS_QUEUE_EMPTY;
@@ -329,46 +329,46 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                 std::shared_ptr<FlowData> data = nullptr;
                 m_input_buffers[earliest_queue]->front(data);
                 // data->debug();
-                // std::cout<<m_nodeparam.m_node_name <<  m_input_data_names.size()<<std::endl;
+                // std::cout<<m_nodeparam.m_node_name << ": " << m_input_data_names.size()<<std::endl;
                 // for(const auto & a :m_input_data_names)
                 // {
-                //     std::cout << m_nodeparam.m_node_name <<  a <<std::endl;
+                //     std::cout << m_nodeparam.m_node_name<< ": " <<  a <<std::endl;
                 // }
                 if(m_batch_process)
                 {
                     m_input_data_names = m_input_data_names_batch[data->get_channel_id()];
                 }
                 if(data->has_extras(m_input_data_names))
-                {
-                    // std::cout<<m_nodeparam.m_node_name<<" data ready"<<std::endl;
-                    m_input_buffers[earliest_queue]->Pop(data);
+                {   
+                    std::shared_ptr<FlowData> pop_data = nullptr;
+                    m_input_buffers[earliest_queue]->Pop(pop_data);                    
+
                     // data.get()已处理队列中
                     bool repeat = false;
                     for(const auto & item : m_dealed_smaple)
                     {
-                        if(data.get() == item)
+                        if(pop_data->get_flow_id() == item)
                         {
-                            // std::cout<<m_nodeparam.m_node_name<<" repeat data " << data.get()<<std::endl;
+                            // std::cout<<m_nodeparam.m_node_name<<" "<<earliest_queue << " queue repeat data " << pop_data->get_flow_id()<<std::endl;
                             repeat = true;
                             continue;
                         }
                     }
                     if(!repeat)
                     {
-                        datas.push_back(data);
+                        datas.push_back(pop_data);
                         cnt++;
                         if(m_dealed_smaple.size()>=64)
                         {
                             m_dealed_smaple.pop_front(); 
-                            m_dealed_smaple.push_back(data.get());                       
+                            m_dealed_smaple.push_back(pop_data->get_flow_id());                       
                         }
                         else
                         {
-                            m_dealed_smaple.push_back(data.get());
+                            m_dealed_smaple.push_back(pop_data->get_flow_id());
                         }
-                    } 
-
-                    
+                    }
+                    // 从其他队列中，去掉同一帧数据
                     for (const auto & buffer :m_input_buffers)
                     {
                         if(earliest_queue == buffer.first)
@@ -378,7 +378,7 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                         std::shared_ptr<FlowData> temp = nullptr;
                         if (buffer.second->front(temp)) 
                         {                            
-                            if (data.get() ==  temp.get())  // 指向同一对象
+                            if (pop_data->get_flow_id() ==  temp->get_flow_id())  // 指向同一对象
                             {
                                 // std::cout<<m_nodeparam.m_node_name<<" repeat data " << data.get()<<std::endl;
                                 buffer.second->Pop(temp);
@@ -386,10 +386,11 @@ int BaseNode::get_input_data(std::vector<std::shared_ptr< FlowData>> &datas)
                         }
                     }
                 }
-                else
+                else // 上游节点，发送的数据是当前节点以完成的。如果在当前节点完成之后，flowdata数据依然不全，则丢弃；使用由其他提供缺失数据的节点发送的flowdata
                 {
-                    // std::cout<<m_nodeparam.m_node_name<<" data not ready"<<std::endl;
-                    m_input_buffers[earliest_queue]->Pop(data);
+                    std::shared_ptr<FlowData> pop_data = nullptr;
+                    m_input_buffers[earliest_queue]->Pop(pop_data);
+                    // std::cout<<m_nodeparam.m_node_name<<" "<< earliest_queue <<" queue data not ready "<< pop_data.get() << std::endl;
                 }                
             }
         }
@@ -468,7 +469,7 @@ int BaseNode::worker()
             continue;
         }
         else
-        {
+        {           
             // 主处理
             process(datas);
             // 传递数据

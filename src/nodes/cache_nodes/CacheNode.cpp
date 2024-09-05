@@ -329,7 +329,7 @@ int CacheNode::process_single(const std::vector<std::shared_ptr<const BaseData> 
     {
         if(m_output_type == ZJV_DATATYPE_IMAGECACHE)
         {
-            std::shared_ptr<ImageCahceData> out = std::make_shared<ImageCahceData>();
+            std::shared_ptr<ImageCacheData> out = std::make_shared<ImageCacheData>();
             if(m_frame_datas.size() >= m_frame_num && m_count >= output_interval_num)
             {
                 auto it = m_frame_datas.begin();

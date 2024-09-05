@@ -30,6 +30,7 @@ public:
     bool Push(const Dtype & data) 
     {
         std::unique_lock<std::mutex> lock(m_mutex);
+        m_push_count++;
         if (m_list.size() >= m_max_number) 
         {
             switch (m_buffer_strategy) 
@@ -120,6 +121,18 @@ public:
         return m_drop_count;
     }
 
+    int get_push_count() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        return m_push_count;
+    }
+
+    void debug() {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        for (const auto & item : m_list) {
+            std::cout << item << std::endl;
+        }
+        return ;
+    }
     void clear() {
         std::unique_lock<std::mutex> lock(m_mutex);
         m_list.clear();
@@ -143,6 +156,7 @@ private:
     int                                         m_max_number = 25;          // 默认最大缓冲帧数
     BufferOverStrategy                          m_buffer_strategy = ZJV_QUEUE_DROP_LATE;  // 缓冲队列满时的策略
     int                                         m_drop_count = 0;
+    int                                         m_push_count = 0;
 }; // class ThreadSaveQueue
 
 // ThreadSaveQueue 实例化
