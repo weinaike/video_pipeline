@@ -9,6 +9,7 @@ libs
 3rdparty/openvino
 3rdparty/PaddleLite
 3rdparty/tnn
+3rdparty/win_x64
 models/
 data
 build

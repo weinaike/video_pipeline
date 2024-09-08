@@ -6,17 +6,19 @@ project(VideoPipeline)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmakes)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+
 
 # Detect Windows platform
 if(WIN32)
     message(STATUS "Configuring for Windows platform")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWIN32")
+    add_compile_options("/Zi" "/Od" "/source-charset:utf-8" "/execution-charset:utf-8" "/w")
     set(CMAKE_C_COMPILER "cl")
     set(CMAKE_CXX_COMPILER "cl")    
 elseif(UNIX AND NOT APPLE)
     message(STATUS "Configuring for Linux platform")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLINUX")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
     set(CMAKE_C_COMPILER "gcc")
     set(CMAKE_CXX_COMPILER "g++")    
 endif()
@@ -81,13 +83,17 @@ if(ENABLE_ONNX)
 
     if(WIN32)
         # Windows specific ONNX configuration
+        set(ONNX_LIB ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.lib)
+        include_directories(${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/include)
+        message(STATUS "ONNX_LIB: ${ONNX_LIB}")   
     elseif(UNIX AND NOT APPLE)
         # Linux specific ONNX configuration
         set(ONNX_LIB ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so)
+        include_directories(${CMAKE_SOURCE_DIR}/3rdparty/OnnxRuntime)
+        message(STATUS "ONNX_LIB: ${ONNX_LIB}")        
     endif()
 
 endif()
-
 
 ## CUDA
 if (ENABLE_CUDA)
@@ -130,7 +136,6 @@ endif()
 add_subdirectory(src)
 # 头文件目录
 include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
 # 添加可执行文件
 add_executable(demo demo/welding.cpp)
@@ -149,7 +154,7 @@ endif()
 
 
 if (WIN32)
-
+    message(STATUS "Configuring for Windows platform")
 elseif(UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
     find_package(X11 REQUIRED)

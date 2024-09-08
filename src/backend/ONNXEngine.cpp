@@ -41,7 +41,12 @@ namespace ZJVIDEO
         _session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
         _session_options.SetLogSeverityLevel(ORT_LOGGING_LEVEL_WARNING);
 
+#ifdef WIN32
+        std::wstring model_path_wstr = std::wstring(param.m_model_path.begin(), param.m_model_path.end());
+        _session = std::make_shared<Ort::Session>(_env, model_path_wstr.c_str(), _session_options);
+#else
         _session = std::make_shared<Ort::Session>(_env, param.m_model_path.c_str(), _session_options);
+#endif
 
         if (nullptr == _session)
         {

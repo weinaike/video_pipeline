@@ -178,8 +178,8 @@ namespace ZJVIDEO
             }
 
             // copy data from saved pointer to new arrays
-            size_t minrows = std::min(rows, m_rows);
-            size_t mincols = std::min(columns, m_columns);
+            size_t minrows = ZJ_MIN(rows, m_rows);
+            size_t mincols = ZJ_MIN(columns, m_columns);
             for (size_t x = 0; x < minrows; x++)
             {
                 for (size_t y = 0; y < mincols; y++)
@@ -242,7 +242,7 @@ namespace ZJVIDEO
 
     /*export*/ template <class T>
     const T
-    Matrix<T>::min() const
+    Matrix<T>::min_func() const
     {
         assert(m_matrix != nullptr);
         assert(m_rows > 0);
@@ -253,7 +253,7 @@ namespace ZJVIDEO
         {
             for (size_t j = 0; j < m_columns; j++)
             {
-                min = std::min<T>(min, m_matrix[i][j]);
+                min = ZJ_MIN(min, m_matrix[i][j]);
             }
         }
 
@@ -262,7 +262,7 @@ namespace ZJVIDEO
 
     /*export*/ template <class T>
     const T
-    Matrix<T>::max() const
+    Matrix<T>::max_func() const
     {
         assert(m_matrix != nullptr);
         assert(m_rows > 0);

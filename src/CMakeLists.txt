@@ -3,7 +3,6 @@
 
 # 设置头文件路径
 include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(${CMAKE_SOURCE_DIR}/3rdparty)
 
 file(GLOB_RECURSE SRC_LIST "*.cpp" "*.h" "*.cc" "*.hpp")
 # aux_source_directory(. SRC_LIST)

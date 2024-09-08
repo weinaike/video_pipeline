@@ -1,4 +1,5 @@
 #include "tracker.h"
+#include "common/Function.h"
 
 namespace ZJVIDEO
 {
@@ -13,10 +14,10 @@ namespace ZJVIDEO
     {
         auto trk = track.GetStateAsBbox();
         // get min/max points
-        auto xx1 = std::max(det.tl().x, trk.tl().x);
-        auto yy1 = std::max(det.tl().y, trk.tl().y);
-        auto xx2 = std::min(det.br().x, trk.br().x);
-        auto yy2 = std::min(det.br().y, trk.br().y);
+        auto xx1 = ZJ_MAX(det.tl().x, trk.tl().x);
+        auto yy1 = ZJ_MAX(det.tl().y, trk.tl().y);
+        auto xx2 = ZJ_MIN(det.br().x, trk.br().x);
+        auto yy2 = ZJ_MIN(det.br().y, trk.br().y);
         auto w = std::max(0, xx2 - xx1);
         auto h = std::max(0, yy2 - yy1);
 

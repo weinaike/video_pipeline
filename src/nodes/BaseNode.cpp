@@ -642,7 +642,7 @@ int BaseNode::process(const std::vector<std::shared_ptr<FlowData>> & datas)
 
     std::chrono::duration<double> elapsed_seconds = end - start; // Calculate elapsed time
 
-    double fps = datas.size() / elapsed_seconds.count() ; 
+    float fps = datas.size() / elapsed_seconds.count() ; 
     m_fps = m_fps*m_fps_count/(m_fps_count+1) + fps/(m_fps_count+1);
     m_fps_count++;
     if(m_fps_count > 100)

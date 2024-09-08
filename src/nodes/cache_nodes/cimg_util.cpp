@@ -2,6 +2,7 @@
 #include "CImg/CImg.h"
 #include "common/StatusCode.h"
 #include "nodes/infer_nodes/InferDefine.h"
+#include <algorithm>
 
 using namespace cimg_library;
 namespace ZJVIDEO
@@ -14,7 +15,7 @@ namespace ZJVIDEO
         }
         else if(resize_type == ZJV_PREPROCESS_RESIZE_LETTERBOX)
         {
-            float scale = std::min( (float)width/img.width(), (float)height/ img.height());
+            float scale = ZJ_MIN( (float)width/img.width(), (float)height/ img.height());
             
             int new_width = int(img.width() * scale)/2*2;
             int new_height = int(img.height() * scale)/2*2;
@@ -28,7 +29,7 @@ namespace ZJVIDEO
         }
         else if(resize_type == ZJV_PREPROCESS_RESIZE_FILL)
         {
-            float scale = std::max( (float)width/img.width(), (float)height/ img.height());
+            float scale = ZJ_MAX( (float)width/img.width(), (float)height/ img.height());
             int new_width = int(img.width() * scale)/2*2;
             int new_height = int(img.height() * scale)/2*2;
             img.resize(new_width, new_height, 1, img.spectrum(), interp_type);
@@ -201,7 +202,7 @@ namespace ZJVIDEO
         }
         else if(param.resize_type == ZJV_PREPROCESS_RESIZE_LETTERBOX)
         {
-            float scale = std::min( (float)param.resize_width/roi.width, (float)param.resize_height/roi.height);
+            float scale = ZJ_MIN( (float)param.resize_width/roi.width, (float)param.resize_height/roi.height);
             scalex = scale;
             scaley = scale;
             padx = (param.resize_width - roi.width * scale) / 2;
@@ -209,7 +210,7 @@ namespace ZJVIDEO
         }
         else if(param.resize_type == ZJV_PREPROCESS_RESIZE_FILL)
         {
-            float scale = std::max( (float)param.resize_width/roi.width, (float)param.resize_height/roi.height);
+            float scale = ZJ_MAX( (float)param.resize_width/roi.width, (float)param.resize_height/roi.height);
             scalex = scale;
             scaley = scale;
             padx = (param.resize_width - roi.width * scale) / 2;

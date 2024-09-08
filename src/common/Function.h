@@ -9,6 +9,10 @@
 #include <limits>
 #include "ExtraData.h"
 
+#define ZJ_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define ZJ_MIN(a, b) ((a) < (b) ? (a) : (b))
+
+
 namespace ZJVIDEO
 {
     // 通道重命名
@@ -66,8 +70,8 @@ namespace ZJVIDEO
 
     static float IoU(const DetectBox &a, const DetectBox &b)
     {
-        float interArea = std::max(0.0f, std::min(a.x2, b.x2) - std::max(a.x1, b.x1)) *
-                          std::max(0.0f, std::min(a.y2, b.y2) - std::max(a.y1, b.y1));
+        float interArea = ZJ_MAX(0.0f, ZJ_MIN(a.x2, b.x2) - ZJ_MAX(a.x1, b.x1)) *
+                          ZJ_MAX(0.0f, ZJ_MIN(a.y2, b.y2) - ZJ_MAX(a.y1, b.y1));
         float unionArea = (a.x2 - a.x1) * (a.y2 - a.y1) +
                           (b.x2 - b.x1) * (b.y2 - b.y1) -
                           interArea;
@@ -117,12 +121,12 @@ namespace ZJVIDEO
     // 一维数组, vector中存放float的指针地址，仅处理单个数据
     static void softmax(std::vector<float *> output)
     {
-        int num = output.size();
+        size_t num = output.size();
         
         float max_output = -std::numeric_limits<float>::infinity();
         for(int i = 0; i < num; i++)
         {
-            max_output = std::max(max_output, *(output[i]));
+            max_output = ZJ_MAX(max_output, *(output[i]));
         }
 
         float sum = 0.0f;

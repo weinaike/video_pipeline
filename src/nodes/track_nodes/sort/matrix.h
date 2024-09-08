@@ -22,6 +22,7 @@
 #include <initializer_list>
 #include <cstdlib>
 #include <ostream>
+#include "common/Function.h"
 namespace ZJVIDEO
 {
     template <class T>
@@ -39,8 +40,8 @@ namespace ZJVIDEO
         void clear();
         T &operator()(const size_t x, const size_t y);
         const T &operator()(const size_t x, const size_t y) const;
-        const T min() const;
-        const T max() const;
+        const T min_func() const;
+        const T max_func() const;
         inline size_t minsize() { return ((m_rows < m_columns) ? m_rows : m_columns); }
         inline size_t columns() const { return m_columns; }
         inline size_t rows() const { return m_rows; }

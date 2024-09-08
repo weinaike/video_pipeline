@@ -67,7 +67,7 @@ namespace ZJVIDEO
                 // If the input matrix isn't square, make it square
                 // and fill the empty values with the largest value present
                 // in the matrix.
-                matrix.resize(size, size, matrix.max());
+                matrix.resize(size, size, matrix.max_func());
             }
 
             // STAR == 1 == starred, PRIME == 2 == primed
@@ -218,7 +218,7 @@ namespace ZJVIDEO
                 // Start at one because we already have the 0th value in min.
                 for (size_t j = 1; j < inner_size && min > 0; j++)
                 {
-                    min = std::min<double>(
+                    min = ZJ_MIN(
                         min,
                         over_columns ? matrix(j, i) : matrix(i, j));
                 }
