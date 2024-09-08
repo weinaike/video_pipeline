@@ -15,12 +15,13 @@ namespace ZJVIDEO
         m_max_batch_size = 1;
         m_frame_cnt = 0;
 
+#ifdef Enable_FFMPEG
         m_Frame = NULL;
         m_rgbFrame = NULL;
         m_CodecCtx = NULL;
         m_FormatCtx = NULL;
         m_swsCtx = NULL;
-
+#endif
         m_video_index = -1;
         m_initialed = false;
         m_video_path = "";
@@ -37,6 +38,7 @@ namespace ZJVIDEO
 
     int VideoSrcNode::deinit()
     {
+#ifdef Enable_FFMPEG        
         av_frame_free(&m_Frame);
         av_frame_free(&m_rgbFrame);
         sws_freeContext(m_swsCtx);
@@ -46,6 +48,7 @@ namespace ZJVIDEO
         {
             av_freep(&m_rgbFrame->data[0]);
         }
+#endif        
         m_initialed = false;
         return 0;
     }
@@ -63,6 +66,7 @@ namespace ZJVIDEO
 
     int VideoSrcNode::init()
     {
+#ifdef Enable_FFMPEG        
         AVCodec *pCodec;
         AVDictionary *options = NULL;
         uint8_t *out_buffer;
@@ -134,6 +138,7 @@ namespace ZJVIDEO
                              m_CodecCtx->height, 1);
 
         m_initialed = true;
+#endif        
 
         CLOG(INFO, VIDEOSRC_LOG) << "VideoSrcNode::init";
         return 0;
@@ -178,7 +183,7 @@ namespace ZJVIDEO
 
     int VideoSrcNode::process(const std::vector<std::shared_ptr<FlowData>> &datas)
     {
-
+#ifdef Enable_FFMPEG
         AVPacket packet;
         // Read frames from the file
         while (av_read_frame(m_FormatCtx, &packet) >= 0 && m_run)
@@ -261,7 +266,7 @@ namespace ZJVIDEO
                 m_fps_count = 0;
             }
         }
-
+#endif
         return 0;
     }
 

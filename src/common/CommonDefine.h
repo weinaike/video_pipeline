@@ -5,7 +5,7 @@
 #define ZJVIDEO_COMMMONDEFINE_H
 
 #include "BaseData.h"
-#include "ControlData.h"
+#include "public/ControlData.h"
 #include "ConfigData.h"
 #include "ThreadSaveQueue.h"
 #include "StatusCode.h"

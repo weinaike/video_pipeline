@@ -15,35 +15,34 @@ INITIALIZE_EASYLOGGINGPP
 #include <memory>
 #include <map>
 #include "common/CommonDefine.h"
+#include "public/PublicPipeline.h"
 
 
 #define PIPE_LOG "pipe"
 
 namespace ZJVIDEO{
 
-class Pipeline {
+class Pipeline : public PublicPipeline {
 
 public:
-    Pipeline() = default;
-
     explicit Pipeline(std::string cfg_file) ;
 
     virtual ~Pipeline();
     //init, start, stop
-    int init();
-    int start();
-    int stop();
+    int init() override;
+    int start() override;
+    int stop() override;
 
 
     // 给源节点添加数据
-    int set_input_data(const std::shared_ptr<FrameData> & data);
-    int set_input_data(const std::shared_ptr<VideoData> & data);
+    int set_input_data(const std::shared_ptr<FrameData> & data) override;
+    int set_input_data(const std::shared_ptr<VideoData> & data) ;
     // 从末尾节点提取数据
-    int get_output_data(std::vector<std::shared_ptr<EventData> >  & data);
+    int get_output_data(std::vector<std::shared_ptr<EventData> >  & data) override;
     int get_output_data(std::vector<std::shared_ptr<const BaseData>> & data) ;
 
     // 设置配置参数
-    int control(std::shared_ptr<ControlData>& data );
+    int control(std::shared_ptr<ControlData>& data ) override;
     int show_debug_info();
 
 

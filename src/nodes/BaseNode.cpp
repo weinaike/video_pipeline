@@ -84,10 +84,8 @@ BaseNode::BaseNode(const NodeParam & param) : AbstractNode(param),
     }
     CLOG(INFO, BASENODE_LOG) << "node batch process: " << m_nodeparam.m_channels;
 
-
-
-    parse_configure(m_nodeparam.m_cfg_file);
-    init();
+    ZJ_CHECK_ASSERT(parse_configure(m_nodeparam.m_cfg_file));
+    ZJ_CHECK_ASSERT(init());
 }
 
 BaseNode::~BaseNode()

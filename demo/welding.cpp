@@ -1,16 +1,18 @@
 
 #include <iostream>
-#include "pipeline/Pipeline.h"
 #include <chrono>
 #include <thread>
 #include <csignal>
-#include "CImg/CImg.h"
+#include <fstream>
+#include <functional>
 
-#include "opencv2/videoio.hpp"
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "public/PublicPipeline.h"
+#include "public/ControlData.h"
+#include "common/FrameData.h"
+
+
 #include <iomanip> // for std::setw and std::setfill
-#define use_opencv 
+
 
 volatile std::sig_atomic_t flag = 0;
 void signalHandler(int signum) {
@@ -71,16 +73,22 @@ int main()
     signal(SIGINT, signalHandler);  
     std::cout<< "laser welding!\n" ;
 
-
     std::string cfg_file = "../configure/pipeline_welding.json";
 
+    auto pipeline = ZJVIDEO::PublicPipeline::create(cfg_file);
+
     
-    ZJVIDEO::Pipeline pipeline(cfg_file);
+    // ZJVIDEO::Pipeline pipeline(cfg_file);
 
     std::cout<< "pipeline.init()\n" ;
-    pipeline.init();
+    int ret = pipeline->init();
+    if(ret != 0)
+    {
+        std::cout<< "pipeline.init() failed\n" ;
+        return -1;
+    }
     std::cout<< "pipeline.start()\n" ;
-    pipeline.start();
+    pipeline->start();
     
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     // std::vector<std::string> src_node_name = pipeline.get_src_node_name();
@@ -91,14 +99,14 @@ int main()
 
 
     std::shared_ptr<ZJVIDEO::SetLoggerLevelControlData> level = std::make_shared<ZJVIDEO::SetLoggerLevelControlData>();
-    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_INFO);
+    level->set_level(ZJVIDEO::ZJV_LOGGER_LEVEL_DEBUG);
     std::shared_ptr<ZJVIDEO::ControlData> base_level = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(level);
-    pipeline.control(base_level);
+    pipeline->control(base_level);
 
     std::shared_ptr<ZJVIDEO::SetRunModeControlData> mode_control = std::make_shared<ZJVIDEO::SetRunModeControlData>();
     mode_control->set_mode(ZJVIDEO::ZJV_PIPELINE_RUN_MODE_LIVING);
     std::shared_ptr<ZJVIDEO::ControlData> base_mode = std::dynamic_pointer_cast<ZJVIDEO::ControlData>(mode_control);
-    pipeline.control(base_mode);
+    pipeline->control(base_mode);
 
     std::vector<std::thread > threads;
     
@@ -106,8 +114,8 @@ int main()
     {
 
         std::thread t1(input_worker, 
-               [&pipeline](const std::shared_ptr<ZJVIDEO::FrameData>& data) {
-                   return pipeline.set_input_data(data);
+               [pipeline](const std::shared_ptr<ZJVIDEO::FrameData>& data) {
+                   return pipeline->set_input_data(data);
                }, 
                i);
 
@@ -124,7 +132,7 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         std::vector<std::shared_ptr<ZJVIDEO::EventData> > datas;
         datas.clear();
-        pipeline.get_output_data(datas);
+        pipeline->get_output_data(datas);
 
         if(datas.size() == 0)
         {
@@ -133,8 +141,6 @@ int main()
 
         for(const auto & data : datas)
         {
-            frame_id = data->frame->frame_id;
-
             for(const auto & extra : data->extras)
             {
                 if(extra->data_name == "WeldResult")
@@ -148,10 +154,6 @@ int main()
                 }
             }            
         }
-        if(frame_id % 24 == 0)
-        {
-            pipeline.show_debug_info();
-        }
         
     }
 
@@ -160,7 +162,7 @@ int main()
         if(t.joinable())   t.join();
     }
 
-    pipeline.stop();
+    pipeline->stop();
 
 
     return 0;

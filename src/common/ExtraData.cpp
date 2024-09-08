@@ -85,6 +85,7 @@ namespace ZJVIDEO
 
     REGISTER_DATA_CLASS(FeatureCache)
 
+    // 定义在PublicData.h中
     REGISTER_DATA_CLASS(WeldResult)    
 
 }   // namespace ZJVIDEO

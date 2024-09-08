@@ -3,13 +3,14 @@
 #ifndef ZJVIDEO_FRAMEDATA_H
 #define ZJVIDEO_FRAMEDATA_H
 
-#include "BaseData.h"
+
 #include <vector>
 #include <memory>
 #include "memory/SyncedMemory.h"
+#include "public/PublicData.h"
 namespace ZJVIDEO
 {
-
+    class BaseData;
     // enum FrameType {
     //     ZJV_FRAMETYPE_UNKNOWN = 0,
     //     ZJV_FRAMETYPE_VIDEO,  // 视频帧
@@ -68,7 +69,6 @@ namespace ZJVIDEO
         int height; // 图像高度
         int depth;  // 图像深度 depth bit数
         int format; // 图像格式 ImageFormat
-
 
         std::shared_ptr<SyncedMemory> data = nullptr; // 图像数据
         // 视频相关参数

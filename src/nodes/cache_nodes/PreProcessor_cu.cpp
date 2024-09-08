@@ -205,6 +205,12 @@ namespace ZJVIDEO
         run_cimg(frame_rois, blob, param);
         return ZJV_STATUS_OK;
     }
+
+    int PreProcessor::run_3d_cuda(const std::vector<std::shared_ptr<FrameROI>> &frame_rois, FBlob &blob, PreProcessParameter &param)
+    {
+        CLOG(ERROR, PRELOG) << "run_3d_cuda not supported now";
+        return ZJV_STATUS_OK;
+    }
 #endif
 
 } // namespace ZJVIDEO {

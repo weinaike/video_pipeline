@@ -5,6 +5,16 @@
 #  FFMPEG_INCLUDE_DIRS - the FFmpeg include directories
 #  FFMPEG_LIBRARIES - link these to use FFmpeg
 
+if(WIN32)
+    set(FFMPEG_INCLUDE_PATHS "C:/ffmpeg/include")
+    set(FFMPEG_LIBRARY_PATHS "C:/ffmpeg/lib")
+elseif(UNIX AND NOT APPLE)
+    set(FFMPEG_INCLUDE_PATHS "/usr/local/include" "/usr/include")
+    set(FFMPEG_LIBRARY_PATHS "/usr/local/lib" "/usr/lib")
+else()
+    message(FATAL_ERROR "Unsupported platform for FFmpeg")
+endif()
+
 find_path(FFMPEG_INCLUDE_DIR
     NAMES libavcodec/avcodec.h
     PATHS /usr/local/include /usr/include

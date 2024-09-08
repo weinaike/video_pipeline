@@ -54,7 +54,7 @@ public:
         // 判断是否存在
         if (registry.find(type) == registry.end()) 
         {
-            std::cout << "Unknown node type: " << type << " \nall: " << NodeTypeListString()<< std::endl;
+            std::cout << "Unknown node type: " << type << " \nall supported node: [" << NodeTypeListString() <<"]"<< std::endl;
             return nullptr;
         }
         return registry[type](param);

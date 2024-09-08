@@ -1,6 +1,6 @@
 #ifndef _ZJV_TENSORRT_ENGINE_H_
 #define _ZJV_TENSORRT_ENGINE_H_
-#define Enable_TRT
+// #define Enable_TRT
 #ifdef Enable_TRT
 
 #include <string>

@@ -126,46 +126,6 @@ namespace ZJVIDEO
         ~ExtraData() override = default;
     };
 
-    class EventData : public BaseData
-    {
-    public:
-        explicit EventData(BaseDataType type = ZJV_DATATYPE_EVENT) : BaseData(type)
-        {
-            data_name = "Event";
-        }
-        ~EventData() override = default;
-        std::shared_ptr<const FrameData> frame; // 帧数据
-        std::vector<std::shared_ptr<const BaseData> >  extras; // 额外数据
-    };
-
-    class WeldResultData : public BaseData
-    {
-    public:
-        explicit WeldResultData(BaseDataType type = ZJV_DATATYPE_EVENT_WELDING) : BaseData(type)
-        {
-            data_name = "WeldResult";   
-            is_enable = false;
-            camera_id = 0;
-            frame_id = 0;
-            weld_status = 0;
-            status_score = 0.0f;
-            weld_depth = 0.0f;
-            front_quality = 0.0f;
-            back_quality = 0.0f;
-
-        }
-        ~WeldResultData() override = default;
-        bool    is_enable;
-        int     camera_id;
-        int     frame_id;
-        int     weld_status;
-        float   status_score;
-        float   weld_depth;
-        float   front_quality;
-        float   back_quality; 
-    };
-
-
 } // namespace ZJVIDEO
 
 #endif //__ZJV_EXTRASDATA_H__

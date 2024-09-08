@@ -8,8 +8,12 @@
 
 namespace ZJVIDEO {
 
+std::shared_ptr<PublicPipeline> PublicPipeline::create(std::string configFile) {
+    return std::make_shared<Pipeline>(std::move(configFile));
+}
 
-Pipeline::Pipeline(std::string cfg_file) 
+
+Pipeline::Pipeline(std::string cfg_file)
 {
     m_logger = el::Loggers::getLogger(PIPE_LOG);
 
@@ -23,7 +27,7 @@ Pipeline::Pipeline(std::string cfg_file)
 
     parse_cfg_file(cfg_file);
     m_initialized = false;
-    CLOG(INFO, PIPE_LOG) << "Pipeline created" ;
+    CLOG(INFO, PIPE_LOG) << "Pipeline confugure file parse done";
 }
 
 
@@ -319,6 +323,12 @@ int Pipeline::init()
     for (auto & node_param : m_nodeparams) 
     {
         std::shared_ptr<AbstractNode> node = NodeRegister::CreateNode(node_param);
+        printf("node:%p\n", node.get());
+        if (node.get() == nullptr) 
+        {
+            CLOG(INFO, PIPE_LOG) << "Create node " << node_param.m_node_name << " failed" ;
+            return ZJV_STATUS_ERROR;
+        }
         m_node_map.insert(std::make_pair(node_param.m_node_name, node));
     }
 
@@ -609,8 +619,8 @@ int Pipeline::get_output_data(std::vector<std::shared_ptr<EventData> > & data)
         if(flowdata)
         {
             std::shared_ptr<EventData> event = std::make_shared<EventData>();
-            event->frame = flowdata->get_frame();
             flowdata->get_node_extras(item.first, event->extras);
+            event->extras.push_back(flowdata->get_frame());
             data.push_back(event);
         }
     }
@@ -766,5 +776,8 @@ int Pipeline::show_debug_info()
     CLOG(DEBUG, PIPE_LOG) << str ;
     return ZJV_STATUS_OK;
 }
+
+
+
 
 }  // namespace ZJVIDEO

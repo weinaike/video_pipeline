@@ -12,55 +12,8 @@
 #include <map>
 #include <vector>
 
+#include "public/PublicData.h"
 namespace ZJVIDEO {
-
-enum BaseDataType {
-    ZJV_DATATYPE_UNKNOWN = 0,
-    ZJV_DATATYPE_VIDEO,    // 视频数据
-    ZJV_DATATYPE_FRAME,    // 帧数据
-    ZJV_DATATYPE_CONTROL,  // 控制数据
-    ZJV_DATATYPE_CONFIG,   // 配置数据
-    ZJV_DATATYPE_EXTRA,    // 额外数据，检测结果，识别结果等
-    ZJV_DATATYPE_FLOW,     // 流数据
-    ZJV_DATATYPE_DETECTRESULT,    //检测结果，实例分割结果
-    ZJV_DATATYPE_DETECTRESULT_TRACK,    //跟踪结果
-    ZJV_DATATYPE_CLASSIFYRESULT,  //分类结果
-    ZJV_DATATYPE_SEGMENTRESULT,   //语义分割结果
-    ZJV_DATATYPE_IMAGECACHE,   //图像缓存
-    ZJV_DATATYPE_FEATURECACHE, //特征缓存
-
-
-
-    ZJV_DATATYPE_EVENT = 1000,    // 事件数据
-    ZJV_DATATYPE_EVENT_WELDING,    // 焊接事件数据
-
-    ZJV_DATATYPE_MAX
-};
-
-// 用于存储数据的基类
-class BaseData {
-public:
-    BaseData() = delete;
-
-    explicit BaseData(BaseDataType data_type) : data_type(data_type) 
-    {
-        create_time     = std::chrono::system_clock::now();
-    }
-
-    virtual ~BaseData() = default;
-    virtual int append(std::shared_ptr<BaseData>& data) { return 0; }
-
-    BaseDataType get_data_type() const 
-    {
-        return data_type;
-    }
-
-    BaseDataType                          data_type;    // 数据类型
-    std::chrono::system_clock::time_point create_time;  // 数据创建时间
-    std::string                           data_name;    // 数据名称/数据来
-
-};
-
 
 class DataRegister
 {
@@ -136,8 +89,6 @@ public:
     }
 };
 
-
-
 class DataRegisterer 
 {
 public:
@@ -149,7 +100,6 @@ public:
     }
 
 };
-
 
 
 #define REGISTER_DATA_CREATOR(type, creator)                                    \

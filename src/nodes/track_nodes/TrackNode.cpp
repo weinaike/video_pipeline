@@ -12,7 +12,7 @@ namespace ZJVIDEO
         m_logger = el::Loggers::getLogger(TrkLOG);
 
         parse_configure(param.m_cfg_file);
-        init();
+        ZJ_CHECK_ASSERT(init());
         m_max_batch_size = 1;
         m_batch_process = false;
 

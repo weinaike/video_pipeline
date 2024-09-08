@@ -3,6 +3,7 @@
 
 #include "nodes/BaseNode.h"
 
+#ifdef Enable_FFMPEG
 extern "C"
 {
 #include <libavcodec/avcodec.h>
@@ -12,6 +13,7 @@ extern "C"
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
 }
+#endif
 
 namespace ZJVIDEO
 {
@@ -56,11 +58,14 @@ namespace ZJVIDEO
 
         int m_video_index; // 视频流索引
         int m_frame_cnt; // 帧计数
-        struct SwsContext* m_swsCtx; // 转换上下文
+
+#ifdef Enable_FFMPEG   
+        struct SwsContext* m_swsCtx; // 转换上下文     
         AVFrame *m_Frame; // 存储解码后的原始帧
         AVFrame* m_rgbFrame; // 存储转换后的RGB帧
         AVCodecContext *m_CodecCtx; // 编解码器上下文
         AVFormatContext *m_FormatCtx; // 格式上下文
+#endif
 
     }; // class VideoSrcNode
 

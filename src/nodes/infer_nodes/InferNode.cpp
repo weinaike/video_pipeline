@@ -16,9 +16,9 @@ InferNode::InferNode(const NodeParam & param) : BaseNode(param)
     // Set the format for Debug level to be the same as Info level
     conf.set(el::Level::Debug, el::ConfigurationType::Format, infoFormat);
     el::Loggers::reconfigureLogger(m_logger, conf);
-    parse_configure(param.m_cfg_file);
+    ZJ_CHECK_ASSERT(parse_configure(param.m_cfg_file));
 
-    init();
+    ZJ_CHECK_ASSERT(init());
     if(m_engine_param.m_max_batch_size > 8)
     {
         m_max_batch_size = m_engine_param.m_max_batch_size; // 根据模型配置设置

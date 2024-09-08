@@ -53,7 +53,7 @@ public:
         // 判断是否存在
         if (registry.find(type) == registry.end()) 
         {
-            std::cout << "Unknown engine type: " << type << " \nall: " << EngineTypeListString()<< std::endl;
+            std::cout << "Unknown engine type: " << type << " \nall Engine: [" << EngineTypeListString() << "]"<< std::endl;
             return nullptr;
         }
         return registry[type](param);

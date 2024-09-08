@@ -29,6 +29,18 @@ enum StatusCode {
     
 };
 
-}
 
+#define ZJ_CHECK_RETURN(ret) \
+    if ((ret) != 0) { \
+        printf("error code[%d], in %s : %d\n", ret,  __FILE__, __LINE__); \
+        return ret; \
+    }
+
+#define ZJ_CHECK_ASSERT(ret) \
+    if ((ret) != 0) { \
+        printf("error code[%d], in %s : %d\n", ret,  __FILE__, __LINE__); \
+        assert(0); \
+    }
+
+}
 #endif  // ZJVIDEO_STATUSCODE_H
