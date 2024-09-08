@@ -3,7 +3,12 @@ cmake_template-main
 .file-templates/
 .vscode/
 libs
-3rdparty/
+3rdparty/mklml
+3rdparty/MNN
+3rdparty/ncnn
+3rdparty/openvino
+3rdparty/PaddleLite
+3rdparty/tnn
 models/
 data
 build
