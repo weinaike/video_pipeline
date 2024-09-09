@@ -189,17 +189,18 @@ if (ENABLE_FFMPEG)
 endif()
 
 
+if (WIN32)
 
+    add_custom_command(TARGET demo POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.dll
+        $<TARGET_FILE_DIR:demo>)
 
-add_custom_command(TARGET demo POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.dll
-    $<TARGET_FILE_DIR:demo>)
+    add_custom_command(TARGET demo POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_SOURCE_DIR}/libs/$<CONFIG>/zj_pipe.dll
+        $<TARGET_FILE_DIR:demo>)
 
-add_custom_command(TARGET demo POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_SOURCE_DIR}/libs/$<CONFIG>/zj_pipe.dll
-    $<TARGET_FILE_DIR:demo>)
-
+endif()
 
 target_link_libraries(demo ${LIBS})
