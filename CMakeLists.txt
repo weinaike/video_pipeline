@@ -83,9 +83,16 @@ if(ENABLE_ONNX)
 
     if(WIN32)
         # Windows specific ONNX configuration
-        set(ONNX_LIB ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.lib)
-        include_directories(${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/include)
-        message(STATUS "ONNX_LIB: ${ONNX_LIB}")   
+        set(ONNXRUNTIME_DIR ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime)
+        # set(ONNX_LIB ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.lib)
+        include_directories(${ONNXRUNTIME_DIR}/include)
+        find_library(ONNX_LIB NAMES onnxruntime PATHS ${ONNXRUNTIME_DIR}/lib)
+        if(NOT ONNX_LIB)
+            message(FATAL_ERROR "ONNX Runtime library not found")
+        else()
+            message(STATUS "ONNX_LIB: ${ONNX_LIB}")
+        endif()
+
     elseif(UNIX AND NOT APPLE)
         # Linux specific ONNX configuration
         set(ONNX_LIB ${CMAKE_SOURCE_DIR}/libs/libonnxruntime.so)
@@ -152,7 +159,6 @@ if (ENABLE_CUDA)
     list(APPEND LIBS cuda_lib)
 endif()
 
-
 if (WIN32)
     message(STATUS "Configuring for Windows platform")
 elseif(UNIX AND NOT APPLE)
@@ -163,9 +169,6 @@ elseif(UNIX AND NOT APPLE)
     list(APPEND LIBS ${X11_LIBRARIES})
     list(APPEND LIBS ${CMAKE_THREAD_LIBS_INIT})    
 endif()
-
-
-
 
 if (ENABLE_ONNX)
     list(APPEND LIBS ${ONNX_LIB})
@@ -184,6 +187,19 @@ if (ENABLE_FFMPEG)
     list(APPEND LIBS ${FFMPEG_LIBRARIES})
     message(STATUS "FFMPEG_LIBRARIES: ${FFMPEG_LIBRARIES}")
 endif()
+
+
+
+
+add_custom_command(TARGET demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.dll
+    $<TARGET_FILE_DIR:demo>)
+
+add_custom_command(TARGET demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/libs/$<CONFIG>/zj_pipe.dll
+    $<TARGET_FILE_DIR:demo>)
 
 
 target_link_libraries(demo ${LIBS})

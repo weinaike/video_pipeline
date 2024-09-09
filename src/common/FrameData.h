@@ -50,7 +50,7 @@ namespace ZJVIDEO
     // };
 
     // 用于存储帧数据的类
-    class FrameData : public BaseData
+    class PUBLIC_API FrameData : public BaseData
     {
     public:
         explicit FrameData();

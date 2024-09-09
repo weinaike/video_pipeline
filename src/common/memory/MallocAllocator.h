@@ -9,7 +9,7 @@
 
 namespace	ZJVIDEO {
 
-class MallocAllocator : public BaseAllocator {
+class PUBLIC_API MallocAllocator : public BaseAllocator {
 public:
 
 	void *allocate(size_t bytesCount) {

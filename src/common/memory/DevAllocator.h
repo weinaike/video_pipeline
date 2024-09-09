@@ -7,7 +7,7 @@
 
 namespace ZJVIDEO {
 
-class DevAllocator : public BaseAllocator {
+class PUBLIC_API DevAllocator : public BaseAllocator {
 public:
 	void* allocate(size_t bytesCount);
 	void deallocate(void* p);

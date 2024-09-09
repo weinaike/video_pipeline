@@ -15,7 +15,7 @@ namespace ZJVIDEO
         ZJV_SYNCEHEAD_SYNCED
     };
 
-    class SyncedMemory
+    class PUBLIC_API SyncedMemory
     {
     public:
         SyncedMemory();

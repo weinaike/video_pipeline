@@ -13,7 +13,7 @@ namespace ZJVIDEO {
     class ControlData;  // Forward declaration
     class EventData;  // Forward declaration
 
-    class PublicPipeline {
+    class PUBLIC_API PublicPipeline {
     public:
         PublicPipeline(){};
         virtual ~PublicPipeline() = default;

@@ -19,4 +19,10 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/libs)
 # add_library(logger  ${CMAKE_SOURCE_DIR}/src/logger/easylogging++.cc)
 
 add_library(zj_pipe SHARED ${SRC_LIST})
+target_link_libraries(zj_pipe PUBLIC ${ONNX_LIB})
 
+set_target_properties(zj_pipe PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+    LIBRARY_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+    RUNTIME_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH}
+)

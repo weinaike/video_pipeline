@@ -4,6 +4,21 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <vector>
+
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64)
+    #define PUBLIC_API __declspec(dllexport)
+    // #ifdef BUILDING_DLL
+    //     #define PUBLIC_API __declspec(dllexport)
+    // #else
+    //     #define PUBLIC_API __declspec(dllimport)
+    // #endif
+#else
+    #define PUBLIC_API
+#endif
+
+
+
 
 namespace ZJVIDEO
 {
@@ -33,7 +48,7 @@ enum BaseDataType {
 
 
 // 用于存储数据的基类
-class BaseData {
+class PUBLIC_API BaseData {
 public:
     BaseData() = delete;
     explicit BaseData(BaseDataType data_type) : data_type(data_type)  { create_time = std::chrono::system_clock::now(); }
@@ -51,7 +66,7 @@ public:
 
 
 
-class EventData : public BaseData
+class PUBLIC_API EventData : public BaseData
 {
 public:
     explicit EventData(BaseDataType type = ZJV_DATATYPE_EVENT) : BaseData(type) { data_name = "Event"; }
@@ -60,7 +75,7 @@ public:
 };
 
 
-class WeldResultData : public BaseData
+class PUBLIC_API WeldResultData : public BaseData
 {
 public:
     explicit WeldResultData(BaseDataType type = ZJV_DATATYPE_EVENT_WELDING) : BaseData(type)
@@ -114,9 +129,6 @@ public:
 
 //     bool alignment = false; // 是否需要内存4字节对齐（扩展宽）
 // };
-
-
-
 
 }
 

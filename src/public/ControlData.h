@@ -20,7 +20,7 @@ namespace ZJVIDEO {
     };
 
     // 用于存储控制数据的类
-    class ControlData : public BaseData {
+    class PUBLIC_API ControlData : public BaseData {
     public:
         explicit ControlData(ControlType control_type)
             : BaseData(ZJV_DATATYPE_CONTROL), m_control_type(control_type) {}
@@ -37,7 +37,7 @@ namespace ZJVIDEO {
 
 
 
-    class GetFPSControlData : public ControlData {
+    class PUBLIC_API GetFPSControlData : public ControlData {
     public:
         explicit GetFPSControlData(ControlType control_type = ZJV_CONTROLTYPE_GET_FPS)
             : ControlData(control_type){}
@@ -65,7 +65,7 @@ namespace ZJVIDEO {
         ZJV_LOGGER_LEVEL_DEBUG  // debug
     };
 
-    class SetLoggerLevelControlData : public ControlData {
+    class PUBLIC_API SetLoggerLevelControlData : public ControlData {
 
     public:
         explicit SetLoggerLevelControlData(ControlType control_type = ZJV_CONTROLTYPE_SET_LOGGER_LEVEL)
@@ -92,7 +92,7 @@ namespace ZJVIDEO {
         ZJV_PIPELINE_RUN_MODE_RECORDED,  // 预先录制
     };
 
-    class SetRunModeControlData : public ControlData {
+    class PUBLIC_API SetRunModeControlData : public ControlData {
 
     public:
         explicit SetRunModeControlData(ControlType control_type = ZJV_CONTROLTYPE_SET_RUN_MODE)

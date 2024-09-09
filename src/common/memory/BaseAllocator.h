@@ -1,9 +1,11 @@
 #ifndef __ZJV_BASEALLOCATOR_H__
 #define __ZJV_BASEALLOCATOR_H__
 
+#include "public/PublicData.h"
+
 namespace ZJVIDEO {
 
-class BaseAllocator {
+class PUBLIC_API BaseAllocator {
 public:
 	virtual void *allocate(size_t bytesCount) = 0;
 	virtual void deallocate(void* p) = 0;
