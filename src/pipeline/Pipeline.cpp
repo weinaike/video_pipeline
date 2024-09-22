@@ -716,7 +716,7 @@ int Pipeline::control(std::shared_ptr<ControlData>& data)
 int Pipeline::show_debug_info()
 {
     std::unique_lock<std::mutex> lk(m_mutex);
-    std::string str = "(src & dst) Queue [stay, drop, push, pop] : ";
+    std::string str = "(src & dst) Queue [stay, drop, push] : ";
     for(const auto & buffer: m_srcQueueList)
     {
         str += buffer.first;
@@ -743,7 +743,7 @@ int Pipeline::show_debug_info()
     }
     str += "| ";
     CLOG(DEBUG, PIPE_LOG) << str ;
-    str = "(Connect) Queue [stay, drop] : ";
+    str = "(Connect) Queue [stay, drop, push] : ";
     
     for(const auto & buffer: m_connectQueue)
     {

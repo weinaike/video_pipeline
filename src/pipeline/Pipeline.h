@@ -43,7 +43,7 @@ public:
 
     // 设置配置参数
     int control(std::shared_ptr<ControlData>& data ) override;
-    int show_debug_info();
+    int show_debug_info() override;
 
 
 protected:

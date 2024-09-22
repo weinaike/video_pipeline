@@ -62,7 +62,8 @@ namespace ZJVIDEO {
         ZJV_LOGGER_LEVEL_ERROR,  // error
         ZJV_LOGGER_LEVEL_WARN,  // warn
         ZJV_LOGGER_LEVEL_INFO,  // info  
-        ZJV_LOGGER_LEVEL_DEBUG  // debug
+        ZJV_LOGGER_LEVEL_DEBUG,  // debug
+        ZJV_LOGGER_LEVEL_TRACE  // trace
     };
 
     class PUBLIC_API SetLoggerLevelControlData : public ControlData {
