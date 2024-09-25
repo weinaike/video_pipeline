@@ -24,7 +24,7 @@ public:
 
     virtual int init(const EngineParameter&) override;
     
-    virtual int forward(std::vector<FBlob> &inputs, std::vector<FBlob> &outputs);
+    virtual int forward(std::vector<FBlob> &inputs, std::vector<FBlob> &outputs) override;
 private:
     int forward_in(const std::vector<void*> &input, const std::vector<std::vector<int>> &input_shape, 
         std::vector<std::vector<float>> &outputs, std::vector<std::vector<int>> &outputs_shape);
