@@ -16,7 +16,7 @@ namespace ZJVIDEO
     class PreProcessor
     {
     public:
-        PreProcessor(int lib_type, int device_id = 0);
+        PreProcessor(int lib_type = ZJV_PREPROCESS_LIB_CIMG, int device_id = 0);
         ~PreProcessor() = default;
 
         int run(const std::vector<std::shared_ptr<FrameROI>> & frame_rois, FBlob & blob, PreProcessParameter & param);

@@ -269,6 +269,10 @@ int CacheNode::transfer_data(std::shared_ptr<const FrameData> in_frame_data, std
             matrix_2_3[1][2] = pady;
 
             cuda_preprocess(in_frame_data, roi, out_data, matrix_2_3, m_param, m_device_id);
+        #else
+            CImg<float> img_float;
+            cimg_preprocess(in_frame_data, roi, img_float, m_param);    
+            std::memcpy(out_frame_data->data->mutable_cpu_data(), (float * )img_float.data(), img_float.size() * sizeof(float));
         #endif
 
         }

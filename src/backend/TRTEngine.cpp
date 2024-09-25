@@ -4,7 +4,7 @@
 
 #define TRT_LOG "TRT"
 
-#include "TensorRT/NvOnnxParser.h"
+#include "NvOnnxParser.h"
 #include <fstream>
 #include <sstream>
 
