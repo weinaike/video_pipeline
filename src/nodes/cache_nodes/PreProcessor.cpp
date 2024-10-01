@@ -10,7 +10,7 @@ namespace ZJVIDEO
 {
  
 
-PreProcessor::PreProcessor(int lib_type = ZJV_PREPROCESS_LIB_CIMG, int device_id)
+PreProcessor::PreProcessor(int lib_type, int device_id )
     : m_lib_type(lib_type), m_device_id(device_id)
 {
     el::Loggers::getLogger(PRELOG);
