@@ -1,32 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
 
-#
-project(VideoPipeline)
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmakes)
-
-
-# Detect Windows platform
-if(WIN32)
-    message(STATUS "Configuring for Windows platform")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWIN32")
-    add_compile_options("/Zi" "/Od" "/source-charset:utf-8" "/execution-charset:utf-8" "/w")
-    set(CMAKE_C_COMPILER "cl")
-    set(CMAKE_CXX_COMPILER "cl")    
-elseif(UNIX AND NOT APPLE)
-    message(STATUS "Configuring for Linux platform")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLINUX")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
-    set(CMAKE_C_COMPILER "gcc")
-    set(CMAKE_CXX_COMPILER "g++")    
-endif()
-
-
-
-OPTION(ENABLE_CUDA      "使能CUDA库"               OFF)
-OPTION(ENABLE_TENSORRT  "使能TensorRT推理引擎"      OFF)
+OPTION(ENABLE_CUDA      "使能CUDA库"               ON)
+OPTION(ENABLE_TENSORRT  "使能TensorRT推理引擎"      ON)
 OPTION(ENABLE_ONNX      "使能ONNXRUNTIME推理引擎"   ON)
 OPTION(ENABLE_OPENCV    "包含OPENCV库"              OFF)
 OPTION(ENABLE_FFMPEG    "包含FFMPEG库"              OFF)
@@ -40,6 +16,40 @@ message(STATUS "ENABLE_ONNX: ${ENABLE_ONNX}")
 message(STATUS "ENABLE_OPENCV: ${ENABLE_OPENCV}")
 message(STATUS "ENABLE_FFMPEG: ${ENABLE_FFMPEG}")
 message(STATUS "-----------------------------------")
+
+if(WIN32)
+    set(CMAKE_GENERATOR_TOOLSET "v141")
+endif()
+
+#
+if(ENABLE_CUDA)
+    project(VideoPipeline CUDA CXX)
+else()
+    project(VideoPipeline)
+endif()
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmakes)
+
+
+# Detect Windows platform
+if(WIN32)
+
+    message(STATUS "Configuring for Windows platform")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWIN32")
+    # add_compile_options( "/w" )
+    # add_compile_options("/Zi" "/Od" "/source-charset:utf-8" "/execution-charset:utf-8" "/w" )
+    # set(CMAKE_C_COMPILER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.16.27023/bin/HostX64/x64/cl.exe")
+    # set(CMAKE_CXX_COMPILER "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.16.27023/bin/HostX64/x64/cl.exe")    
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ob0")
+
+elseif(UNIX AND NOT APPLE)
+    message(STATUS "Configuring for Linux platform")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLINUX")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+    set(CMAKE_C_COMPILER "gcc")
+    set(CMAKE_CXX_COMPILER "g++")    
+endif()
+
 
 
 ## OpenCV
@@ -114,7 +124,7 @@ if (ENABLE_TENSORRT)
     # TensorRT依赖配置
     include(${CMAKE_SOURCE_DIR}/cmakes/tensorrt.cmake)
     add_definitions(-DEnable_TRT)
-endif ()
+endif()
 
 
 
@@ -156,7 +166,6 @@ set(LIBS zj_pipe)
 
 if (ENABLE_CUDA)
     list(APPEND LIBS ${CUDA_LIBS})
-    list(APPEND LIBS cuda_lib)
 endif()
 
 if (WIN32)
@@ -180,7 +189,7 @@ endif()
 
 if (ENABLE_TENSORRT)
     list(APPEND LIBS ${TRT_LIBS})
-    list(APPEND LIBS ${CUDNN_LIBS} )    
+    # list(APPEND LIBS ${CUDNN_LIBS} )    
 endif()
 
 if (ENABLE_FFMPEG)
@@ -191,15 +200,45 @@ endif()
 
 if (WIN32)
 
-    add_custom_command(TARGET demo POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.dll
-        $<TARGET_FILE_DIR:demo>)
+    # add_custom_command(TARGET demo POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    #     ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.dll
+    #     $<TARGET_FILE_DIR:demo>)
+
+    # add_custom_command(TARGET demo POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    #     ${CMAKE_SOURCE_DIR}/libs/$<CONFIG>/zj_pipe.dll
+    #     $<TARGET_FILE_DIR:demo>)
+    # add_custom_command(TARGET demo POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        
+    #     $<TARGET_FILE_DIR:demo>)
+    # add_custom_command(TARGET demo POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        
+    #     $<TARGET_FILE_DIR:demo>)
 
     add_custom_command(TARGET demo POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${TENSORRT_ROOT_DIR}/lib/nvonnxparser.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvinfer_plugin.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvparsers.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvinfer.dll
         ${CMAKE_SOURCE_DIR}/libs/$<CONFIG>/zj_pipe.dll
+        ${CMAKE_SOURCE_DIR}/3rdparty/win_x64/OnnxRuntime/lib/onnxruntime.dll
+        ${CUNDD_ROOT_DIR}/bin/cudnn64_8.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvinfer_dispatch.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvinfer_vc_plugin.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvinfer_lean.dll
+        ${TENSORRT_ROOT_DIR}/lib/nvinfer_builder_resource.dll
+
+
         $<TARGET_FILE_DIR:demo>)
+    # add_custom_command(TARGET demo POST_BUILD
+    #     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    #     ${TENSORRT_ROOT_DIR}/lib/nvinfer_plugin.dll
+    #     $<TARGET_FILE_DIR:demo>)
+
 
 endif()
 

@@ -4,7 +4,7 @@
 
 #define TRT_LOG "TRT"
 
-#include "TensorRT/NvOnnxParser.h"
+#include "NvOnnxParser.h"
 #include <fstream>
 #include <sstream>
 
@@ -122,7 +122,7 @@ namespace ZJVIDEO
         
 
         std::fstream existEngine;
-        existEngine.open(engine_file, std::ios::in);
+        existEngine.open(engine_file, std::ios::in | std::ios::binary);
         if (existEngine.is_open()) 
         {
             std::string cached_engine = "";

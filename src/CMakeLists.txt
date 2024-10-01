@@ -4,7 +4,7 @@
 # 设置头文件路径
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-file(GLOB_RECURSE SRC_LIST "*.cpp" "*.h" "*.cc" "*.hpp")
+file(GLOB_RECURSE SRC_LIST "*.cpp" "*.h" "*.cc" "*.hpp" "*.c" "*.cu")
 # aux_source_directory(. SRC_LIST)
 
 # 打印遍历SRC_LIST
@@ -19,7 +19,10 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/libs)
 # add_library(logger  ${CMAKE_SOURCE_DIR}/src/logger/easylogging++.cc)
 
 add_library(zj_pipe SHARED ${SRC_LIST})
-target_link_libraries(zj_pipe PUBLIC ${ONNX_LIB})
+enable_language(CUDA)
+set_target_properties(zj_pipe PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+# set_target_properties(zj_pipe PROPERTIES CUDA_STANDARD 11)
+target_link_libraries(zj_pipe PRIVATE ${TRT_LIBS} ${ONNX_LIB} )
 
 set_target_properties(zj_pipe PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${LIBRARY_OUTPUT_PATH}

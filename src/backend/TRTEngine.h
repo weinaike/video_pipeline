@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 #include "EngineFactory.h"
-#include "TensorRT/NvInfer.h"
-// #include "TensorRT/NvInferPlugin.h"
-#include "TensorRT/NvInferRuntime.h"
+#include "NvInfer.h"
+// #include "NvInferPlugin.h"
+#include "NvInferRuntime.h"
 #include <cuda_runtime_api.h>
 
 #include "assert.h"

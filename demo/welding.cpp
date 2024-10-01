@@ -23,8 +23,8 @@ void signalHandler(int signum) {
 #define FRAME_WIDTH 640
 #define FRAME_HEIGHT 512
 #define CHANNELS 1
-#define FPS 200
-#define STEP 4
+#define FPS 100
+#define STEP 1
 
 std::string video_path = "../data/video/107#.raw";
 
@@ -150,7 +150,10 @@ int main()
                     {
                         printf("WeldResult:     frame_id: %d, camera_id: %d, weld_status: %d, status_score: %f, weld_depth: %f, front_quality: %f, back_quality: %f\n", 
                             weld->frame_id, weld->camera_id, weld->weld_status, weld->status_score, weld->weld_depth, weld->front_quality, weld->back_quality);
-                    }                
+
+                        pipeline->show_debug_info();   
+                    }    
+                    
                 }
             }            
         }

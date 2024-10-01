@@ -18,11 +18,11 @@
         "max_batch_size" : 1,
         "device" : 0,
         "model_file": "../models/welding/laser_welding_depth.onnx",
-        "weight_file": "../models/resnet/laser_welding_depth.onnx",        
+        "weight_file": "../models/welding/laser_welding_depth.onnx",
         "backend": "TRT",
         "dynamic_batch": false,
         "enable_int8": false,
-        "enable_fp16": false
+        "enable_fp16": true
     },
     "preprocess": 
     {
