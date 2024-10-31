@@ -77,14 +77,13 @@ namespace ZJVIDEO
         CUDA::crop_cvtcolor_Invoker(data, frame_data->width * frame_data->channel(),
                                 frame_data->width, frame_data->height, roi_img_data,
                                 roi.x, roi.y, roi.width, roi.height, format, NULL);
-        // std::cout<<roi.x<<" "<<roi.y<<" "<<roi.width<<" "<<roi.height<<std::endl;
-
+        // std::cout<<roi.x<<" "<<roi.y<<" "<<roi.width<<" "<<roi.height << " "<< frame_data->format <<std::endl;        
 
         #if  CIMG_DEBUG
-        if(i==0)
+        if(0)
         {
-            std::cout<<i<<std::endl;
-            cil::CImg<unsigned char> roi_img(3,roi.width, roi.height, 1);
+
+            cil::CImg<unsigned char> roi_img(1,roi.width, roi.height, 1);
             cudaMemcpy(roi_img.data(), roi_img_data, roi_img.size(),cudaMemcpyDeviceToHost);
             roi_img.permute_axes("yzcx");
 
@@ -108,7 +107,7 @@ namespace ZJVIDEO
         for(int t = 0; t < 6; t++)
         {
             int s = t / 3;
-            std::cout << "matrix_2_3[" << t << "] = " << matrix_2_3_inv[s][t%3];
+            std::cout << "matrix_2_3[" << t << "] = " << matrix_2_3_inv[s][t%3]<<std::endl;
         }
         #endif
         // // 为matrix_2_3 申请cuda设备内存
@@ -148,32 +147,32 @@ namespace ZJVIDEO
         CUDA_CHECK_RETURN(cudaFree(matrix_2_3_device)); 
         
         #if CIMG_DEBUG
-            if(i == 0)
+            if(0)
             {
 
                 // 打印norm
                 for(int t = 0; t < 3; t++)
                 {
-                    std::cout << "norm.mean[" << t << "] = " << norm.mean[t];
-                    std::cout << "norm.std[" << t << "] = " << norm.std[t];
+                    std::cout << "norm.mean[" << t << "] = " << norm.mean[t]<<std::endl;
+                    std::cout << "norm.std[" << t << "] = " << norm.std[t]<<std::endl;
                 }
                 // 打印norm.alpha
-               std::cout << "norm.alpha = " << norm.alpha;
-                
-                std::cout<<roi.width << " "<<roi.height << " " << count << " "<< i << " " <<pad_value << std::endl;
-
+                std::cout << "norm.alpha = " << norm.alpha<<std::endl;
+                int count = param.resize_channel * param.resize_height * param.resize_width;
+                std::cout<<roi.width << " "<<roi.height << " " << count << " "<< " " <<pad_value << std::endl;
+                // unsigned char* input_data = roi_img_blob.mutable_gpu_data();
                 std::cout<<param.resize_width<<" "<<param.resize_height<<" "<<param.resize_channel<<std::endl;
-                cil::CImg<float> img(param.resize_width, param.resize_height, 1, param.resize_channel);
-                cudaMemcpy(img.data(), input_data + count* i, count * sizeof(float), cudaMemcpyDeviceToHost);
+                // cil::CImg<float> img(param.resize_width, param.resize_height, 1, param.resize_channel);
+                // cudaMemcpy(img.data(), input_data, count * sizeof(float), cudaMemcpyDeviceToHost);
 
-                cil::CImgDisplay disp(img,"After Resize");
-                while (!disp.is_closed()) 
-                {
-                    disp.wait();
-                    if (disp.is_key()) {
-                        std::cout << "Key pressed: " << disp.key() << std::endl;
-                    }
-                }
+                // cil::CImgDisplay disp(img,"After Resize");
+                // while (!disp.is_closed()) 
+                // {
+                //     disp.wait();
+                //     if (disp.is_key()) {
+                //         std::cout << "Key pressed: " << disp.key() << std::endl;
+                //     }
+                // }
             }
 
         #endif

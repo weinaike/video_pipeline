@@ -9,7 +9,7 @@
     "num": 8,
     "param":
     {
-        "resize_type": "Stretch",
+        "resize_type": "Fill",
         "roi": [0, 0, 1.0, 1.0],
         "output_diims": [1,1,224,224],
         "output_format":"NCHW",

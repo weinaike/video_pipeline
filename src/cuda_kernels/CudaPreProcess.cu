@@ -502,7 +502,8 @@ namespace CUDA
                 }
 
                 // same to opencv
-                c0 = floorf(w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4 + 0.5f);
+                // c0 = floorf(w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4 + 0.5f);
+                c0 = (w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4 );
             }
 
             if (norm.type == NormType::MeanStd)

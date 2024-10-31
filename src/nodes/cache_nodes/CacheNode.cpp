@@ -1,5 +1,3 @@
-
-
 #include "CacheNode.h"
 #include "nlohmann/json.hpp"
 #include "cimg_util.cpp"
@@ -7,6 +5,8 @@
 #include "common/ExtraData.h"
 
 #define CACHE_LOG "Cache"
+
+#define DATA_DEBUG 0
 namespace ZJVIDEO {
 
 CacheNode::CacheNode(const NodeParam & param) : BaseNode(param)
@@ -24,11 +24,17 @@ CacheNode::CacheNode(const NodeParam & param) : BaseNode(param)
     m_max_batch_size = 1;
     m_count = 0;
     m_append_count = 0;
-    parse_configure(param.m_cfg_file);
+    ZJ_CHECK_ASSERT(parse_configure(param.m_cfg_file));
+    ZJ_CHECK_ASSERT(init());
 }
 
 CacheNode::~CacheNode()
-{
+{  
+    if(m_test_data != NULL)
+    {
+        free(m_test_data);
+        m_test_data = NULL;
+    }
     CLOG(INFO, CACHE_LOG) << "CacheNode::~CacheNode";
 }
 
@@ -207,10 +213,57 @@ int CacheNode::parse_configure(std::string cfg_file)
 int CacheNode::init()
 {
     CLOG(INFO, CACHE_LOG) << "CacheNode::init";
-    return 0;
+
+    #if DATA_DEBUG
+        FILE *file = fopen("../data/data.bin", "rb");
+        if (file == NULL) 
+        {
+            perror("can't open file");
+            return -1;
+        }
+
+        // 获取文件大小
+        fseek(file, 0, SEEK_END);
+        long size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        // 创建一个缓冲区来存储数据
+        m_test_data = (float *)malloc(size);
+        if (m_test_data == NULL) 
+        {
+            CLOG(ERROR, CACHE_LOG) << "malloc failed";
+            fclose(file);
+            return -1;
+        }
+
+        // 读取文件数据到缓冲区
+        size_t read_size = fread(m_test_data, 1, size, file);
+        if (read_size != size) 
+        {            
+            CLOG(ERROR, CACHE_LOG) << "read file failed";
+            free(m_test_data);
+            fclose(file);
+            m_test_data = NULL;
+            return -1;
+        }
+
+        m_test_data_size = size / sizeof(float);
+
+        fclose(file);
+
+        if (m_test_data == NULL) 
+        {
+            CLOG(ERROR, CACHE_LOG) << "m_test_data is NULL";
+            return -1;
+        }
+    #endif
+
+    return ZJV_STATUS_OK;
 }
 
 
+
+// 1. 数据变换
 int CacheNode::transfer_data(std::shared_ptr<const FrameData> in_frame_data, std::shared_ptr<FrameData> & out_frame_data)
 {
     if(m_transform == false)
@@ -242,14 +295,14 @@ int CacheNode::transfer_data(std::shared_ptr<const FrameData> in_frame_data, std
         
 
         if(m_device_id < 0) // cpu
-        {      
+        {
 
             CImg<float> img_float;
             cimg_preprocess(in_frame_data, roi, img_float, m_param);    
             std::memcpy(out_frame_data->data->mutable_cpu_data(), (float * )img_float.data(), img_float.size() * sizeof(float));
         }
         else // gpu
-        {
+        {            
 
         #ifdef Enable_CUDA
             // 1. 提取图片
@@ -262,13 +315,32 @@ int CacheNode::transfer_data(std::shared_ptr<const FrameData> in_frame_data, std
 
             float matrix_2_3[2][3];
             matrix_2_3[0][0] = scale_x;
-            matrix_2_3[0][1] = 0;
+            matrix_2_3[0][1] = 0.0f;
             matrix_2_3[0][2] = padx;
-            matrix_2_3[1][0] = 0;
+            matrix_2_3[1][0] = 0.0f;
             matrix_2_3[1][1] = scale_y;
             matrix_2_3[1][2] = pady;
 
             cuda_preprocess(in_frame_data, roi, out_data, matrix_2_3, m_param, m_device_id);
+            
+            #if 0
+                float *cpu_data = (float *)out_frame_data->data->cpu_data();
+                int sz = m_param.resize_channel * m_param.resize_height * m_param.resize_width;
+                // 二进制文件保存
+                char name[128] = {0};
+                snprintf(name, sizeof(name), "../data/data_%05d.bin", in_frame_data->frame_id);
+                FILE *file = fopen(name, "wb");
+                if (file == NULL) 
+                {
+                    perror("can't open file");
+                    return -1;
+                }
+                fwrite(cpu_data, sizeof(float), sz, file);
+                fclose(file);
+
+                
+            #endif
+
         #else
             CImg<float> img_float;
             cimg_preprocess(in_frame_data, roi, img_float, m_param);    
@@ -276,7 +348,7 @@ int CacheNode::transfer_data(std::shared_ptr<const FrameData> in_frame_data, std
         #endif
 
         }
-
+        out_frame_data->frame_id = in_frame_data->frame_id;
 
     }
     else
@@ -309,18 +381,17 @@ int CacheNode::process_single(const std::vector<std::shared_ptr<const BaseData> 
     // CLOG(DEBUG, CACHE_LOG) << "output_interval_num: " << output_interval_num << "  frame_id : " << in_frame_data->frame_id
     //                         << " m_step: " << m_step << " m_count: " << m_count << " m_append_count: " << m_append_count 
     //                         << " m_frame_datas.size(): " << m_frame_datas.size();
-    
+    m_count++;
     if(m_append_count % (m_step + 1) == 0)
     {    
-        m_count++;
         // add to list
         std::shared_ptr<FrameData> frame_data = nullptr;
         transfer_data(in_frame_data, frame_data);
-        // CLOG(DEBUG, CACHE_LOG) << "frame_data size: " <<  frame_data->data->size();
+        // CLOG(DEBUG, CACHE_LOG) << "frame_data frame_id: " <<  frame_data->frame_id;
         m_frame_datas.push_back(frame_data);    
         m_append_count = 0;
 
-        if(m_frame_datas.size() > 32)
+        if(m_frame_datas.size() > m_frame_num)
         {
             m_frame_datas.pop_front();
         }
@@ -368,12 +439,15 @@ int CacheNode::process_single(const std::vector<std::shared_ptr<const BaseData> 
                     memcpy(out_data + i * sz, (*it)->data->cpu_data(), sz * sizeof(float));
                     it++;
                 }
+                #if DATA_DEBUG                    
+                    // printf("data:%p m_test_data_size: %d, out:%d\n", m_test_data, m_test_data_size, out->count());
+                    memcpy(out_data, m_test_data, out->count() * sizeof(float));
+                #endif
                 
                 feat->feature = out;
                 m_count = 0;
             }
-            out_metas.push_back(feat);
-
+            out_metas.push_back(feat);           
         }
         else
         {
@@ -386,7 +460,6 @@ int CacheNode::process_single(const std::vector<std::shared_ptr<const BaseData> 
         //todo trigger condition
         assert(0);            
     }
- 
 
     // CLOG(INFO, CACHE_LOG) << "CacheNode::process_single";
     return 0;
