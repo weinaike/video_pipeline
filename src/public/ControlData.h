@@ -16,6 +16,7 @@ namespace ZJVIDEO {
         ZJV_CONTROLTYPE_SET_FPS,            // 设置帧率
         ZJV_CONTROLTYPE_SET_LOGGER_LEVEL,   // 设置日志级别
         ZJV_CONTROLTYPE_SET_RUN_MODE,       // 设置运行模式
+        ZJV_CONTROLTYPE_CLEAR_CACHE,        // 清除缓存
         ZJV_CONTROLTYPE_MAX
     };
 

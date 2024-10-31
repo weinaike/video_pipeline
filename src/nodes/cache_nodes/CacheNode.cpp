@@ -392,6 +392,22 @@ int CacheNode::process_single(const std::vector<std::shared_ptr<const BaseData> 
     return 0;
 }
 
+int CacheNode::control(std::shared_ptr<ControlData>& data)
+{
+    CLOG(INFO, CACHE_LOG) << "CacheNode::control";
+    // 调用基类的control函数
+    BaseNode::control(data);
+    if(data->get_control_type() == ZJV_CONTROLTYPE_CLEAR_CACHE)
+    {
+        m_frame_datas.clear();
+        m_count = 0;
+        m_append_count = 0;
+    }
+
+    return 0;
+}
+
+
 REGISTER_NODE_CLASS(Cache)
 
 } // namespace ZJVIDEO

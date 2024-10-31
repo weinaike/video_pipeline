@@ -34,7 +34,7 @@ protected:
 
     virtual int process_single(const std::vector<std::shared_ptr<const BaseData> > & in_metas, 
                                 std::vector<std::shared_ptr<BaseData> > & out_metas);
-
+    virtual int control(std::shared_ptr<ControlData> &data) override;
 protected:
     int transfer_data(std::shared_ptr<const FrameData> in_frame_data, std::shared_ptr<FrameData> & out_frame_data);
     

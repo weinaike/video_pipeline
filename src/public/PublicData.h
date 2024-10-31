@@ -102,34 +102,6 @@ public:
     float   back_quality; 
 };
 
-
-
-// class ImageData : public BaseData
-// {
-// public:
-//     explicit ImageData(int w, int h, int fmt = ZJV_IMAGEFORMAT_RGBP, bool align = true);
-
-//     // 析构函数
-//     ~FrameData() override = default;
-
-//     int channel() const; // 获取图像通道数
-//     // 图像相关参数
-//     int width;  // 图像宽度
-//     int stride; // 图像步长 uSnapUp(uSnapUp(depth, 8) * width, 4) 向上 4字节对齐取整
-//     int height; // 图像高度
-//     int depth;  // 图像深度 depth bit数
-//     int format; // 图像格式 ImageFormat
-
-//     std::shared_ptr<SyncedMemory> data = nullptr; // 图像数据
-//     // 视频相关参数
-//     float fps;          // 帧率
-//     int camera_id;    // 相机ID
-//     int64_t frame_id; // 帧号
-//     int64_t pts;      // 时间戳
-
-//     bool alignment = false; // 是否需要内存4字节对齐（扩展宽）
-// };
-
 }
 
 #endif // __PUBLICDATA_H__

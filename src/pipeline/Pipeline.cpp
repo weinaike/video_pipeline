@@ -318,7 +318,26 @@ int Pipeline::parse_cfg_file(std::string cfg_file)
 
 
 int Pipeline::init() 
-{
+{   
+    if(m_initialized == true)
+    {
+        // 清空队列
+        for(auto & item : m_connectQueue)
+        {
+            item.second->clear();
+        }
+        for(auto & item : m_srcQueueList)
+        {
+            item.second->clear();
+        }
+        for(auto & item : m_dstQueueList)
+        {
+            item.second->clear();
+        }
+
+        CLOG(INFO, PIPE_LOG) << "Pipeline already initialized" ;
+        return ZJV_STATUS_OK;
+    }
     // 1. 初始化节点
     for (auto & node_param : m_nodeparams) 
     {
@@ -677,12 +696,6 @@ int Pipeline::control(std::shared_ptr<ControlData>& data)
             m_logger->configurations()->set(el::Level::Error, el::ConfigurationType::Enabled, "false");
         }
         m_logger->reconfigure();
-
-        for(auto & node_itme:m_node_map)
-        {
-            auto & node = node_itme.second;
-            node->control(data);
-        }
     }
     else if(data->get_control_type() == ZJV_CONTROLTYPE_SET_RUN_MODE)
     {
@@ -701,12 +714,27 @@ int Pipeline::control(std::shared_ptr<ControlData>& data)
                 item.second->set_buffer_strategy(BufferOverStrategy::ZJV_QUEUE_BLOCK);
             }            
         }
-
-        for(auto & node_itme:m_node_map)
+    }
+    else if(ZJV_CONTROLTYPE_CLEAR_CACHE  == data->get_control_type())
+    {
+        for(auto & item : m_connectQueue)
         {
-            auto & node = node_itme.second;
-            node->control(data);
+            item.second->clear();
         }
+        for(auto & item : m_srcQueueList)
+        {
+            item.second->clear();
+        }
+        for(auto & item : m_dstQueueList)
+        {
+            item.second->clear();
+        }
+    }
+
+    for(auto & node_itme:m_node_map)
+    {
+        auto & node = node_itme.second;
+        node->control(data);
     }
 
 
