@@ -42,6 +42,8 @@ protected:
 protected:
     int m_count;                // 满足条件帧累计，满足帧频率条件，输出数据并清零
     int m_append_count;         // 未满足条件的帧累计，达到记录条件清零
+    float * m_test_data = NULL;
+    int m_test_data_size = 0;
 
 private:
     std::list<std::shared_ptr<FrameData> > m_frame_datas;
@@ -58,7 +60,7 @@ private:
     // 预处理参数
     PreProcessParameter m_param;
     Rect2f m_roi;
-    
+
 
 }; // class CacheNode
 

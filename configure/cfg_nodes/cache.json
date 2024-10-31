@@ -3,13 +3,13 @@
     "version": "1.0",
     "output_type": "FeatureCache",
     "type": "continue",
-    "device" : 0,
+    "device" : -1,
     "step": 3,
     "fps": 25,
     "num": 8,
     "param":
     {
-        "resize_type": "Stretch",
+        "resize_type": "Fill",
         "roi": [0, 0, 1.0, 1.0],
         "output_diims": [1,1,224,224],
         "output_format":"NCHW",

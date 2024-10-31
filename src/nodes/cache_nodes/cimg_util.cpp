@@ -172,6 +172,12 @@ namespace ZJVIDEO
         }
 
         #if 0
+
+        // 存为png图
+        char name[128] = {0};
+        snprintf(name, sizeof(name), "../data/roi_img_%05d.bmp", frame_data->frame_id);
+        roi_img.save(name);
+
         CImgDisplay disp(roi_img,"My Image");
         while (!disp.is_closed()) {
             disp.wait();
