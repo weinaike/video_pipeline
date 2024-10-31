@@ -23,10 +23,10 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)    
     message(STATUS "Configuring CUDA for Linux platform")
     # set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda-11.8)
-    set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda-12.3)
+    set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda-12.1)
     set(CUDA_LIB_DIR "${CUDA_TOOLKIT_ROOT_DIR}/lib64")   
 	find_package(CUDA REQUIRED)
-
+    set(CMAKE_CUDA_ARCHITECTURES 80) 
 	include_directories(${CUDA_TOOLKIT_ROOT_DIR}/include)
 	link_directories(${CUDA_TOOLKIT_ROOT_DIR}/lib64)
 

@@ -26,7 +26,7 @@ void signalHandler(int signum) {
 #define FPS 100
 #define STEP 1
 
-std::string video_path = "../data/video/107#.raw";
+std::string video_path = "../data/video/84#.raw";
 
 
 
@@ -126,7 +126,7 @@ int main()
     // pipeline.set_input_data(std::make_shared<ZJVIDEO::VideoData>(video_path, 0));
 
     int frame_id = 0;
-    
+    FILE *fp = fopen("../data/welding_result.txt", "w");
     while(!flag)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -152,6 +152,8 @@ int main()
                             weld->frame_id, weld->camera_id, weld->weld_status, weld->status_score, weld->weld_depth, weld->front_quality, weld->back_quality);
 
                         pipeline->show_debug_info();   
+                        fprintf(fp, "%05d %d %d %f %f %f %f\n", 
+                            weld->frame_id, weld->camera_id, weld->weld_status, weld->status_score, weld->weld_depth, weld->front_quality, weld->back_quality);
                     }    
                     
                 }
@@ -159,7 +161,7 @@ int main()
         }
         
     }
-
+    fclose(fp);
     for(auto & t : threads)
     {
         if(t.joinable())   t.join();
