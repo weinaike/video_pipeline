@@ -82,12 +82,109 @@ int WeldEventNode::process_single(const std::vector<std::shared_ptr<const BaseDa
                     event->back_quality = obj_attr.attr_value;
                 }
             }
+            
+        }
+    }
+    if(event->is_enable)
+    {
+        m_status.push_back(event->weld_status);
+        m_depth.push_back(event->weld_depth);
+        m_front.push_back(event->front_quality);
+        m_back.push_back(event->back_quality);
+        m_score.push_back(event->status_score);
+
+        if(m_status.size() > m_max_size)
+        {
+            m_status.pop_front();
+            m_depth.pop_front();
+            m_front.pop_front();
+            m_back.pop_front();
+            m_score.pop_front();
+        }
+    }
+
+    // 平滑status
+    if(event->is_enable)
+    {        
+        int num = 4;
+        if(m_status.size() >= num)
+        {
+            int start = m_status.size() - num;
+            std::map<int, float> map;
+            for(int s = start; s < m_status.size(); s++)
+            {
+                bool found = false;
+                for (auto& pair : map)
+                {
+                    if (pair.first == m_status[s])
+                    {
+                        map[pair.first] += m_score[s];
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found)
+                {
+                    map[m_status[s]] = m_score[s];
+                }                
+            }
+            int label = -1;
+            float max_score = 0;
+            for (const auto& pair : map)
+            {
+                if(pair.second > max_score)
+                {
+                    label = pair.first;
+                    max_score = pair.second;
+                }
+            }
+            event->weld_status = label;            
+        }
+    }
+    // 平滑depth、front、back
+    if(event->is_enable)
+    {
+        int num = 5;
+        if(m_depth.size() >= num)
+        {
+            int start = m_depth.size() - num;
+            float depth = 0;
+            float front = 0;
+            float back = 0;
+            for(int s = start; s < m_depth.size(); s++)
+            {
+                depth += m_depth[s];
+                front += m_front[s];
+                back += m_back[s];
+            }
+            event->weld_depth = depth / num;
+            event->front_quality = front / num;
+            event->back_quality = back / num;
         }
     }
     out_metas.push_back(event);
 
     return 0;
 }
+
+
+int WeldEventNode::control(std::shared_ptr<ControlData>& data)
+{
+    CLOG(INFO, WELD_LOG) << "CacheNode::control";
+    // 调用基类的control函数
+    BaseNode::control(data);
+    if(data->get_control_type() == ZJV_CONTROLTYPE_CLEAR_CACHE)
+    {
+        m_status.clear();
+        m_score.clear();
+        m_depth.clear();
+        m_front.clear();
+        m_back.clear();
+    }
+
+    return 0;
+}
+
 
 REGISTER_NODE_CLASS(WeldEvent)
 

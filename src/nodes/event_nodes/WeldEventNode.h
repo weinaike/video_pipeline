@@ -21,7 +21,14 @@ protected:
 
     virtual int process_single(const std::vector<std::shared_ptr<const BaseData> > & in_metas, 
                                 std::vector<std::shared_ptr<BaseData> > & out_metas);   
-
+    virtual int control(std::shared_ptr<ControlData> &data) override;
+private:
+    std::deque<int> m_status;
+    std::deque<float> m_score;
+    std::deque<float> m_depth;
+    std::deque<float> m_front;
+    std::deque<float> m_back;
+    int m_max_size = 8;
 }; // class WeldEventNode
 
 } // namespace ZJVIDEO

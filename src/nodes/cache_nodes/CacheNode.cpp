@@ -371,7 +371,8 @@ int CacheNode::process_single(const std::vector<std::shared_ptr<const BaseData> 
         if (in->data_name == "Frame")
         {            
             in_frame_data = std::dynamic_pointer_cast<const FrameData>(in);
-            output_interval_num = in_frame_data->fps/m_fps > output_interval_num ? in_frame_data->fps/m_fps : output_interval_num;
+            float interval = in_frame_data->fps/m_fps;
+            output_interval_num = interval > output_interval_num ? int(interval + 0.5) : output_interval_num;
         }
         else
         {

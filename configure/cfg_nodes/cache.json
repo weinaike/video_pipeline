@@ -5,7 +5,7 @@
     "type": "continue",
     "device" : -1,
     "step": 3,
-    "fps": 25,
+    "fps": 50,
     "num": 8,
     "param":
     {
