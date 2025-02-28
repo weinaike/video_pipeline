@@ -23,7 +23,8 @@ VideoPipeline 是一个用于处理和分析视频流数据的模块化 C++ 项�
 
 ### 流水线配置
 
-流水线配置的详细内容，参考 [VideoPipeline 配置文件使用指南](docs/Configuration_File_User_Guide.md)
+流水线配置的详细内容，参考 [VideoPipeline 配置文件使用指南](docs/Configuration_File_User_Guide.md),
+采用可视化配置工具可以提升配置效率，如果未开发对应工具，可临时使用[drawflow_jsoneditor](https://github.com/weinaike/drawflow_jsoneditor)（注意未及时更新，可能存在缺陷）
 
 ![流水线示例](./docs/image_flow.png "示例")
 
